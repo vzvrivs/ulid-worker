@@ -13,7 +13,7 @@ async function handleRequest(event) {
 	const { request } = event;
 	const url = new URL(request.url);
 
-	// ⚙️ API ULID : génération / validation
+	// ⚙️ API ULID : génération / vérification
 	if (url.pathname === '/ulid' && request.method === 'GET') {
 		return handleUlid(event);
 	}
@@ -79,13 +79,24 @@ function rawToBinary(str) {
 //
 async function handleUlid(event) {
 	const url = new URL(event.request.url);
-	const validate = url.searchParams.get('validate');
 
-	// 🔍 VALIDATION ULID
-	if (validate) {
-		const response = { ulid: validate, conform: false };
+	const allowedParams = ["check", "n", "pretty", "prefix", "suffix", "base", "bin", "format"];
+	const unknownParams = [...url.searchParams.keys()].filter(k => !allowedParams.includes(k));
+	if (unknownParams.length > 0) {
+		return new Response(JSON.stringify({
+			error: `Unsupported query parameter(s): ${unknownParams.join(", ")}`
+		}, null, 2), {
+			headers: { 'Content-Type': 'application/json' },
+			status: 400
+		});
+	}
+	const check = url.searchParams.get('check');
 
-		if (validate.length !== 26) {
+	// 🔍 VÉRIFICATION ULID
+	if (check) {
+		const response = { ulid: check, conform: false };
+
+		if (check.length !== 26) {
 			response.error = 'ULID must be exactly 26 characters';
 			return new Response(JSON.stringify(response, null, 2), {
 				headers: { 'Content-Type': 'application/json' },
@@ -93,7 +104,7 @@ async function handleUlid(event) {
 			});
 		}
 
-		if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(validate)) {
+		if (!/^[0-9A-HJKMNP-TV-Z]{26}$/.test(check)) {
 			response.error = 'ULID contains invalid characters';
 			return new Response(JSON.stringify(response, null, 2), {
 				headers: { 'Content-Type': 'application/json' },
@@ -101,7 +112,7 @@ async function handleUlid(event) {
 			});
 		}
 
-		const decoded = decodeTime(validate);
+		const decoded = decodeTime(check);
 		response.conform = true;
 		response.t = decoded;
 		response.ts = new Date(decoded).toISOString();

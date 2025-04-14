@@ -70,16 +70,16 @@ function beautifyJSON(checked) {
   updateJsonValidity();
 }
 
-// ✅ Validation Validation JSON en temps réel (avec debounce)
+// ✅ Validation JSON en temps réel (avec debounce)
 const updateJsonValidity = debounce(() => {
   const textarea = $("json-input");
-  const validityEl = $("json-validity");
+  const validityEl = $("json-conformity");
   const isValid = validateJSON(textarea.value);
-  validityEl.textContent = isValid ? "✅ JSON valide" : "❌ JSON invalide";
+  validityEl.textContent = isValid ? "✅ JSON conforme" : "❌ JSON inconforme";
   validityEl.style.color = isValid ? "#33ff33" : "#ff4444";
 }, 300);
 
-// 🧠 Analyse JSON et complète les champs *_uid:null via l’API /autofill
+// 🧠 Valide JSON et complète les champs *_uid:null via l’API /autofill
 window.autofillJSON = async () => {
   try {
     const input = $("json-input").value;
@@ -95,8 +95,8 @@ window.autofillJSON = async () => {
     const data = await res.json();
     $("json-output").textContent = JSON.stringify(data, null, 2);
   } catch {
-    $("req-autofill-full").textContent = "// JSON invalide ❌";
-    $("json-output").textContent = "// JSON invalide ❌";
+    $("req-autofill-full").textContent = "// JSON inconforme ❌";
+    $("json-output").textContent = "// JSON inconforme ❌";
   }
 };
 
@@ -182,18 +182,18 @@ window.downloadConverted = () => {
   URL.revokeObjectURL(url);
 };
 
-// 🔎 Validation ULID
-window.validateULID = async () => {
-  const ulid = $("validate-input").value.trim();
-  const output = $("validate-output");
-  const reqDisplay = $("req-validate");
+// 🔎 Vérification ULID
+window.checkULID = async () => {
+  const ulid = $("check-input").value.trim();
+  const output = $("check-output");
+  const reqDisplay = $("req-check");
 
   if (!ulid) {
     output.textContent = "// 🟡 Aucun ULID fourni";
     return;
   }
 
-  const url = `/ulid?validate=${encodeURIComponent(ulid)}`;
+  const url = `/ulid?check=${encodeURIComponent(ulid)}`;
   reqDisplay.textContent = `GET ${url}`;
 
   try {
@@ -204,11 +204,14 @@ window.validateULID = async () => {
       ...(data.error && { error: data.error }),
       ulid: data.ulid || ulid,
       conform: data.conform ?? false,
-      ...(data.valid && { t: data.t, ts: data.ts })
+      ...(data.conform && { t: data.t, ts: data.ts })
     }, null, 2);
   } catch (err) {
     output.textContent = JSON.stringify({
-      ...(data.error && { error: data.error }), ulid, valid: false }, null, 2);
+      ulid,
+      conform: false,
+      error: "Erreur de requête ou réponse non conforme"
+    }, null, 2);
     console.debug("Erreur ULID :", err.message);
   }
 
@@ -224,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
-  // 🎯 Déclenche la validation JSON à chaque modification du textarea
+  // 🎯 Déclenche la vérification JSON à chaque modification du textarea
   const textarea = $("json-input");
   if (textarea) {
     textarea.addEventListener("input", updateJsonValidity);
@@ -241,13 +244,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Appuyer sur Entrée dans le champ "ULID à valider" déclenche la validation
-  const inputValidate = $("validate-input");
-  if (inputValidate) {
-    inputValidate.addEventListener("keydown", event => {
+  // Appuyer sur Entrée dans le champ "ULID à vérifier" déclenche la vérification
+  const inputCheck = $("check-input");
+  if (inputCheck) {
+    inputCheck.addEventListener("keydown", event => {
       if (event.key === "Enter") {
         event.preventDefault(); // empêche le submit implicite
-        window.validateULID();  // déclenche la validation
+        window.checkULID();  // déclenche la vérification
       }
     });
   }
@@ -255,7 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Boutons de collage : target + callback associé
   const pasteActions = [
     { id: "paste-json-btn", target: "json-input", callback: updateJsonValidity },
-    { id: "paste-ulid-btn",  target: "validate-input" }
+    { id: "paste-ulid-btn",  target: "check-input" }
   ];
 
   pasteActions.forEach(({ id, target, callback }) => {
@@ -269,14 +272,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const clearActions = [
     // Champs d'entrée
     { id: "clear-json-btn", target: "json-input", callback: updateJsonValidity },
-    { id: "clear-ulid-btn", target: "validate-input" },
+    { id: "clear-ulid-btn", target: "check-input" },
   
     // Champs de sortie
     { id: "clear-gen-output-btn", target: "gen-output" },
-    { id: "clear-validate-output-btn", target: "validate-output" },
+    { id: "clear-check-output-btn", target: "check-output" },
     { id: "clear-json-output-btn", target: "json-output" },
     { id: "clear-req-gen-btn", target: "req-gen" },
-    { id: "clear-req-validate-btn", target: "req-validate" },
+    { id: "clear-req-check-btn", target: "req-check" },
     { id: "clear-req-autofill-btn", target: "req-autofill-full" }
   ];  
 
@@ -305,7 +308,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const actionButtons = [
     { id: "generate-btn", handler: generateULID },
-    { id: "validate-btn", handler: validateULID },
+    { id: "check-btn", handler: checkULID },
     { id: "autofill-btn", handler: autofillJSON },
     { id: "download-gen-btn", handler: downloadConverted },
     { id: "download-autofill-btn", handler: downloadAutofill }

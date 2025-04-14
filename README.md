@@ -13,7 +13,7 @@ Ce projet a deux objectifs principaux :
 1. **Générer des ULID** (Universally Unique Lexicographically Sortable Identifiers)
 2. **Analyser, documenter et expérimenter avec leur structure et leurs usages**
 
-Il est né dans le cadre d’un autre projet nommé [PlayPal](#), avant de devenir une entité indépendante dédiée à la compréhension et à la manipulation des ULID.
+Il est né dans le cadre d’un autre projet nommé PlayPal(#), avant de devenir une entité indépendante dédiée à la compréhension et à la manipulation des ULID.
 
 ---
 
@@ -67,7 +67,7 @@ Ce projet est distribué sous la licence
 **[Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)**
 
 > Cela signifie que vous êtes libre de :
-> 
+>
 > - 📤 utiliser, modifier et redistribuer ce projet,
 > - à condition de me créditer clairement,
 > - **et de ne pas en faire un usage commercial**.

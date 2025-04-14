@@ -94,7 +94,7 @@
   <h1>🎛️ ULID Playground</h1>
   <p>Bienvenue sur ton labo interactif de génération et test d'ULID, propulsé par Cloudflare Worker ✨</p>
   <p>ULID est un identifiant unique universel, qui est lexicographiquement sortable et basé sur le temps. Il est souvent utilisé dans les bases de données et les systèmes distribués.</p>
-  <p>Tu peux générer des ULID, les valider, et même remplir automatiquement des champs JSON avec des ULID. Amuse-toi bien !</p>
+  <p>Tu peux générer des ULID, vérifier leur conformité, et même remplir automatiquement des champs JSON avec des ULID. Amuse-toi bien !</p>
 
   <h2>🎲 Générateur ULID</h2>
   <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
@@ -175,22 +175,22 @@
   </div>
 
 
-  <h2>🔍 Analyse ULID</h2>
+  <h2>🔍 Vérificateur ULID</h2>
   <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
     <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
       <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <label for="validate-input">ULID à analyser :</label>
-        <input id="validate-input" type="text" placeholder="01JR...">
+        <label for="check-input">ULID à vérifier :</label>
+        <input id="check-input" type="text" placeholder="01JR...">
       </div>
       <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
         <button id="paste-ulid-btn">📥 Coller</button>
         <button id="clear-ulid-btn">🧼 Effacer ULID</button>
-        <button id="validate-btn">Analyser l’ULID</button>
+        <button id="check-btn">Vérifier l’ULID</button>
       </div>
     </div>
     <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <label for="validate-output">Résultat de l’analyse :</label>
-      <pre id="validate-output" style="
+      <label for="check-output">Résultat de la vérification :</label>
+      <pre id="check-output" style="
           width: 100%;
           max-width: 100%;
           overflow-x: auto;
@@ -200,14 +200,14 @@
           box-sizing: border-box;
           max-height: 400px;
         ">// En attente</pre>
-      <button class="copy-btn" onclick="copyText('validate-output', event)">📋 Copier</button>
-      <button id="clear-validate-output-btn">🧹 Effacer</button>
+      <button class="copy-btn" onclick="copyText('check-output', event)">📋 Copier</button>
+      <button id="clear-check-output-btn">🧹 Effacer</button>
     </div>
   </div>
   <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
     <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <h4>📎 Requête GET de l’analyse ULID :</h4>
-      <pre id="req-validate" style="
+      <h4>📎 Requête GET de la vérification ULID :</h4>
+      <pre id="req-check" style="
           width: 100%;
           max-width: 100%;
           overflow-x: auto;
@@ -217,8 +217,8 @@
           box-sizing: border-box;
           max-height: 400px;
         ">// En attente</pre>
-      <button class="copy-btn" onclick="copyText('req-validate', event)">📋 Copier</button>
-      <button id="clear-req-validate-btn">🧹 Effacer</button>
+      <button class="copy-btn" onclick="copyText('req-check', event)">📋 Copier</button>
+      <button id="clear-req-check-btn">🧹 Effacer</button>
     </div>
   </div>
 
