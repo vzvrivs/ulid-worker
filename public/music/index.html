@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>🎶 ULID Music Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background-color: #0d0d0d;
+      color: #33ff33;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 2rem;
+      max-width: 960px;
+      margin: auto;
+    }
+    h1 {
+      color: #00ffcc;
+      border-bottom: 1px dashed #00ffcc;
+      margin-bottom: 1rem;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 1.5rem;
+      display: block;
+    }
+    select, button {
+      background-color: #111;
+      color: #66ff66;
+      border: 1px solid #00ffcc;
+      font-family: monospace;
+      font-size: 1rem;
+      padding: 0.5rem;
+      margin-right: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 4px;
+    }
+    #ulid-display {
+      font-size: 1.3rem;
+      background-color: #111;
+      border-left: 4px solid #00ffcc;
+      padding: 1rem;
+      margin-top: 1rem;
+      word-break: break-word;
+    }
+    #log {
+      background-color: #111;
+      margin-top: 2rem;
+      padding: 1rem;
+      border-left: 4px solid #00ffcc;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎶 ULID Music Terminal</h1>
+
+  <label for="style">🎛️ Sélectionne un style :</label>
+  <select id="style">
+    <option value="ambient">Ambient futuriste</option>
+    <option value="chiptune">Chiptune rétro</option>
+    <option value="jazz">ULID Jazz</option>
+    <option value="minimal">Minimal mystérieux</option>
+    <option value="ulidcore">ULIDcore tribal glitch</option>
+ 
+
+  </select>
+
+  <div style="margin-top:1rem;">
+    <button onclick="generate()">🎲 Nouveau ULID</button>
+    <button onclick="play()">▶️ Rejouer</button>
+  </div>
+
+  <label>🎯 ULID généré :</label>
+  <div id="ulid-display">...</div>
+
+  <label>🧠 Console :</label>
+  <div id="log">Chargement de l'orchestre...</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
+  <script>
+    const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    let currentULID = "";
+    let currentStyle = "ambient";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("style").addEventListener("change", (e) => {
+        currentStyle = e.target.value;
+      });
+
+      document.querySelector("button[onclick='generate()']").addEventListener("click", generate);
+      document.querySelector("button[onclick='play()']").addEventListener("click", play);
+
+      generate(); // Initial generation au chargement
+    });
+
+    function generateULID() {
+      const chars = crockford.split('');
+      let result = "";
+      for (let i = 0; i < 26; i++) {
+        result += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return result;
+    }
+
+    async function generate() {
+      try {
+        const res = await fetch("/ulid?n=1");
+        const data = await res.json();
+        currentULID = data[0].ulid;
+        document.getElementById("ulid-display").textContent = currentULID;
+        play();
+      } catch (e) {
+        document.getElementById("ulid-display").textContent = "Erreur de génération";
+        console.error(e);
+      }
+    }
+
+    const soundStyles = {
+      ambient: {
+        label: "Ambient futuriste",
+        scale: ["C4", "D#4", "F4", "G4", "A#4", "C5", "D#5", "F5"],
+        synth: () => new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "sine" },
+          envelope: { attack: 0.8, decay: 0.2, sustain: 0.5, release: 1.5 }
+        }),
+        effects: [() => new Tone.Reverb({ decay: 5, preDelay: 0.2, wet: 0.6 })],
+        tempo: 0.7,
+        duration: "2n",
+        length: 8
+      },
+
+      chiptune: {
+        label: "Chiptune rétro",
+        scale: ["C5", "D5", "E5", "G5", "A5", "C6", "D6", "E6"],
+        synth: () => new Tone.MonoSynth({
+          oscillator: { type: "square" },
+          envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.3 }
+        }),
+        effects: [],
+        tempo: 0.2,
+        duration: "8n",
+        length: 8
+      },
+
+      jazz: {
+        label: "Jazz improvisé",
+        scale: ["C3", "Eb3", "F3", "G3", "Bb3", "C4", "D4", "Eb4"],
+        synth: () => new Tone.FMSynth({
+          harmonicity: 3,
+          modulationIndex: 10,
+          envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 1 }
+        }),
+        effects: [() => new Tone.Tremolo(9, 0.75).start()],
+        tempo: 0.4,
+        duration: "4n",
+        length: 8,
+        noteModifier: (i, index, scale) => scale[(index * 3 + i) % scale.length]
+      },
+
+      minimal: {
+        label: "Minimal mystérieux",
+        scale: ["A2", "C3", "E3", "G3", "A3", "C4", "E4", "G4"],
+        synth: () => new Tone.MembraneSynth(),
+        effects: [() => new Tone.FeedbackDelay("8n", 0.5)],
+        tempo: 1.2,
+        duration: "1n",
+        length: 6
+      },
+
+      ulidcore: {
+        label: "ULIDcore tribal glitch",
+        scale: ["C2", "D2", "E2", "F2", "G5", "A5", "B5", "C6"],
+        synth: () => new Tone.MetalSynth({
+          frequency: 200,
+          envelope: { attack: 0.001, decay: 0.4, release: 0.2 },
+          harmonicity: 5.1,
+          modulationIndex: 32,
+          resonance: 4000,
+          octaves: 1.5
+        }),
+        effects: [() => new Tone.Distortion(0.4), () => new Tone.PingPongDelay("4n", 0.3)],
+        tempo: 0.12,
+        duration: "16n",
+        length: 12
+      }
+    };
+
+    function generateNotesFromULID(ulid, scale, length, modifierFn) {
+      const chars = crockford.split('');
+      const notes = [];
+
+      for (let i = 0; i < length; i++) {
+        const index = chars.indexOf(ulid[i]);
+        const note = modifierFn ? modifierFn(i, index, scale) : scale[index % scale.length];
+        notes.push(note);
+      }
+
+      return notes;
+    }
+
+    function play() {
+      currentStyle = document.getElementById("style").value;
+      const style = soundStyles[currentStyle];
+      const log = document.getElementById("log");
+
+      log.textContent = "\\n\\u{1F3B5} Style sélectionné : " + style.label + "\\n";
+      log.textContent += "\\n⏳ Chargement de l'orchestre...";
+      log.textContent += "\\n🔊 Synthétiseur prêt !";
+      log.textContent += "\\n🎵 Lecture des notes...";
+
+      const scale = style.scale;
+      const notes = generateNotesFromULID(currentULID, scale, style.length, style.noteModifier);
+
+      const synth = style.synth();
+      let finalOutput = synth;
+
+      if (style.effects && style.effects.length > 0) {
+        style.effects.forEach(effectFn => {
+          const effect = effectFn();
+          finalOutput.connect(effect);
+          finalOutput = effect;
+        });
+      }
+
+      finalOutput.toDestination();
+
+      Tone.start();
+      const now = Tone.now();
+      notes.forEach((note, i) => {
+        synth.triggerAttackRelease(note, style.duration, now + i * style.tempo);
+      });
+
+      log.textContent += "\\nULID : " + currentULID;
+      log.textContent += "\\nNotes jouées : " + notes.join(", ");
+      log.textContent += "\\n🎶 Terminé !";
+      log.textContent += "\\n🔁 Cliquez sur 'Nouveau ULID' ou 'Jouer' pour une nouvelle session.";
+      log.scrollTop = log.scrollHeight;
+    }
+      
+
+    // Init
+    generate();
+  </script>
+</body>
+</html>

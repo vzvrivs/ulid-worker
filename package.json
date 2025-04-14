@@ -1,0 +1,19 @@
+{
+	"name": "ulid-worker",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"dev": "wrangler dev",
+		"start": "wrangler dev",
+		"test": "vitest"
+	},
+	"devDependencies": {
+		"@cloudflare/vitest-pool-workers": "^0.7.5",
+		"vitest": "~3.0.7",
+		"wrangler": "^4.6.0"
+	},
+	"dependencies": {
+		"ulid": "^3.0.0"
+	}
+}

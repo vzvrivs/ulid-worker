@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+
+    <title>ULID Terminal – Home</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- 🌐 Favicon classique -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    
+    <style>
+      body {
+        display: flex;
+        margin: 0;
+        background-color: #0d0d0d;
+        color: #33ff33;
+        font-family: 'Courier New', Courier, monospace;
+      }
+  
+      body.light-mode {
+    background-color: #fdfdfd;
+    color: #111;
+  }
+  
+  body.light-mode nav {
+    background-color: #eee;
+    border-right: 2px dashed #999;
+  }
+  
+  body.light-mode nav a {
+    color: #003366;
+  }
+  body.light-mode nav a:hover {
+    color: #0066cc;
+  }
+  
+  body.light-mode .active {
+    color: #000;
+    font-weight: bold;
+  }
+  
+  body.light-mode .comment {
+    color: #666;
+  }
+  
+  body.light-mode h1 {
+    color: #0066cc;
+    border-bottom: 1px dashed #0066cc;
+  }
+  
+  body.light-mode a {
+    color: #0066cc;
+  }
+  
+  body.light-mode .blink {
+    color: #0066cc;
+  }
+  
+  body.light-mode .cmd {
+    color: #111;
+  }
+  
+  
+      nav {
+        width: 240px;
+        background-color: #111;
+        padding: 2rem 1rem;
+        height: 100vh;
+        position: fixed;
+        overflow-y: auto;
+        border-right: 2px dashed #00ffcc;
+      }
+  
+      nav a {
+        display: block;
+        color: #66ffff;
+        text-decoration: none;
+        margin-bottom: 1rem;
+      }
+  
+      nav a:hover {
+        text-decoration: underline;
+      }
+  
+      nav .active {
+        color: #ffffff;
+        font-weight: bold;
+      }
+  
+      main {
+        margin-left: 260px;
+        padding: 2rem;
+        max-width: 900px;
+        line-height: 1.6;
+      }
+      h1 {
+        font-size: 1.8rem;
+        color: #00ffcc;
+        border-bottom: 1px dashed #00ffcc;
+        padding-bottom: 0.4rem;
+        margin-bottom: 1.5rem;
+      }
+      .blink {
+        animation: blink 1s step-start infinite;
+      }
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+      a {
+        color: #66ffff;
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .section {
+        margin-top: 1.5rem;
+      }
+      .comment {
+        color: #888;
+      }
+      .cmd {
+        display: block;
+        margin: 0.4rem 0;
+      }
+      footer {
+        margin-top: 3rem;
+        font-size: 0.9rem;
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <nav>
+      <button onclick="toggleDarkMode()" style="margin-top: 2rem;">🌓 Thème</button>
+      <ul>
+        <li><a href="/">🏠 Accueil</a></li>
+        <li><a href="/ulid?n=5">⚙️ Générer</a></li>
+        <li><a href="/music">🎶 Music</a></li>
+        <li><a href="/docs">📚 Docs</a></li>
+        <li><a href="/help">🆘 Aide</a></li>
+        <li><a href="/matrix">🧬 Matrix</a></li>
+        <li><a href="/playground">🕹️ Playground ULID</a></li>
+
+      </ul>
+    </nav>
+    <main>
+      <h1>🧪 ULID Worker Terminal</h1>
+  
+      <div class="section">
+        <span class="comment"># Générer des ULID 👇</span>
+        <span class="cmd">$ <a href="./ulid?n=5&pretty=true">/ulid?n=5&pretty=true</a></span>
+  
+        <span class="comment"># Valider un ULID 👇</span>
+        <span class="cmd">$ <a href="./ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP">/ulid?validate=ULID</a></span>
+  
+        <span class="comment"># Remplir un JSON avec *_uid:null 👇</span>
+        <span class="cmd">$ <a href="./test">/test</a> <span class="blink">_</span></span>
+      </div>
+  
+      <div class="section">
+        <span class="comment"># Aide rapide et documentation 👇</span>
+        <span class="cmd">$ <a href="./help">/help</a></span>
+        <span class="cmd">$ <a href="./docs">/docs</a></span>
+      </div>
+      
+      <footer>
+        ULID Worker v1 • Codé avec 💚 par Raphaël<br />
+        <span class="comment">// uptime, stabilité, élégance</span>
+      </footer>
+    </main>
+    <script src="/theme-toggle.js"></script> 
+  </body>
+</html>

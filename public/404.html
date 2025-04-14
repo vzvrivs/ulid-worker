@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>404 – Fichier introuvable</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      background-color: #0d0d0d;
+      color: #33ff33;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      flex-direction: column;
+    }
+
+    h1 {
+      color: #00ffcc;
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    a {
+      color: #66ffff;
+      text-decoration: none;
+      background-color: #111;
+      padding: 0.6rem 1rem;
+      border: 1px dashed #00ffcc;
+      border-radius: 5px;
+    }
+
+    a:hover {
+      background-color: #222;
+      text-decoration: underline;
+    }
+
+    .matrix {
+      font-size: 0.9rem;
+      opacity: 0.3;
+      animation: flicker 2s infinite alternate;
+    }
+
+    @keyframes flicker {
+      from { opacity: 0.1; }
+      to { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+  <h1>💥 Erreur 404</h1>
+  <p>Cette ressource n’existe pas ou a été dissoute dans l’espace-temps.</p>
+  <a href="/">⏎ Revenir au terminal d’accueil</a>
+  <br><br>
+  <div class="matrix">
+    01010000 01110010 01101111 01100010 01101100 01100101 01101101 01100101
+  </div>
+</body>
+</html>
