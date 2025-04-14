@@ -1,5 +1,7 @@
 # ULID Worker
 
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+
 ✨ Un projet personnel autour des ULID, propulsé par Cloudflare Workers.
 
 ---
@@ -61,13 +63,13 @@ Projet conçu avec passion par **Raphaël**
 
 ## 📝 Licence
 
-Ce projet est distribué sous la licence
-Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)
+Ce projet est distribué sous la licence  
+**[Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)**
 
-Cela signifie que vous êtes libre de :
-
-- "📤 utiliser, modifier et redistribuer ce projet",
-- "à condition de me créditer clairement",
-- "et de ne pas en faire un usage commercial."
+> Cela signifie que vous êtes libre de :
+> 
+> - 📤 utiliser, modifier et redistribuer ce projet,
+> - à condition de me créditer clairement,
+> - **et de ne pas en faire un usage commercial**.
 
 Pour toute demande d’usage commercial, merci de me contacter directement.
