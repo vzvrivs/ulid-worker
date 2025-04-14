@@ -55,11 +55,19 @@ wrangler dev
 
 ## 🧠 Auteur
 
-Projet conçu avec passion par **Raphaël**  
-> _“Where data meets drama.”_ – *Emotive Protocols*
+Projet conçu avec passion par **Raphaël**
 
 ---
 
 ## 📝 Licence
 
-À définir.
+Ce projet est distribué sous la licence
+Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)
+
+Cela signifie que vous êtes libre de :
+
+- "📤 utiliser, modifier et redistribuer ce projet",
+- "à condition de me créditer clairement",
+- "et de ne pas en faire un usage commercial."
+
+Pour toute demande d’usage commercial, merci de me contacter directement.
