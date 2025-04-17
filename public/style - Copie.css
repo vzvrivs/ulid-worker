@@ -1,0 +1,463 @@
+/************************************************************
+ * 1. VARIABLES (communes & spécifiques aux thèmes)
+ ************************************************************/
+
+/* Variables communes – structure, espacements, police */
+:root {
+  --max-width: 900px;
+  --radius-sm: 4px;
+  --space-sm: 0.4rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* Thème DARK (couleurs de base et déclinaisons via color-mix()) */
+[data-theme="dark"] {
+  /* Couleurs de base */
+  --base-bg: hsl(0, 0%, 15%);             /* Fond dominant – gris très foncé */
+  --base-accent: hsl(175, 100%, 45%);      /* Accent – turquoise vibrant */
+
+  /* Dérivations */
+  --bg: var(--base-bg);
+  --fg-text: color-mix(in srgb, var(--base-bg) 40%, white 60%);
+  --link-color: color-mix(in srgb, var(--base-accent) 60%, var(--fg-text) 40%);
+  --heading-color: var(--base-accent);
+  --section-bg: color-mix(in srgb, var(--base-bg) 80%, black 20%);
+  --border: 1px solid color-mix(in srgb, var(--base-accent) 50%, var(--base-bg) 50%);
+  --link-hover: var(--heading-color);
+
+  /* Pour les boutons */
+  --button-bg: color-mix(in srgb, var(--base-accent) 40%, var(--base-bg) 60%);
+  --button-color: color-mix(in srgb, var(--fg-text) 40%, white 60%);
+  --button-border: 1px solid color-mix(in srgb, var(--base-accent) 50%, var(--base-bg) 50%);
+
+  /* Pour les containers de type « box » et le code */
+  --bg-box: color-mix(in srgb, var(--base-bg) 90%, white 10%);
+  --code-bg: color-mix(in srgb, var(--base-bg) 85%, white 15%);
+}
+
+/* Thème LIGHT */
+[data-theme="light"] {
+  /* Couleurs de base */
+  --base-bg: hsl(0, 0%, 97%);              /* Fond dominant – blanc cassé ou gris très clair */
+  --base-accent: hsl(220, 90%, 50%);       /* Accent – bleu vif */
+
+  /* Dérivations */
+  --bg: var(--base-bg);
+  --fg-text: color-mix(in srgb, var(--base-bg) 40%, black 60%);
+  --link-color: color-mix(in srgb, var(--base-accent) 60%, var(--fg-text) 40%);
+  --heading-color: var(--base-accent);
+  --section-bg: color-mix(in srgb, var(--base-bg) 80%, white 20%);
+  --border: 1px solid color-mix(in srgb, var(--base-accent) 50%, var(--base-bg) 50%);
+  --link-hover: var(--heading-color);
+
+  /* Pour les boutons */
+  --button-bg: color-mix(in srgb, var(--base-accent) 40%, var(--base-bg) 60%);
+  --button-color: color-mix(in srgb, var(--fg-text) 40%, black 60%);
+  --button-border: 1px solid color-mix(in srgb, var(--base-accent) 50%, var(--base-bg) 50%);
+
+  /* Pour les containers et blocs de code */
+  --bg-box: color-mix(in srgb, var(--base-bg) 90%, black 10%);
+  --code-bg: color-mix(in srgb, var(--base-bg) 85%, black 15%);
+}
+
+
+/************************************************************
+ * 2. STRUCTURE & LAYOUT
+ ************************************************************/
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--fg-text);
+  font-family: var(--font-mono);
+}
+
+main {
+  padding: var(--space-lg);
+  line-height: 1.6;
+  margin-top: 4rem;
+}
+
+main.container {
+  margin-top: 2rem; /* pour compenser la navbar */
+}
+
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.margin-vertical { margin: 1rem 0; }
+.margin-top-small { margin-top: 0.5rem; }
+.margin-top { margin-top: 1rem; }
+.flex-space-between { display: flex; justify-content: space-between; align-items: center; }
+.form-column { display: flex; flex-direction: column; gap: 0.5rem; }
+.input-small { width: 8rem; }
+
+/************************************************************
+ * 3. NAVIGATION (SIDEBAR & NAVBAR)
+ ************************************************************/
+/* Sidebar */
+nav.sidebar {
+  width: 240px;
+  background-color: var(--bg-box);
+  padding: var(--space-lg) var(--space-md);
+  height: 100vh;
+  position: fixed;
+  overflow-y: auto;
+}
+
+nav a {
+  display: block;
+  color: var(--link-color);
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+nav .active {
+  color: white;
+  font-weight: bold;
+}
+
+/* Navbar supérieure */
+.navbar {
+  background-color: var(--bg-box);
+  padding: 0.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.navbar-links a {
+  margin: 0 0.5rem;
+  color: var(--link-color);
+  text-decoration: none;
+  font-family: var(--font-mono);
+}
+
+.navbar-links a:hover {
+  text-decoration: underline;
+}
+
+/* Navbar en light */
+[data-theme="light"] .navbar {
+  background-color: #eee;
+}
+
+[data-theme="light"] .navbar-links a {
+  color: var(--link-hover);
+}
+
+/* Ulid Navbar */
+.ulid-navbar {
+  position: sticky;
+  top: 1rem;
+  z-index: 100;
+  margin: 1rem auto 0 auto;
+  max-width: 90vw;
+  width: fit-content;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  background-color: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+[data-theme="light"] .ulid-navbar {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.ulid-navbar-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+
+.ulid-logo {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  color: var(--heading-color);
+  text-decoration: none;
+}
+
+.ulid-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: 1rem;
+}
+
+.ulid-nav a {
+  font-family: var(--font-mono);
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+.ulid-nav a:hover {
+  text-decoration: underline;
+}
+
+/* Bouton burger (responsive) */
+.burger-btn {
+  display: none;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--link-color);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .burger-btn {
+    display: block;
+  }
+  .ulid-nav {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  .ulid-nav.show {
+    display: flex;
+  }
+}
+
+/* Lien pour basculer le thème */
+#themeToggle {
+  cursor: pointer;
+  color: var(--link-color);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  vertical-align: middle;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+#themeToggle:hover {
+  text-decoration: underline;
+  color: var(--link-hover);
+}
+
+
+/************************************************************
+ * 4. TYPOGRAPHIE & TITRES
+ ************************************************************/
+h1 {
+  font-size: 1.8rem;
+  color: var(--heading-color);
+  border-bottom: 1px dashed var(--heading-color);
+  padding-bottom: 0.4rem;
+  margin-bottom: 1.5rem;
+}
+
+h2, h3 {
+  color: var(--heading-color);
+  border-bottom: 1px dashed var(--heading-color);
+  padding-bottom: 0.3rem;
+  margin-top: 2rem;
+}
+
+a {
+  color: var(--link-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.comment {
+  color: #888;
+  margin-bottom: 0.4rem;
+}
+
+.cmd {
+  margin-bottom: 0.4rem;
+}
+
+
+/************************************************************
+ * 5. FORMULAIRES
+ ************************************************************/
+input, select, textarea {
+  background: var(--input-bg, var(--bg-box)); /* Utilisation de bg-box par défaut */
+  color: var(--fg-text);
+  border: var(--border);
+  padding: var(--space-sm);
+  margin: 0.3rem 0 1rem;
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+label {
+  display: block;
+  margin-top: var(--space-md);
+  font-weight: bold;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+}
+
+
+/************************************************************
+ * 6. BOUTONS
+ ************************************************************/
+button, .btn {
+  background: var(--button-bg);
+  color: var(--button-color);
+  border: var(--button-border);
+  padding: var(--space-sm) var(--space-lg);
+  margin-top: var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover, .btn:hover {
+  background: var(--button-color);
+  color: var(--fg-text);
+}
+
+.copy-btn {
+  margin-left: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+
+/************************************************************
+ * 7. CODE & BLOCS (PRE, CODE, TERMINAL)
+ ************************************************************/
+pre {
+  background: var(--code-bg);
+  padding: var(--space-md);
+  margin-top: var(--space-md);
+  border-left: 4px solid var(--heading-color);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+code {
+  background: var(--code-bg);
+  color: var(--link-color);
+  padding: 0.2em 0.4em;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+/* Ancienne terminal-box remplacée par la section principale */
+.terminal-box { 
+  /* Si vous souhaitez conserver une variante pour le mode terminal, vous pouvez la redéfinir ici */
+  background: var(--bg-box);
+  color: var(--fg-text);
+  border: var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-lg);
+  box-shadow: 0 0 10px rgba(0,255,204,0.33);
+}
+
+/* Section principale centrée */
+.main-section {
+  max-width: var(--max-width);
+  margin: 2rem auto;
+  padding: var(--space-lg);
+  background-color: var(--section-bg);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 16px var(--heading-color);
+}
+
+
+/************************************************************
+ * 8. MISE EN PAGE & RESPONSIVITÉ
+ ************************************************************/
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.col {
+  flex: 1 1 0;
+  min-width: 300px;
+  max-width: 50%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .col {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+.btn-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+
+/************************************************************
+ * 9. EFFETS SPÉCIAUX & ANIMATIONS
+ ************************************************************/
+.blink {
+  animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+
+/************************************************************
+ * 10. PIED DE PAGE
+ ************************************************************/
+footer {
+  margin: 3rem auto 0 auto;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--footer-color, var(--fg-text));
+  font-style: italic;
+}

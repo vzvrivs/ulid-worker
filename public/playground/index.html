@@ -1,306 +1,215 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>🎛️ ULID Playground – Raphaël</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {
-      background: #0d0d0d;
-      color: #33ff33;
-      font-family: monospace;
-      padding: 2rem;
-      max-width: 1000px;
-      margin: auto;
-    }
-    h1, h2, h3 {
-      color: #00ffcc;
-      border-bottom: 1px dashed #00ffcc;
-      padding-bottom: 0.3rem;
-      margin-top: 2rem;
-    }
-    label, input, select, textarea, button {
-      font-family: monospace;
-      font-size: 1rem;
-    }
-    input, select, textarea {
-      background: #111;
-      color: #33ff33;
-      border: 1px solid #00ffcc;
-      padding: 0.4rem;
-      margin: 0.3rem 0;
-      width: 100%;
-    }
-    button {
-      background: #222;
-      color: #00ffcc;
-      border: 1px solid #00ffcc;
-      padding: 0.4rem 1rem;
-      margin-top: 0.5rem;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    button:hover {
-      background: #00ffcc;
-      color: #000;
-    }
-    .copy-btn {
-      margin-left: 0.5rem;
-      padding: 0.2rem 0.5rem;
-      font-size: 0.9rem;
-    }
-    pre {
-      background: #111;
-      padding: 1rem;
-      margin-top: 1rem;
-      border-left: 4px solid #00ffcc;
-      overflow-x: auto;
-    }
-    code {
-      background-color: #111;
-      color: #66ffff;
-      padding: 0.2em 0.4em;
-      border-radius: 4px;
-    }
-    a {
-      color: #66ffff;
-    }
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .col {
-      flex: 1 1 50%;
-      min-width: 300px;
-      max-width: 50%;
-      box-sizing: border-box;
-    }
-    footer {
-      margin-top: 3rem;
-      font-style: italic;
-      font-size: 0.9rem;
-      color: #888;
-    }
-    .btn-line {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 0.5rem;
-    }
-  </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ULID Playground – Home</title>
+  <link rel="stylesheet" href="/style.css"/>
 </head>
-<body>
-  <h1>🎛️ ULID Playground</h1>
-  <p>Bienvenue sur ton labo interactif de génération et test d'ULID, propulsé par Cloudflare Worker ✨</p>
-  <p>ULID est un identifiant unique universel, qui est lexicographiquement sortable et basé sur le temps. Il est souvent utilisé dans les bases de données et les systèmes distribués.</p>
-  <p>Tu peux générer des ULID, vérifier leur conformité, et même remplir automatiquement des champs JSON avec des ULID. Amuse-toi bien !</p>
+<body data-theme="dark">
 
-  <h2>🎲 Générateur ULID</h2>
-  <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <label for="gen-count">Nombre d'ULID :</label>
-        <input id="gen-count" type="number" value="5" min="1" max="1000" style="width: 8rem;" />
-        <label for="gen-prefix">Préfixe :</label>
-        <input id="gen-prefix" placeholder="ex: RAPH-" />
-        <label for="gen-suffix">Suffixe :</label>
-        <input id="gen-suffix" placeholder="ex: -X" />
-        <label for="gen-base">Base :</label>
-        <select id="gen-base">
-          <option value="crockford">Base32 (Crockford)</option>
-          <option value="hex">Base16 (Hexa)</option>
-        </select>
-        <label for="gen-format">Format d’affichage :</label>
-          <select id="gen-format" style="width: 100%;">
-            <option value="json">JSON</option>
-            <option value="csv">CSV</option>
-            <option value="tsv">TSV</option>
-            <option value="text">Text</option>
-            <option value="joined">Joined</option>
-          </select>        
-      </div>
-      <div style="margin: 1rem 0;">
-        <label style="display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;">
-          Inclure version binaire (bin) :
-          <input type="checkbox" id="gen-bin" name="gen-bin">
-        </label>
-      </div>
-      <div style="margin-top: 0.5rem;">
-        <button id="generate-btn">Générer les ULID</button>
-      </div>
+  <header class="ulid-navbar">
+    <div class="ulid-navbar-container">
+      <button class="burger-btn" aria-label="Menu">☰</button>
+      <nav class="ulid-nav">
+        <a href="/">🧪 ULID</a>
+        <a href="/music">🎶 Music</a>
+        <a href="/docs">📚 Docs</a>
+        <a href="/help">🆘 Aide</a>
+        <a href="/matrix">🧬 Matrix</a>
+        <a href="/playground">🕹️ Playground</a>
+        <a href="#" onclick="toggleDarkMode();return false;" id="themeToggle">🌓 Thème</a>
+      </nav>
     </div>
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <label for="gen-output">ULID Générés :</label>
-      <pre id="gen-output" style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-          max-height: 400px;
-        ">// En attente</pre>
-      <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
-        <button class="copy-btn" onclick="copyText('gen-output', event)">📋 Copier</button>
-        <button id="clear-gen-output-btn">🧹 Effacer</button>
-        <label for="gen-export-format" style="width: min(35%, 200px);">Exporter en :
-          <select id="gen-export-format">
-            <option value="json">JSON</option>
-            <option value="csv">CSV</option>
-            <option value="tsv">TSV</option>
-            <option value="text">Text</option>
-            <option value="joined">Joined</option>
-          </select>
-        </label>
-        <button id="download-gen-btn">💾 Télécharger</button>
-      </div>
-    </div>
-  </div> 
-  <div style="margin-top: 1rem;">
-    <h4>📎 Requête GET de la génération d'ULID :</h4>
-    <pre id="req-gen" style="
-        width: 100%;
-        max-width: 100%;
-        overflow-x: auto;
-        overflow-y: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        box-sizing: border-box;
-        max-height: 400px;
-      ">// En attente</pre>
-    <button class="copy-btn" onclick="copyText('req-gen', event)">📋 Copier</button>
-    <button id="clear-req-gen-btn">🧹 Effacer</button>
+  </header>
+
+  <div class="content">
+    <main class="container main-section">
+
+      <!-- Présentation -->
+      <section class="component">
+        <h2 class="component-title"><span class="icon">🧪</span>ULID Playground</h2>
+        <p>Bienvenue sur ton labo interactif de génération et test d’ULID, propulsé par Cloudflare Worker ✨</p>
+      </section>
+
+      <!-- Générateur ULID -->
+      <section class="component">
+        <h2 class="component-title"><span class="icon">🎲</span>Générateur ULID</h2>
+        <div class="row">
+
+          <!-- Formulaire -->
+          <div>
+            <div class="form-ulid">
+              <div class="form-group">
+                <label for="gen-count">Nombre d’ULID :</label>
+                <input id="gen-count" type="number" value="5" min="1" max="1000" class="w-sm"/>
+              </div>
+              <div class="form-group">
+                <label for="gen-format">Format d’affichage :</label>
+                <select id="gen-format" class="w-full">
+                  <option value="json">JSON</option>
+                  <option value="csv">CSV</option>
+                  <option value="tsv">TSV</option>
+                  <option value="text">Text</option>
+                  <option value="joined">Joined</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="gen-prefix">Préfixe :</label>
+                <input id="gen-prefix" placeholder="ex : prefix-" class="w-full"/>
+              </div>
+              <div class="form-group">
+                <label for="gen-suffix">Suffixe :</label>
+                <input id="gen-suffix" placeholder="ex : -suffix" class="w-full"/>
+              </div>
+
+              <div class="form-group">
+                <label for="gen-base">Base :</label>
+                <select id="gen-base" class="w-full">
+                  <option value="crockford">Base32 (Crockford)</option>
+                  <option value="hex">Base16 (Hexa)</option>
+                </select>
+              </div>
+
+              <div class="form-group inline-flex-center">
+                <input type="checkbox" id="gen-bin"/>
+                <label for="gen-bin">Inclure binaire (bin)</label>
+              </div>
+            </div>
+
+            <div class="controls-row">
+              <button id="generate-btn">Générer les ULID</button>
+            </div>
+          </div>
+
+          <!-- Output Générateur -->
+          <div>
+            <label for="gen-output">ULID Générés :</label>
+            <pre id="gen-output" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('gen-output',event)">📋 Copier</button>
+              <button id="clear-gen-output-btn">🧹 Effacer</button>
+              <label for="gen-export-format">Exporter en :</label>
+              <select id="gen-export-format" class="w-mid">
+                <option value="json">JSON</option>
+                <option value="csv">CSV</option>
+                <option value="tsv">TSV</option>
+                <option value="text">Text</option>
+                <option value="joined">Joined</option>
+              </select>
+              <button id="download-gen-btn">💾 Télécharger</button>
+            </div>
+          </div>
+
+          <!-- Requête Générateur -->
+          <div class="span-full">
+            <h3><span class="icon">📎</span>Requête GET de la génération d’ULID :</h3>
+            <pre id="req-gen" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('req-gen',event)">📋 Copier</button>
+              <button id="clear-req-gen-btn">🧹 Effacer</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vérificateur ULID -->
+      <section class="component">
+        <h2 class="component-title"><span class="icon">🔍</span>Vérificateur ULID</h2>
+        <div class="row">
+
+          <!-- Form Vérificateur -->
+          <div>
+            <div class="form-group">
+              <label for="check-input">ULID à vérifier :</label>
+              <input id="check-input" type="text" placeholder="01JR..." class="w-full"/>
+            </div>
+            <div class="controls-row">
+              <button id="paste-ulid-btn">📥 Coller</button>
+              <button id="clear-ulid-btn">🧼 Effacer ULID</button>
+              <button id="check-btn">Vérifier l’ULID</button>
+            </div>
+          </div>
+
+          <!-- Output Vérificateur -->
+          <div>
+            <label for="check-output">Résultat de la vérification :</label>
+            <pre id="check-output" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('check-output',event)">📋 Copier</button>
+              <button id="clear-check-output-btn">🧹 Effacer</button>
+            </div>
+          </div>
+
+          <!-- Requête Vérificateur -->
+          <div class="span-full">
+            <h3><span class="icon">📎</span>Requête GET de la vérification ULID :</h3>
+            <pre id="req-check" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('req-check',event)">📋 Copier</button>
+              <button id="clear-req-check-btn">🧹 Effacer</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Autofill JSON -->
+      <section class="component">
+        <h2 class="component-title"><span class="icon">🧪</span>Autofill JSON</h2>
+        <div class="row">
+
+          <!-- Form Autofill -->
+          <div>
+            <div class="form-group">
+              <label for="json-input">Entrée JSON :</label>
+              <label class="inline-flex-center">
+                <input type="checkbox" id="beautify-toggle"/> Beautify
+              </label>
+            </div>
+            <textarea id="json-input" rows="21" class="w-full h-lg" placeholder='{"key":null}'></textarea>
+            <div class="controls-row">
+              <button id="paste-json-btn">📥 Coller</button>
+              <button id="clear-json-btn">🧼 Effacer JSON</button>
+              <button id="autofill-btn">Compléter les champs *_uid:null</button>
+            </div>
+          </div>
+
+          <!-- Output Autofill -->
+          <div>
+            <label for="json-output">Sortie JSON Autofill :</label>
+            <pre id="json-output" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('json-output',event)">📋 Copier</button>
+              <button id="clear-json-output-btn">🧹 Effacer</button>
+              <label for="autofill-export-format">Exporter en :</label>
+              <select id="autofill-export-format" class="w-mid">
+                <option value="json">JSON</option>
+                <option value="text">Text</option>
+              </select>
+              <button id="download-autofill-btn">💾 Télécharger</button>
+            </div>
+          </div>
+
+          <!-- Requête Autofill -->
+          <div class="span-full">
+            <h3><span class="icon">📨</span>Requête POST Autofill JSON :</h3>
+            <pre id="req-autofill-full" class="code-block">// En attente</pre>
+            <div class="controls-row">
+              <button onclick="copyText('req-autofill-full',event)">📋 Copier</button>
+              <button id="clear-req-autofill-btn">🧹 Effacer</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      ULID Playground v1 • Codé avec <span class="icon">💚</span> par Raphaël
+    </footer>
   </div>
 
-
-  <h2>🔍 Vérificateur ULID</h2>
-  <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-        <label for="check-input">ULID à vérifier :</label>
-        <input id="check-input" type="text" placeholder="01JR...">
-      </div>
-      <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-        <button id="paste-ulid-btn">📥 Coller</button>
-        <button id="clear-ulid-btn">🧼 Effacer ULID</button>
-        <button id="check-btn">Vérifier l’ULID</button>
-      </div>
-    </div>
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <label for="check-output">Résultat de la vérification :</label>
-      <pre id="check-output" style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-          max-height: 400px;
-        ">// En attente</pre>
-      <button class="copy-btn" onclick="copyText('check-output', event)">📋 Copier</button>
-      <button id="clear-check-output-btn">🧹 Effacer</button>
-    </div>
-  </div>
-  <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <h4>📎 Requête GET de la vérification ULID :</h4>
-      <pre id="req-check" style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-          max-height: 400px;
-        ">// En attente</pre>
-      <button class="copy-btn" onclick="copyText('req-check', event)">📋 Copier</button>
-      <button id="clear-req-check-btn">🧹 Effacer</button>
-    </div>
-  </div>
-
-
-  <h2>🧪 Autofill JSON</h2>
-  <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <label for="json-input">Entrée JSON :</label>
-        <label style="display: inline-flex; align-items: center; gap: 0.4rem;">
-          <input type="checkbox" id="beautify-toggle">
-          Beautify
-        </label>
-      </div>
-      <textarea id="json-input" rows="21"
-        placeholder='{"playlist_uid": null, "tracks": [{"track_uid": null}]}'
-        style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-        "></textarea>
-      <div id="json-validity" style="margin-top: 0.3rem; font-weight: bold;"></div>
-      <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-        <button id="paste-json-btn">📥 Coller</button>
-        <button id="clear-json-btn">🧼 Effacer JSON</button>
-        <button id="autofill-btn">Compléter les champs *_uid:null</button>
-      </div>
-    </div>  
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <label for="json-output">Sortie JSON Autofill :</label>
-      <pre id="json-output" style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-          max-height: 400px;
-        ">// En attente</pre>
-      <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
-        <button class="copy-btn" onclick="copyText('json-output', event)">📋 Copier</button>
-        <button id="clear-json-output-btn">🧹 Effacer</button>
-        <label for="autofill-export-format" style="width: min(35%, 200px);">Exporter en :
-          <select id="autofill-export-format">
-            <option value="json">JSON</option>
-            <option value="text">Text</option>
-          </select>
-        </label>      
-        <button id="download-autofill-btn">💾 Télécharger</button>
-      </div>      
-    </div>
-  </div>
-  <div class="row" style="display: flex; flex-wrap: wrap; gap: 1rem;">
-    <div class="col" style="flex: 1 1 0; min-width: 300px; max-width: 50%; box-sizing: border-box;">
-      <h4>📨 Requête POST Autofill JSON :</h4>
-      <pre id="req-autofill-full" style="
-          width: 100%;
-          max-width: 100%;
-          overflow-x: auto;
-          overflow-y: auto;
-          white-space: pre-wrap;
-          word-break: break-word;
-          box-sizing: border-box;
-          max-height: 400px;
-        ">// En attente</pre>
-      <button class="copy-btn" onclick="copyText('req-autofill-full', event)">📋 Copier</button>
-      <button id="clear-req-autofill-btn">🧹 Effacer</button>
-    </div>
-  </div>
-
-
-  <footer>
-    ULID Playground v1 — Codé à la main par Raphaël dans le noir 🦾
-  </footer>
-
-
-  <script type="module" src="/playground.js"></script>
-  
+  <script src="/theme-manager.js"></script>
 </body>
 </html>

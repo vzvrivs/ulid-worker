@@ -1,0 +1,308 @@
+/* 0. Box‑Sizing global */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* 1. Variables communes & Container fluid */
+:root {
+  --max-width: clamp(320px, 90vw, 1200px);
+  --radius-sm: 4px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.4rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+/* 2. Thèmes (dark + light) */
+[data-theme="dark"] {
+  --bg:            #0a0b0b;    /* fond du terminal */
+  --bg-box:        #2a2a2a;
+  --section-bg:    #242424;
+  --fg-accent:     #91ffd1;    /* vert mint exact extrait */
+  --fg-alt:        #33ff33;
+  --fg-text:       #bbbbbb;
+  --border:        1px solid var(--fg-accent);
+  --heading-color: var(--fg-accent);
+  --link-color:    var(--fg-text);
+  --link-hover:    var(--fg-accent);
+  --input-bg:      var(--bg-box);
+  --input-color:   var(--fg-alt);
+  --button-bg:     #222;
+  --button-color:  var(--fg-accent);
+  --button-border: var(--border);
+  --footer-color:  #666;
+  --shadow-elev1:  0 4px 12px var(--heading-color);
+}
+
+[data-theme="light"] {
+  --bg:            #fdfdfd;
+  --bg-box:        #fff;
+  --section-bg:    #f7f7f7;
+  --fg-dark:       #111;
+  --fg-link:       #0066cc;
+  --fg-link-hover: #003366;
+  --border:        1px solid #ccc;
+  --heading-color: var(--fg-link);
+  --link-color:    var(--fg-link);
+  --link-hover:    var(--fg-link-hover);
+  --input-bg:      #fff;
+  --input-color:   var(--fg-dark);
+  --button-bg:     #f0f0f0;
+  --button-color:  var(--fg-link-hover);
+  --button-border: var(--border);
+  --footer-color:  #999;
+  --shadow-elev1:  0 4px 12px var(--heading-color);
+}
+
+
+/* 3. Utilitaires */
+.flex           { display:flex; }
+.flex-col       { flex-direction:column; }
+.items-center   { align-items:center; }
+.gap-sm         { gap:var(--space-sm); }
+.gap-md         { gap:var(--space-md); }
+.gap-lg         { gap:var(--space-lg); }
+
+.w-full         { width:100%; }
+.w-sm           { width:8rem; }
+.w-mid          { width:min(35%,200px); }
+
+.mt-xs          { margin-top:var(--space-xs); }
+.mt-sm          { margin-top:var(--space-sm); }
+.mt-md          { margin-top:var(--space-md); }
+.mb-md          { margin-bottom:var(--space-md); }
+
+.h-lg           { height:400px; }
+.max-h-lg       { max-height:400px; }
+
+.inline-flex-center {
+  display:inline-flex;
+  align-items:center;
+  gap:var(--space-sm);
+}
+
+.span-full {
+  grid-column:1 / -1;
+}
+
+/* 4. Corps de page & Layout */
+body {
+  margin:0;
+  background-color:var(--bg);
+  color:var(--fg-alt);
+  font-family:var(--font-mono);
+}
+[data-theme="light"] body {
+  color:var(--fg-dark);
+}
+.container {
+  max-width:var(--max-width);
+  margin-inline:auto;
+  padding:var(--space-lg);
+}
+main {
+  margin-block-start:var(--space-lg);
+  line-height:1.6;
+}
+.content {
+  display:flex;
+  flex-direction:column;
+}
+.main-section {
+  margin-block:var(--space-lg);
+  padding:var(--space-lg);
+  background-color:var(--section-bg);
+  border-radius:var(--radius-sm);
+  box-shadow:var(--shadow-elev1);
+}
+
+/* 5. Section composants */
+.component {
+  padding-block:var(--space-md);
+  border-bottom:1px dashed var(--heading-color);
+}
+.component-title {
+  display:flex;
+  align-items:center;
+  gap:var(--space-sm);
+  font-size:1.6rem;
+  color:var(--heading-color);
+}
+
+/* 6. Navbar */
+.ulid-navbar {
+  position:sticky;
+  top:var(--space-lg);
+  z-index:100;
+  margin-inline:auto;
+  padding:0.6rem 1.2rem;
+  background-color:rgba(0,0,0,0.3);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(10px);
+}
+[data-theme="light"] .ulid-navbar {
+  background-color:rgba(255,255,255,0.6);
+}
+.ulid-navbar-container {
+  display:flex;
+  justify-content:space-between;
+  gap:var(--space-lg);
+  max-width:var(--max-width);
+  margin-inline:auto;
+  padding-inline:var(--space-md);
+  flex-wrap:wrap;
+}
+.ulid-nav {
+  display:flex;
+  gap:var(--space-md);
+  flex-wrap:wrap;
+  font-size:1rem;
+}
+.ulid-nav a {
+  font-family:var(--font-mono);
+  color:var(--link-color);
+}
+.ulid-nav a:hover {
+  text-decoration:underline;
+}
+.burger-btn {
+  display:none;
+  font-size:1.5rem;
+  background:none;
+  border:none;
+  color:var(--link-color);
+  cursor:pointer;
+}
+@media (max-width:768px) {
+  .burger-btn     { display:block; }
+  .ulid-nav       { display:none; flex-direction:column; width:100%; }
+  .ulid-nav.show  { display:flex; }
+}
+#themeToggle {
+  cursor:pointer;
+  color:var(--link-color);
+  transition:color 0.2s ease;
+}
+#themeToggle:hover {
+  color:var(--link-hover);
+}
+
+/* 7. Titres */
+:is(h1,h2) {
+  color:var(--heading-color);
+  border-bottom:1px dashed var(--heading-color);
+  padding-block-end:var(--space-sm);
+  margin-block-end:var(--space-md);
+}
+h1 { font-size:1.8rem; }
+h2 { font-size:1.5rem; margin-block-start:var(--space-lg); }
+h3 {
+  font-size:1.2rem;
+  color:var(--link-hover);
+  border-bottom:1px dotted var(--link-hover);
+  padding-block-end:var(--space-xs);
+  margin-block-start:var(--space-md);
+}
+
+/* 8. Commentaires & Commandes */
+.comment {
+  color:#888;
+  margin-block-end:var(--space-sm);
+}
+.cmd {
+  color:var(--fg-accent);
+  margin-block-end:var(--space-sm);
+  font-family:var(--font-mono);
+}
+.cmd a {
+  color:var(--link-color);
+}
+
+/* 9. Formulaires */
+input, select, textarea {
+  background:var(--input-bg);
+  color:var(--input-color);
+  border:var(--border);
+  padding:var(--space-sm);
+  margin-block:var(--space-sm) var(--space-md);
+  font-family:var(--font-mono);
+}
+label {
+  display:block;
+  margin-block-start:var(--space-md);
+  font-weight:bold;
+  font-family:var(--font-mono);
+}
+
+/* 10. Grille ULID form */
+.form-ulid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--space-md);
+}
+.form-ulid .form-group {
+  display:flex;
+  flex-direction:column;
+}
+
+/* 11. Boutons */
+button {
+  background:var(--button-bg);
+  color:var(--button-color);
+  border:var(--button-border);
+  padding:var(--space-md) var(--space-lg);
+  font-family:var(--font-mono);
+  cursor:pointer;
+  transition:background 0.2s ease;
+}
+button:hover {
+  background:var(--button-color);
+  color:#000;
+}
+
+/* 12. Codeblocks */
+pre.code-block {
+  background:var(--bg-box);
+  padding:var(--space-md);
+  margin-block-start:var(--space-md);
+  border-left:4px solid var(--heading-color);
+  overflow-x:auto;
+  font-family:var(--font-mono);
+  font-size:0.95rem;
+  line-height:1.5;
+  white-space:pre-wrap;
+  word-break:break-word;
+  max-height:400px;
+}
+
+/* 13. Grille principale */
+.row {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:var(--space-md);
+  margin-block:var(--space-md) 0;
+}
+@media (max-width:640px) {
+  .row { grid-template-columns:1fr; }
+}
+
+/* 14. Contrôles */
+.controls-row {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:var(--space-md);
+  margin-block:var(--space-md);
+}
+
+/* 15. Blink & Footer */
+.blink { animation:blink 1s step-start infinite; }
+@keyframes blink {50%{opacity:0;}}
+footer {
+  margin-block:var(--space-lg) auto 0;
+  text-align:center;
+  font-size:0.9rem;
+  color:var(--footer-color);
+  font-style:italic;
+}

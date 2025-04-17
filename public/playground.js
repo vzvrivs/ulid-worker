@@ -73,9 +73,9 @@ function beautifyJSON(checked) {
 // ✅ Validation JSON en temps réel (avec debounce)
 const updateJsonValidity = debounce(() => {
   const textarea = $("json-input");
-  const validityEl = $("json-conformity");
+  const validityEl = $("json-validity");
   const isValid = validateJSON(textarea.value);
-  validityEl.textContent = isValid ? "✅ JSON conforme" : "❌ JSON inconforme";
+  validityEl.textContent = isValid ? "✅ JSON valide" : "❌ JSON invalide";
   validityEl.style.color = isValid ? "#33ff33" : "#ff4444";
 }, 300);
 
@@ -95,8 +95,8 @@ window.autofillJSON = async () => {
     const data = await res.json();
     $("json-output").textContent = JSON.stringify(data, null, 2);
   } catch {
-    $("req-autofill-full").textContent = "// JSON inconforme ❌";
-    $("json-output").textContent = "// JSON inconforme ❌";
+    $("req-autofill-full").textContent = "// JSON invalide ❌";
+    $("json-output").textContent = "// JSON invalide ❌";
   }
 };
 

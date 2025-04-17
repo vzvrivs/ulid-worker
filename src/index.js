@@ -32,6 +32,11 @@ async function handleRequest(event) {
 		});
 	}
 
+  // 📘 Documentation automatique
+	if (url.pathname === '/auto-doc') {
+		return handleAutoDoc(event);
+	}
+
 	// 🖼️ Fichiers statiques (HTML, CSS, PNG…)
 	try {
 		return await getAssetFromKV(event);
@@ -72,6 +77,63 @@ function generateULID({ prefix = '', suffix = '', base = 'crockford', bin = fals
 function rawToBinary(str) {
 	const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 	return [...str].map((char) => alphabet.indexOf(char).toString(2).padStart(5, '0')).join('');
+}
+
+
+//
+// 📜 DOCUMENTATION AUTOMATIQUE
+//
+function handleAutoDoc(event) {
+	const url = new URL(event.request.url);
+	const pretty = url.searchParams.get("pretty") === "true";
+
+	const autoDoc = {
+		info: {
+			title: "ULID Worker API",
+			description: "Documentation auto-générée des routes disponibles dans ce Worker.",
+			version: "1.0",
+		},
+		endpoints: [
+			{
+				path: "/ulid",
+				method: "GET",
+				description: "Génère ou valide un ou plusieurs ULID.",
+				params: {
+					check: "ULID à analyser pour vérifier sa validité",
+					n: "Nombre de ULID à générer (max 1000)",
+					pretty: "Format JSON lisible (indenté)",
+					prefix: "Ajoute un préfixe aux ULID générés",
+					suffix: "Ajoute un suffixe aux ULID générés",
+					base: "Base de sortie : crockford (par défaut) ou hex",
+					bin: "Ajoute le ULID en binaire (true/false)",
+					format: "Format de sortie : json, csv, tsv, text, joined"
+				}
+			},
+			{
+				path: "/autofill",
+				method: "POST",
+				description: "Remplit tous les champs *_uid:null d’un JSON avec des ULID structurés.",
+				body: "JSON à analyser et enrichir",
+			},
+			{
+				path: "/module/ulid",
+				method: "GET",
+				description: "Renvoie un module JavaScript ES6 exportant ulid() et decodeTime()."
+			},
+			{
+				path: "/auto-doc",
+				method: "GET",
+				description: "Documentation automatique (cette route).",
+				params: {
+					pretty: "Affiche le JSON avec indentation"
+				}
+			}
+		]
+	};
+
+	return new Response(JSON.stringify(autoDoc, null, pretty ? 2 : 0), {
+		headers: { 'Content-Type': 'application/json; charset=utf-8' },
+	});
 }
 
 //
