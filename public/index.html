@@ -3,10 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ULID Worker Terminal – Home</title>    
+    <script>
+      /* Applique le thème enregistré **avant** que le CSS ne se charge */
+      const saved = localStorage.getItem("ulid-theme");
+      document.documentElement.setAttribute(
+        "data-theme",
+        saved === "light" ? "light" : "dark"       // dark par défaut
+      );
+    </script>
     <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="stylesheet" href="/style.css" />
+    <title>ULID Worker Terminal – Home</title>
   </head>
 
   <body>
@@ -45,11 +53,6 @@
         ULID Worker v1 • Codé avec 💚 par Raphaël<br />
       </footer>
     </div>
-    <script>
-      document.querySelector('.burger-btn').addEventListener('click', () => {
-        document.querySelector('.ulid-nav').classList.toggle('show');
-      });
-    </script>
-    <script src="/theme-manager.js"></script>
+    <script src="/site.js"></script>
   </body>
 </html>
