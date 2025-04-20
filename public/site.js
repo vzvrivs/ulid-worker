@@ -1,3 +1,36 @@
+// ==== Toast simple ====
+function showToast(msg, duration = 3000) {
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.textContent = msg;
+  document.body.append(t);
+  setTimeout(() => t.remove(), duration);
+}
+// style minimal pour le toast
+const toastStyle = document.createElement("style");
+toastStyle.textContent = `
+.toast {
+  position: fixed;
+  bottom: 1rem; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  color: #fff; padding: 0.5rem 1rem;
+  border-radius: 4px; z-index: 9999;
+  font-family: sans-serif;
+}
+`;
+document.head.append(toastStyle);
+
+// charge Flatpickr pour un vrai date-time picker (avec ms)
+const fpScript = document.createElement("script");
+fpScript.src = "https://cdn.jsdelivr.net/npm/flatpickr";
+document.head.append(fpScript);
+const fpCss = document.createElement("link");
+fpCss.rel = "stylesheet";
+fpCss.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
+document.head.append(fpCss);
+
+
 // 🔄 Appliquer le thème enregistré dès le chargement
 // -----------------------------------------------
 // On lit `ulid-theme` dans localStorage et on applique
@@ -240,8 +273,35 @@ window.generateULID = async () => {
   const base     = $("gen-base").value;
   const bin      = $("gen-bin").checked   ? "&bin=true"    : "";
   const format   = $("gen-format").value;
-  const tsParam  = $("common-timestamp").checked  ? `&timestamp=${Date.now()}` : "";
-  const monoParam= $("monotonic-ulid").checked   ? `&monotonic=true`         : "";
+
+  // ── Lecture du timestamp commun (now / custom) ──
+  let tsParam = "";
+  if ($("gen-common-timestamp").checked) {
+    const mode = $("gen-ts-common").value;    // "now" ou "custom"
+    if (mode === "custom") {
+      const val = $("ts-gen-custom").value;   // ex : "2025-04-20T15:30:12.345"
+      if (!val) {
+        showToast("❌ Veuillez saisir une date/heure valide !");
+        return; // stoppe la génération
+      }
+      const [dateStr, timeStr] = val.split("T");
+      if (!dateStr || !timeStr) {
+        showToast("❌ Format date/heure invalide !");
+        return;
+      }
+      const [year, month, day] = dateStr.split("-").map(Number);
+      const [hour, minute, second = "0"] = timeStr.split(":");
+      const [sec, milli = "0"] = second.split(".");
+      const ms = Date.UTC(year, month - 1, day, +hour, +minute, +sec, +milli);
+      tsParam = `&timestamp=${ms}`;
+    } else {
+      // mode "now"
+      tsParam = `&timestamp=${Date.now()}`;
+    }
+  }
+  // ── Fin tsParam ──
+  
+  const monoParam= $("gen-monotonic-ulid").checked   ? `&monotonic=true`         : "";
 
   const url = `/ulid`
     + `?n=${n}` + tsParam + monoParam
@@ -367,6 +427,53 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key==="Enter") { e.preventDefault(); checkULID(); }
   });
 
+  // Activation du datetime-local
+  // 1️⃣ Récupère les éléments
+  const commonCb    = $("gen-common-timestamp");
+  const modeSelect  = $("gen-ts-common");
+  const tsInput     = $("ts-gen-custom");
+
+  // 2️⃣ Quand on coche/décoche la case « Timestamp commun »
+  commonCb.addEventListener("change", () => {
+    const on = commonCb.checked;
+    modeSelect.disabled = !on;
+    tsInput.disabled    = true;        // date toujours bloquée tant qu'on n'a pas choisi
+    tsInput.value       = "";          // reset possible
+  });
+
+  // 3️⃣ Quand on change le mode « Maintenant / Personnalisé »
+  modeSelect.addEventListener("change", () => {
+    const custom = modeSelect.value === "custom";
+    tsInput.disabled = !custom;
+    if (!custom) tsInput.value = "";
+  });
+
+  // 4️⃣ Initialise Flatpickr une fois qu'il est chargé
+  fpScript.onload = () => {
+    flatpickr(tsInput, {
+      enableTime: true,
+      time_24hr: true,
+      enableSeconds: true,
+      dateFormat: "Y-m-d\\TH:i:S",
+      allowInput: true,
+      onOpen: function(_, __, fp) {
+        requestAnimationFrame(() => {
+          const calendar = fp.calendarContainer;
+          const trigger  = fp._positionElement;
+    
+          // On positionne absolument par rapport à la page
+          const rect = trigger.getBoundingClientRect();
+          const scrollTop = window.scrollY || document.documentElement.scrollTop;
+          const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+    
+          calendar.style.position = "absolute";
+          calendar.style.top = `${rect.bottom + scrollTop + 6}px`;   // 6px sous le champ
+          calendar.style.left = `${rect.left + scrollLeft}px`;
+        });
+      }
+    });       
+  };
+  
   // Boutons paste
   [
     { id:"paste-json-btn",  tgt:"json-input", callback:updateJsonValidity },

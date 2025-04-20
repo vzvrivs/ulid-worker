@@ -35,6 +35,7 @@
   --code-bg: #111;
   --code-color: #66ffff;
   --code-border: 4px solid #00ffcc;
+  --field-even-background: #0C2C25;
   --footer-color: #888;
 }
 
@@ -191,6 +192,25 @@ footer {
   flex-wrap:wrap;
   align-items:center;
   gap:var(--space-md);
+  margin-block: 1rem;
+}
+
+.odd-bloc{
+  border-style: solid;
+  border-color: var(--field-even-background);
+  padding-block: 0.125rem;
+}
+
+.even-bloc{
+  background: var(--field-even-background);
+  margin-block: 0rem;
+  padding-block: 0.25rem;
+}
+
+/* ─── En `.field-pair`, enfants côte-à-côte ─── */
+.field-pair > * {
+  flex: 1;      /* chaque colonne prend 1 part */
+  min-width: 0; /* autorise à rapetisser en-dessous du contenu */
 }
 
 .export-label{
@@ -207,12 +227,12 @@ footer {
 }
 
 /* ===== Bloc code ===== */
-/* Limiter la hauteur des <pre> à 20 lignes et activer le scroll vertical */
+/* Limiter la hauteur des <pre> à 25 lignes et activer le scroll vertical */
 pre.code-block {
   /* Assure-toi d’avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
-  /* max‑height = line-height × 20 */
-  max-height: calc(1.4em * 20);
+  /* max‑height = line-height × 25 */
+  max-height: calc(1.4em * 25);
   overflow-y: auto;
   /* Conserve le padding et le reste de ton style */
 }
@@ -221,8 +241,10 @@ pre.code-block {
   background:var(--code-bg);
   padding:var(--space-md);
   border-left:var(--code-border);
-  overflow-x:auto;
+  //overflow-x:auto;
+  //overflow-x:hidden;
   white-space:pre-wrap;
+  word-break: break-all;
 }
 
 /* ===== Boutons en deux lignes ===== */
@@ -232,6 +254,8 @@ button {
   align-items: center;
   justify-content: center;
   text-align: center;
+  margin-inline: auto;
+  padding-inline: 1rem;
 }
 
 /* Icône et texte distincts */
@@ -247,20 +271,69 @@ button {
   margin-top: 0.1em;
 }
 
-/* ===============================
-   Wrap des pré-requêtes GET/POST
-   =============================== */
+/* Boutons d’action principaux (Générer, Vérifier, Remplir) */
+.btn-action {
+  font-size: 1.1rem;
+  padding: 0.6rem 1.5rem;
+  margin-inline: 1.5rem;
+  padding-block: 1rem;
+  //border-radius: 6px;
+  //font-weight: bold;
+  //box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
 
-/* Cible tes trois pré de requête */
-#req-gen,
-#req-check,
-#req-autofill-full {
+/* Sélecteur date et heure */
+.flatpickr-calendar {
+  z-index: 9999 !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.flatpickr-fix {
+  position: relative;
+  z-index: auto;
+}
+
+
+/* ================================
+   Wrap des pre de requête GET/POST
+   ================================ */
+// Inutile, j'ai appliqué ces valeurs à tous les code-block
+/* Cible les trois pre de requête */
+//#req-gen,
+//#req-check,
+//#req-autofill-full {
   /* on cache le scroll horizontal */
-  overflow-x: hidden;
+//  overflow-x: hidden;
 
   /* conserve les sauts de ligne manuels mais autorise le retour à la ligne automatique */
-  white-space: pre-wrap;
+//  white-space: pre-wrap;
 
   /* force la coupure n’importe où dans la chaîne (utile pour les URLs sans espace) */
-  word-break: break-all;
+//  word-break: break-all;
+//}
+
+
+/* =====================================
+   Centre verticalement checkbox + texte
+   ===================================== */
+
+/* ─── Pile verticale pour checkbox + texte ─── */
+.checkbox-stack {
+  display: inline-flex;        /* s’aligne comme un mot */
+  flex-direction: column;      /* input au‑dessus, texte en dessous */
+  align-items: center;         /* centrage horizontal */
+  gap: 0.2rem;                 /* petite marge entre les deux */
+  cursor: pointer;             /* main sur tout le bloc */
+  width: max-content;          /* ne s’étire pas à 100 % */
+}
+
+/* L’input lui‑même : enlève l’héritage "width:100%" */
+input[type="checkbox"] {
+  width: auto;
+  margin: 0;                   /* retire le margin implicite */
+}
+
+/* Un champ inactif ne ressemble pas à un champ actif */
+:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

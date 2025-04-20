@@ -11,7 +11,14 @@
     document.documentElement.setAttribute("data-theme", saved === "light" ? "light" : "dark");
   </script>
 
+  <!-- time picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <!-- ton CSS -->
   <link rel="stylesheet" href="/style.css"/>
+  <!-- enfin ton script principal -->
+  <script src="/site.js" defer></script>
+
 </head>
 <body>
 
@@ -41,11 +48,13 @@
       <div class="row">
 
         <!-- Bloc 1 : Entrée -->
-        <div class="field-pair"> 
-          <div>
+        <div>
+          
+          <!-- Nombre et format -->
+          <div class="field-pair odd-bloc">
             <div class="form-group">
               <label for="gen-count">Nombre d’ULID :</label>
-              <input id="gen-count" type="number" value="5" min="1" max="1000"/>
+              <input id="gen-count" type="number" value="5" min="1" max="1000">
             </div>
             <div class="form-group">
               <label for="gen-format">Format :</label>
@@ -59,18 +68,20 @@
             </div>
           </div>
 
-          <div class="field-pair">
+          <!-- Préfixe et suffixe -->
+          <div class="field-pair even-bloc">
             <div class="form-group">
               <label for="gen-prefix">Préfixe :</label>
-              <input id="gen-prefix" placeholder="ex : prefix-"/>
+              <input id="gen-prefix" placeholder="ex : prefix-">
             </div>
             <div class="form-group">
               <label for="gen-suffix">Suffixe :</label>
-              <input id="gen-suffix" placeholder="ex : -suffix"/>
+              <input id="gen-suffix" placeholder="ex : -suffix">
             </div>
           </div>
 
-          <div class="field-pair">
+          <!-- Base et binaire -->
+          <div class="field-pair odd-bloc">
             <div class="form-group">
               <label for="gen-base">Base :</label>
               <select id="gen-base">
@@ -78,27 +89,48 @@
                 <option value="hex">Hexa</option>
               </select>
             </div>
-            <div class="form-group inline-flex-center">
-              <input type="checkbox" id="gen-bin"/>
-              <label for="gen-bin">Inclure binaire (bin)</label>
+            <label class="checkbox-stack">
+              <span>Inclure binaire</span>
+              <input type="checkbox" id="gen-bin">
+            </label>
+          </div> 
+
+          <!-- Timestamp commun -->
+          <div class="field-pair even-bloc">
+            <label class="checkbox-stack">
+              <span>Timestamp commun</span>
+              <input type="checkbox" id="gen-common-timestamp">
+            </label>
+          </div>
+
+          <!-- Timestamp seed -->
+          <div class="field-pair even-bloc">
+            <div class="form-group">
+              <label for="gen-ts-common">Timestamp commun :</label>
+              <select id="gen-ts-common" disabled>
+                <option value="now">Maintenant</option>
+                <option value="custom">Personnalisé</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="ts-gen-custom">Date & heure :</label>
+              <input type="datetime-local" step="0.001" id="ts-gen-custom" class="flatpickr-fix" disabled>
             </div>
           </div>
 
-          <div class="field-pair">
-            <label class="inline-flex-center">
-              <input type="checkbox" id="common-timestamp"/>
-              Timestamp commun
-            </label>
-            <label class="inline-flex-center">
-              <input type="checkbox" id="monotonic-ulid"/>
-              ULIDs monotones
+          <!-- ULID monotone -->
+          <div class="field-pair odd-bloc">
+            <label class="checkbox-stack">
+              <span>ULID monotones</span>
+              <input type="checkbox" id="gen-monotonic-ulid">
             </label>
           </div>
-
+          
+          <!-- Bouton de génération -->
           <div class="controls-row">
-            <button id="generate-btn">
+            <button type="button" id="generate-btn" class="btn-action">
               <span class="btn-icon">🎲</span>
-              <span class="btn-label">Générer les ULID</span>
+              <span class="btn-label">Générer</span>
             </button>
           </div>
         </div>
@@ -111,11 +143,11 @@
           <pre id="gen-output" class="code-block">// En attente</pre>
           <div class="action-container">
             <div class="action-pair">
-              <button onclick="copyText('gen-output',event)">
+              <button type="button" onclick="copyText('gen-output',event)">
                 <span class="btn-icon">📋</span>
                 <span class="btn-label">Copier</span>
               </button>
-              <button id="clear-gen-output-btn">
+              <button type="button" id="clear-gen-output-btn">
                 <span class="btn-icon">🧹</span>
                 <span class="btn-label">Effacer</span>
               </button>
@@ -131,7 +163,7 @@
                   <option value="joined">Joined</option>
                 </select>
               </label>
-              <button id="download-gen-btn">
+              <button type="button" id="download-gen-btn">
                 <span class="btn-icon">💾</span>
                 <span class="btn-label">Télécharger</span>
               </button>
@@ -144,11 +176,11 @@
           <h3>📎 Requête GET :</h3>
           <pre id="req-gen" class="code-block">// En attente</pre>
           <div class="controls-row">
-            <button onclick="copyText('req-gen',event)">
+            <button type="button" onclick="copyText('req-gen',event)">
               <span class="btn-icon">📋</span>
               <span class="btn-label">Copier</span>
             </button>
-            <button id="clear-req-gen-btn">
+            <button type="button" id="clear-req-gen-btn">
               <span class="btn-icon">🧹</span>
               <span class="btn-label">Effacer</span>
             </button>
@@ -166,18 +198,18 @@
         <!-- Bloc 1 -->
         <div>
           <label for="check-input">ULID à vérifier :</label>
-          <input id="check-input" type="text" placeholder="01JR…"/>
+          <input id="check-input" type="text" placeholder="01JR…">
           <!-- champ + checkbox… -->
           <div class="btn-row">
-            <button id="paste-ulid-btn">
+            <button type="button" id="paste-ulid-btn">
               <span class="btn-icon">📥</span>
               <span class="btn-label">Coller</span>
             </button>
-            <button id="clear-ulid-btn">
+            <button type="button" id="clear-ulid-btn">
               <span class="btn-icon">🧼</span>
               <span class="btn-label">Effacer</span>
             </button>
-            <button id="check-btn">
+            <button type="button" id="check-btn" class="btn-action">
               <span class="btn-icon">✅</span>
               <span class="btn-label">Vérifier</span>
             </button>
@@ -189,11 +221,11 @@
           <label for="check-output">Résultat :</label>
           <pre id="check-output" class="code-block">// En attente</pre>
           <div class="controls-row">
-            <button onclick="copyText('check-output',event)">
+            <button type="button" onclick="copyText('check-output',event)">
               <span class="btn-icon">📋</span>
               <span class="btn-label">Copier</span>
             </button>
-            <button id="clear-check-output-btn">
+            <button type="button" id="clear-check-output-btn">
               <span class="btn-icon">🧹</span>
               <span class="btn-label">Effacer</span>
             </button>
@@ -205,11 +237,11 @@
           <h3>📎 Requête GET :</h3>
           <pre id="req-check" class="code-block">// En attente</pre>
           <div class="controls-row">
-            <button onclick="copyText('req-check',event)">
+            <button type="button" onclick="copyText('req-check',event)">
               <span class="btn-icon">📋</span>
               <span class="btn-label">Copier</span>
             </button>
-            <button id="clear-req-check-btn">
+            <button type="button" id="clear-req-check-btn">
               <span class="btn-icon">🧹</span>
               <span class="btn-label">Effacer</span>
             </button>
@@ -229,7 +261,7 @@
           <div class="form-group">
             <label for="json-input">Entrée JSON :</label>
             <label class="inline-flex-center">
-              <input type="checkbox" id="beautify-toggle"/> Beautify
+              <input type="checkbox" id="beautify-toggle"> Beautify
             </label>
           </div>
           <textarea id="json-input" rows="18" placeholder='{"key":null}'></textarea>
@@ -237,20 +269,106 @@
           <div id="json-validity"></div>
           <!-- textarea + validité… -->
           <div class="controls-row">
-            <button id="paste-json-btn">
+            <button type="button" id="paste-json-btn">
               <span class="btn-icon">📥</span>
               <span class="btn-label">Coller</span>
             </button>
-            <button id="clear-json-btn">
+            <button type="button" id="clear-json-btn">
               <span class="btn-icon">🧼</span>
               <span class="btn-label">Effacer</span>
             </button>
-            <button id="autofill-btn">
-              <span class="btn-icon">📝</span>
-              <span class="btn-label">Remplir</span>
-            </button>
+
+
+            <!------------------------------------------------------------------------------------------------------------   -->>
+            <!-- Bloc 1 : Entrée -->
+            <div>
+              
+              <!-- Nombre et format -->
+              <div class="field-pair odd-bloc">
+                <div class="form-group">
+                  <label for="autofill-count">Nombre d’ULID :</label>
+                  <input id="autofill-count" type="number" value="5" min="1" max="1000">
+                </div>
+                <div class="form-group">
+                  <label for="autofill-format">Format :</label>
+                  <select id="autofill-format">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="tsv">TSV</option>
+                    <option value="text">Text</option>
+                    <option value="joined">Joined</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Préfixe et suffixe -->
+              <div class="field-pair even-bloc">
+                <div class="form-group">
+                  <label for="autofill-prefix">Préfixe :</label>
+                  <input id="autofill-prefix" placeholder="ex : prefix-">
+                </div>
+                <div class="form-group">
+                  <label for="autofill-suffix">Suffixe :</label>
+                  <input id="autofill-suffix" placeholder="ex : -suffix">
+                </div>
+              </div>
+
+              <!-- Base et binaire -->
+              <div class="field-pair odd-bloc">
+                <div class="form-group">
+                  <label for="autofill-base">Base :</label>
+                  <select id="autofill-base">
+                    <option value="crockford">Base32</option>
+                    <option value="hex">Hexa</option>
+                  </select>
+                </div>
+                <label class="checkbox-stack">
+                  <span>Inclure binaire</span>
+                  <input type="checkbox" id="autofill-bin">
+                </label>
+              </div> 
+
+              <!-- Timestamp commun -->
+              <div class="field-pair even-bloc">
+                <label class="checkbox-stack">
+                  <span>Timestamp commun</span>
+                  <input type="checkbox" id="autofill-common-timestamp">
+                </label>
+              </div>
+
+              <!-- Timestamp seed -->
+              <div class="field-pair even-bloc">
+                <div class="form-group">
+                  <label for="autofill-ts-common">Timestamp commun :</label>
+                  <select id="autofill-ts-common" disabled>
+                    <option value="now">Maintenant</option>
+                    <option value="custom">Personnalisé</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="ts-autofill-custom">Date & heure :</label>
+                  <input type="datetime-local" step="0.001" id="ts-autofill-custom" class="flatpickr-fix" disabled>
+                </div>
+              </div>
+
+              <!-- ULID monotone -->
+              <div class="field-pair odd-bloc">
+                <label class="checkbox-stack">
+                  <span>ULID monotones</span>
+                  <input type="checkbox" id="autofill-monotonic-ulid">
+                </label>
+              </div>
+              
+              <!-- Bouton de remplissage -->
+              <div class="controls-row">
+                <button type="button" id="autofill-btn" class="btn-action">
+                  <span class="btn-icon">📝</span>
+                  <span class="btn-label">Remplir</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+            <!--------------------------------------------------------------------------------------------------------------- -->
 
         <!-- Bloc 2 -->
         <div>
@@ -258,11 +376,11 @@
           <pre id="json-output" class="code-block">// En attente</pre>
           <div class="action-container">
             <div class="action-pair">
-              <button onclick="copyText('json-output',event)">
+              <button type="button" onclick="copyText('json-output',event)">
                 <span class="btn-icon">📋</span>
                 <span class="btn-label">Copier</span>
               </button>
-              <button id="clear-json-output-btn">
+              <button type="button" id="clear-json-output-btn">
                 <span class="btn-icon">🧹</span>
                 <span class="btn-label">Effacer</span>
               </button>
@@ -277,7 +395,7 @@
                   <option value="joined">Joined</option>
                 </select>
               </label>
-              <button id="download-autofill-btn">
+              <button type="button" id="download-autofill-btn">
                 <span class="btn-icon">💾</span>
                 <span class="btn-label">Télécharger</span>
               </button>
@@ -290,11 +408,11 @@
           <h3>📨 Requête POST :</h3>
           <pre id="req-autofill-full" class="code-block">// En attente</pre>
           <div class="controls-row">
-            <button onclick="copyText('req-autofill-full',event)">
+            <button type="button" onclick="copyText('req-autofill-full',event)">
               <span class="btn-icon">📋</span>
               <span class="btn-label">Copier</span>
             </button>
-            <button id="clear-req-autofill-btn">
+            <button type="button" id="clear-req-autofill-btn">
               <span class="btn-icon">🧹</span>
               <span class="btn-label">Effacer</span>
             </button>
@@ -307,6 +425,5 @@
   </main>
 
   <footer>ULID Playground v1 • Codé avec 💚 par Raphaël</footer>
-  <script src="/site.js"></script>
 </body>
 </html>
