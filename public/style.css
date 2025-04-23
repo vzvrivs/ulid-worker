@@ -227,11 +227,11 @@ footer {
 }
 
 /* ===== Bloc code ===== */
-/* Limiter la hauteur des <pre> à 25 lignes et activer le scroll vertical */
+/* Limiter la hauteur des <pre> à 35 lignes et activer le scroll vertical */
 pre.code-block {
   /* Assure-toi d’avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
-  /* max‑height = line-height × 25 */
+  /* max‑height = line-height × 35 */
   max-height: calc(1.4em * 35);
   overflow-y: auto;
   /* Conserve le padding et le reste de ton style */

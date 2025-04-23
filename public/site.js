@@ -77,6 +77,30 @@ const debounce = (fn, delay = 300) => {
   };
 };
 
+// ─── Beautify / Minify JSON ───
+function beautifyJSON() {
+  const input = $("json-input");
+  try {
+    const obj = JSON.parse(input.value);
+    input.value = JSON.stringify(obj, null, 2);
+    updateJsonValidity();
+  } catch {
+    showToast("❌ JSON invalide !");
+  }
+}
+
+function minifyJSON() {
+  const input = $("json-input");
+  try {
+    const obj = JSON.parse(input.value);
+    input.value = JSON.stringify(obj);
+    updateJsonValidity();
+  } catch {
+    showToast("❌ JSON invalide !");
+  }
+}
+
+
 /* --- Crockford <-> ms helpers --- */
 const CF_ALPH = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 function encodeTime(ms,len=10){
@@ -182,25 +206,7 @@ window.pasteTo = async (targetId, callback) => {
   }
 };
 
-// === 🧼 Beautify / Restore JSON ===
-// -----------------------------------------------
-// Si `checked`, formate le JSON en pretty-print,
-// sinon restaure la valeur brute stockée dans data-raw.
-function beautifyJSON(checked) {
-  const input = $("json-input");
-  if (!input) return;
-  if (checked) {
-    try {
-      input.setAttribute("data-raw", input.value);
-      const parsed = JSON.parse(input.value);
-      input.value = JSON.stringify(parsed, null, 2);
-    } catch {}
-  } else {
-    const raw = input.getAttribute("data-raw");
-    if (raw) input.value = raw;
-  }
-  updateJsonValidity();
-}
+
 
 // === ✅ Validation JSON en temps réel ===
 // -----------------------------------------------
@@ -434,8 +440,10 @@ window.checkULID = async () => {
 
 // === 🚀 Init DOMContentLoaded — liaison des handlers ===
 document.addEventListener("DOMContentLoaded", () => {
-  // Beautifier JSON au changement de checkbox
-  $("beautify-toggle")?.addEventListener("change", () => beautifyJSON($("beautify-toggle").checked));
+
+  // Nouveau : boutons Beautify / Minify
+  $("beautify-btn")?.addEventListener("click", beautifyJSON);
+  $("minify-btn")?.addEventListener("click",  minifyJSON);
 
   // Validation JSON à chaque frappe
   $("json-input")?.addEventListener("input", updateJsonValidity);
@@ -447,7 +455,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("check-input")?.addEventListener("keydown", e => {
     if (e.key==="Enter") { e.preventDefault(); checkULID(); }
   });
-
 
   
   // Boutons paste
@@ -519,36 +526,57 @@ function initTimestampUI(){
 
   let mode="no"; let type="iso";
 
-  const updatePreview = ()=>{
-    clearValid(vIso,vUnix,vCrock);          // on efface tout
-
-    let ms, ok=false;
-    if(type==="iso"){
-      ms = Date.parse(isoIn.value);
+  const updatePreview = () => {
+    // 1) On efface d’abord tous les indicateurs
+    clearValid(vIso, vUnix, vCrock);
+  
+    let raw, ms, ok;
+  
+    if (type === "iso") {
+      raw = isoIn.value.trim();
+      // Si le champ est vide, on ne fait rien
+      if (!raw) {
+        preview.textContent = "📆 Date : —";
+        return;
+      }
+      ms = Date.parse(raw);
       ok = !Number.isNaN(ms);
-      if(ok) setValid(vIso,true);
-      else   setValid(vIso,false);
-    }else if(type==="unix"){
-      ms = Number(unixIn.value);
-      ok = Number.isFinite(ms) && ms>0;
-      setValid(vUnix,ok);
-    }else{ // crock
-      ms = decodeCrock(crockIn.value);
+      setValid(vIso, ok);
+    }
+    else if (type === "unix") {
+      raw = unixIn.value.trim();
+      if (!raw) {
+        preview.textContent = "📆 Date : —";
+        return;
+      }
+      ms = Number(raw);
+      ok = Number.isFinite(ms) && ms > 0;
+      setValid(vUnix, ok);
+    }
+    else { // crockford
+      raw = crockIn.value.trim();
+      if (!raw) {
+        preview.textContent = "📆 Date : —";
+        return;
+      }
+      ms = decodeCrock(raw);
       ok = !Number.isNaN(ms);
-      setValid(vCrock,ok);
+      setValid(vCrock, ok);
     }
-
-    if(!ok){
-      preview.textContent="📆 Date : —";
-      return;                     // pas de synchro si invalide
+  
+    // Si invalide, on arrête là
+    if (!ok) {
+      preview.textContent = "📆 Date : —";
+      return;
     }
-
-    // synchro autres champs
+  
+    // 2) Si valide, on synchronise et on affiche la date
     isoIn.value   = new Date(ms).toISOString();
     unixIn.value  = String(ms);
     crockIn.value = encodeTime(ms);
     preview.textContent = "📆 Date : " + humanize(ms);
   };
+  
 
   /* ----- State helpers ----- */
   const setMode = m => {

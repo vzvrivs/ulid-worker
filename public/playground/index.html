@@ -288,9 +288,19 @@
         <div>
           <div class="form-group">
             <label for="json-input">Entrée JSON :</label>
-            <label class="inline-flex-center">
-              <input type="checkbox" id="beautify-toggle"> Beautify
-            </label>
+            <!-- ➡️ Nouveaux boutons Beautify / Minify -->
+            <div class="action-container">
+              <div class="action-pair">
+                <button type="button" id="beautify-btn">
+                  <span class="btn-icon">🖼️</span>
+                  <span class="btn-label">Beautify</span>
+                </button>
+                <button type="button" id="minify-btn">
+                  <span class="btn-icon">🗜️</span>
+                  <span class="btn-label">Minify</span>
+                </button>
+              </div>
+            </div>
           </div>
           <textarea id="json-input" rows="18" placeholder='{"key":null}'></textarea>
           <!-- Ajouté pour l’état "JSON valide / invalide" -->
