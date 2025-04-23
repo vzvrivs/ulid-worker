@@ -21,16 +21,6 @@ toastStyle.textContent = `
 `;
 document.head.append(toastStyle);
 
-// charge Flatpickr pour un vrai date-time picker (avec ms)
-const fpScript = document.createElement("script");
-fpScript.src = "https://cdn.jsdelivr.net/npm/flatpickr";
-document.head.append(fpScript);
-const fpCss = document.createElement("link");
-fpCss.rel = "stylesheet";
-fpCss.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
-document.head.append(fpCss);
-
-
 // 🔄 Appliquer le thème enregistré dès le chargement
 // -----------------------------------------------
 // On lit `ulid-theme` dans localStorage et on applique
@@ -41,6 +31,15 @@ document.head.append(fpCss);
     document.documentElement.setAttribute("data-theme", stored);
   }
 })();
+
+// charge Flatpickr pour un vrai date-time picker (avec ms)
+const fpScript = document.createElement("script");
+fpScript.src = "https://cdn.jsdelivr.net/npm/flatpickr";
+document.head.append(fpScript);
+const fpCss = document.createElement("link");
+fpCss.rel = "stylesheet";
+fpCss.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
+document.head.append(fpCss);
 
 // === 🍔 Script burger menu ===
 // -----------------------------------------------
@@ -77,6 +76,36 @@ const debounce = (fn, delay = 300) => {
     timeout = setTimeout(() => fn(...args), delay);
   };
 };
+
+/* --- Crockford <-> ms helpers --- */
+const CF_ALPH = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function encodeTime(ms,len=10){
+  let s="";while(len--){s=CF_ALPH[ms%32]+s;ms=Math.floor(ms/32);}return s;
+}
+function decodeCrock(str){       // 10 car. => ms
+  if(!/^[0-9A-HJKMNP-TV-Z]{10}$/i.test(str)) return NaN;
+  let v=0;for(const c of str.toUpperCase()){
+    const i=CF_ALPH.indexOf(c); if(i<0) return NaN;
+    v=v*32+i;
+  }
+  return v;                      // ms
+}
+function humanize(ms){
+  return new Date(ms).toLocaleString("fr-FR",{
+    weekday:"long",day:"2-digit",month:"long",year:"numeric",
+    hour:"2-digit",minute:"2-digit",second:"2-digit",
+    hour12:false,timeZone:"UTC"
+  })+" UTC";
+}
+
+function setValid(el, ok){
+  el.textContent = ok ? "✅ Valide" : "❌ Invalide";
+  el.className   = "ts-valid " + (ok ? "ok" : "bad");
+}
+function clearValid(...els){
+  els.forEach(e=>{ e.textContent=""; e.className="ts-valid"; });
+}
+
 
 // === ✅ Validation JSON ===
 // -----------------------------------------------
@@ -274,33 +303,25 @@ window.generateULID = async () => {
   const bin      = $("gen-bin").checked   ? "&bin=true"    : "";
   const format   = $("gen-format").value;
 
-  // ── Lecture du timestamp commun (now / custom) ──
-  let tsParam = "";
-  if ($("gen-common-timestamp").checked) {
-    const mode = $("gen-ts-common").value;    // "now" ou "custom"
-    if (mode === "custom") {
-      const val = $("ts-gen-custom").value;   // ex : "2025-04-20T15:30:12.345"
-      if (!val) {
-        showToast("❌ Veuillez saisir une date/heure valide !");
-        return; // stoppe la génération
-      }
-      const [dateStr, timeStr] = val.split("T");
-      if (!dateStr || !timeStr) {
-        showToast("❌ Format date/heure invalide !");
-        return;
-      }
-      const [year, month, day] = dateStr.split("-").map(Number);
-      const [hour, minute, second = "0"] = timeStr.split(":");
-      const [sec, milli = "0"] = second.split(".");
-      const ms = Date.UTC(year, month - 1, day, +hour, +minute, +sec, +milli);
-      tsParam = `&timestamp=${ms}`;
-    } else {
-      // mode "now"
-      tsParam = `&timestamp=${Date.now()}`;
-    }
+
+/* ---- Timestamp commun ---- */
+let tsParam="";
+const tsBoxVal=document.querySelector("#gen-ts-common-selectbox .selected").dataset.value;
+if(tsBoxVal==="now") tsParam=`&timestamp=${Date.now()}`;
+else if(tsBoxVal==="custom"){
+  const ms =   $("ts-type-iso").checked   ? Date.parse($("ts-input-iso").value.trim())
+            : $("ts-type-unix").checked  ? Number($("ts-input-unix").value.trim())
+            : decodeCrock($("ts-input-crock").value.trim());
+  if(!ms || Number.isNaN(ms)){
+    showToast("❌ Timestamp custom invalide !");
+    return;
   }
-  // ── Fin tsParam ──
+  tsParam=`&timestamp=${ms}`;
+}
+/* --------------------------- */
+
   
+
   const monoParam= $("gen-monotonic-ulid").checked   ? `&monotonic=true`         : "";
 
   const url = `/ulid`
@@ -427,52 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key==="Enter") { e.preventDefault(); checkULID(); }
   });
 
-  // Activation du datetime-local
-  // 1️⃣ Récupère les éléments
-  const commonCb    = $("gen-common-timestamp");
-  const modeSelect  = $("gen-ts-common");
-  const tsInput     = $("ts-gen-custom");
 
-  // 2️⃣ Quand on coche/décoche la case « Timestamp commun »
-  commonCb.addEventListener("change", () => {
-    const on = commonCb.checked;
-    modeSelect.disabled = !on;
-    tsInput.disabled    = true;        // date toujours bloquée tant qu'on n'a pas choisi
-    tsInput.value       = "";          // reset possible
-  });
-
-  // 3️⃣ Quand on change le mode « Maintenant / Personnalisé »
-  modeSelect.addEventListener("change", () => {
-    const custom = modeSelect.value === "custom";
-    tsInput.disabled = !custom;
-    if (!custom) tsInput.value = "";
-  });
-
-  // 4️⃣ Initialise Flatpickr une fois qu'il est chargé
-  fpScript.onload = () => {
-    flatpickr(tsInput, {
-      enableTime: true,
-      time_24hr: true,
-      enableSeconds: true,
-      dateFormat: "Y-m-d\\TH:i:S",
-      allowInput: true,
-      onOpen: function(_, __, fp) {
-        requestAnimationFrame(() => {
-          const calendar = fp.calendarContainer;
-          const trigger  = fp._positionElement;
-    
-          // On positionne absolument par rapport à la page
-          const rect = trigger.getBoundingClientRect();
-          const scrollTop = window.scrollY || document.documentElement.scrollTop;
-          const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-    
-          calendar.style.position = "absolute";
-          calendar.style.top = `${rect.bottom + scrollTop + 6}px`;   // 6px sous le champ
-          calendar.style.left = `${rect.left + scrollLeft}px`;
-        });
-      }
-    });       
-  };
   
   // Boutons paste
   [
@@ -512,3 +488,134 @@ document.addEventListener("DOMContentLoaded", () => {
     $(id)?.addEventListener("click", fn);
   });
 });
+
+/* ---------- Outils horodatage ---------- */
+const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+function encodeTime(ms, len = 10) {
+  let str = "";
+  while (len-- > 0) {
+    str = alphabet[ms % 32] + str;
+    ms = Math.floor(ms / 32);
+  }
+  return str;
+}
+function humanize(ms){
+  return new Date(ms).toLocaleString("fr-FR", {
+    weekday:"long", day:"2-digit", month:"long", year:"numeric",
+    hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false, timeZone:"UTC"
+  })+" UTC";
+}
+
+/* ---------- Sélecteur custom “Timestamp commun” ---------- */
+function initTimestampUI(){
+  const box   = $("gen-ts-common-selectbox");
+  const opts  = box.querySelectorAll(".option");
+
+  const isoRad=$("ts-type-iso"),   unixRad=$("ts-type-unix"),   crockRad=$("ts-type-crock");
+  const isoIn = $("ts-input-iso"), unixIn = $("ts-input-unix"), crockIn = $("ts-input-crock");
+  const preview=$("ts-preview"),   nowBtn=$("ts-now-btn");
+
+  const vIso=$("ts-valid-iso"), vUnix=$("ts-valid-unix"), vCrock=$("ts-valid-crock");
+
+  let mode="no"; let type="iso";
+
+  const updatePreview = ()=>{
+    clearValid(vIso,vUnix,vCrock);          // on efface tout
+
+    let ms, ok=false;
+    if(type==="iso"){
+      ms = Date.parse(isoIn.value);
+      ok = !Number.isNaN(ms);
+      if(ok) setValid(vIso,true);
+      else   setValid(vIso,false);
+    }else if(type==="unix"){
+      ms = Number(unixIn.value);
+      ok = Number.isFinite(ms) && ms>0;
+      setValid(vUnix,ok);
+    }else{ // crock
+      ms = decodeCrock(crockIn.value);
+      ok = !Number.isNaN(ms);
+      setValid(vCrock,ok);
+    }
+
+    if(!ok){
+      preview.textContent="📆 Date : —";
+      return;                     // pas de synchro si invalide
+    }
+
+    // synchro autres champs
+    isoIn.value   = new Date(ms).toISOString();
+    unixIn.value  = String(ms);
+    crockIn.value = encodeTime(ms);
+    preview.textContent = "📆 Date : " + humanize(ms);
+  };
+
+  /* ----- State helpers ----- */
+  const setMode = m => {
+    mode = m;
+    opts.forEach(o => o.classList.toggle("selected", o.dataset.value === m));
+    const custom = m === "custom";
+
+    [isoRad, unixRad, crockRad].forEach(r => r.disabled = !custom);
+    // Si on n'est PAS en custom, on désactive et vide tous les inputs
+    if (!custom) {
+       [isoIn, unixIn, crockIn].forEach(i => {
+         i.readOnly = true;
+         i.value = "";
+       });
+       preview.textContent = "📆 Date : —";
+     } else {
+       // En mode custom, on laisse la radio ISO cochée par défaut
+       // et on active directement son input via handleTypeChange
+       handleTypeChange();
+     }
+
+    // Mets à jour l’aperçu si une valeur valide existe déjà
+    updatePreview();
+  };
+
+  const handleTypeChange = () => {
+    type = isoRad.checked ? "iso" : unixRad.checked ? "unix" : "crock";
+
+    [isoIn, unixIn, crockIn].forEach(i => i.readOnly = true);
+    if (type === "iso")   isoIn.readOnly = false;
+    if (type === "unix")  unixIn.readOnly = false;
+    if (type === "crock") crockIn.readOnly = false;
+
+    // Vider les anciens indicateurs
+    clearValid(vIso, vUnix, vCrock);
+    // Mettre à jour l’aperçu si la nouvelle valeur est valide (ou le vider)
+    updatePreview();
+  };
+
+  /* --- listeners de saisie --- */
+  [isoIn, unixIn, crockIn].forEach(input => {
+    input.addEventListener("input", () => {
+      // on nettoie les anciens messages sous *tous* les inputs
+      clearValid(vIso, vUnix, vCrock);
+      // et on affiche l’aperçu si valide
+      updatePreview();
+    });
+  });
+
+  nowBtn.addEventListener("click", ()=>{
+    const ms=Date.now();
+    isoIn.value=new Date(ms).toISOString();
+    unixIn.value=String(ms);
+    crockIn.value=encodeTime(ms);
+    clearValid(vIso,vUnix,vCrock);
+    isoRad.checked=true; handleTypeChange();
+    setValid(vIso,true);
+    preview.textContent="📆 Date : " + humanize(ms);
+  });
+
+
+  /* --- listeners --- */
+  opts.forEach(o=>o.addEventListener("click",()=>setMode(o.dataset.value)));
+  [isoRad,unixRad,crockRad].forEach(r=>r.addEventListener("change",handleTypeChange));
+  [isoIn,unixIn,crockIn].forEach(i=>i.addEventListener("input",updatePreview));
+
+  setMode("no");
+}
+document.addEventListener("DOMContentLoaded", initTimestampUI);
+

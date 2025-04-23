@@ -95,28 +95,56 @@
             </label>
           </div> 
 
-          <!-- Timestamp commun -->
+
+          <!-- ░░░ Timestamp commun ░░░ -->
           <div class="field-pair even-bloc">
-            <label class="checkbox-stack">
+            <label for="gen-ts-common-selectbox" class="checkbox-stack">
               <span>Timestamp commun</span>
-              <input type="checkbox" id="gen-common-timestamp">
+
+              <!-- select-box custom -->
+              <div id="gen-ts-common-selectbox" class="ts-select">
+                <div class="option selected" data-value="no">Non</div>
+                <div class="option"             data-value="now">Maintenant</div>
+                <div class="option"             data-value="custom">Personnalisé</div>
+              </div>
             </label>
           </div>
 
-          <!-- Timestamp seed -->
-          <div class="field-pair even-bloc">
-            <div class="form-group">
-              <label for="gen-ts-common">Timestamp commun :</label>
-              <select id="gen-ts-common" disabled>
-                <option value="now">Maintenant</option>
-                <option value="custom">Personnalisé</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="ts-gen-custom">Date & heure :</label>
-              <input type="datetime-local" step="0.001" id="ts-gen-custom" class="flatpickr-fix" disabled>
-            </div>
+          <!-- ░░░ Type + valeur du timestamp custom ░░░ -->
+          <div class="ts-radio-group odd-bloc">
+            <label class="ts-radio-line">
+              <input type="radio" id="ts-type-iso" name="ts-type" value="iso" checked>
+              <span class="label">ISO 8601</span>
+              <input id="ts-input-iso" class="ts-input" placeholder="1979-06-30T07:23:00.000Z" readonly>
+              <span id="ts-valid-iso" class="ts-valid"></span>
+            </label>
+          
+            <label class="ts-radio-line">
+              <input type="radio" id="ts-type-unix" name="ts-type" value="unix">
+              <span class="label">UNIX (ms)</span>
+              <input id="ts-input-unix" class="ts-input" placeholder="299575380000" readonly>
+              <span id="ts-valid-unix" class="ts-valid"></span>
+            </label>
+          
+            <label class="ts-radio-line">
+              <input type="radio" id="ts-type-crock" name="ts-type" value="crock">
+              <span class="label">Crockford</span>
+              <input id="ts-input-crock" class="ts-input" placeholder="01HZY9AJ4Z" readonly>
+              <span id="ts-valid-crock" class="ts-valid"></span>
+            </label>
           </div>
+          
+
+          <!-- Bouton « Maintenant » + aperçu -->
+          <div class="controls-row even-bloc">
+            <button type="button" id="ts-now-btn">⏲️ Maintenant</button>
+          </div>
+
+          <pre id="ts-preview" class="code-block">
+          📆 Date : —
+          </pre>
+
+
 
           <!-- ULID monotone -->
           <div class="field-pair odd-bloc">
@@ -277,98 +305,15 @@
               <span class="btn-icon">🧼</span>
               <span class="btn-label">Effacer</span>
             </button>
-
-
-            <!------------------------------------------------------------------------------------------------------------   -->>
-            <!-- Bloc 1 : Entrée -->
-            <div>
-              
-              <!-- Nombre et format -->
-              <div class="field-pair odd-bloc">
-                <div class="form-group">
-                  <label for="autofill-count">Nombre d’ULID :</label>
-                  <input id="autofill-count" type="number" value="5" min="1" max="1000">
-                </div>
-                <div class="form-group">
-                  <label for="autofill-format">Format :</label>
-                  <select id="autofill-format">
-                    <option value="json">JSON</option>
-                    <option value="csv">CSV</option>
-                    <option value="tsv">TSV</option>
-                    <option value="text">Text</option>
-                    <option value="joined">Joined</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Préfixe et suffixe -->
-              <div class="field-pair even-bloc">
-                <div class="form-group">
-                  <label for="autofill-prefix">Préfixe :</label>
-                  <input id="autofill-prefix" placeholder="ex : prefix-">
-                </div>
-                <div class="form-group">
-                  <label for="autofill-suffix">Suffixe :</label>
-                  <input id="autofill-suffix" placeholder="ex : -suffix">
-                </div>
-              </div>
-
-              <!-- Base et binaire -->
-              <div class="field-pair odd-bloc">
-                <div class="form-group">
-                  <label for="autofill-base">Base :</label>
-                  <select id="autofill-base">
-                    <option value="crockford">Base32</option>
-                    <option value="hex">Hexa</option>
-                  </select>
-                </div>
-                <label class="checkbox-stack">
-                  <span>Inclure binaire</span>
-                  <input type="checkbox" id="autofill-bin">
-                </label>
-              </div> 
-
-              <!-- Timestamp commun -->
-              <div class="field-pair even-bloc">
-                <label class="checkbox-stack">
-                  <span>Timestamp commun</span>
-                  <input type="checkbox" id="autofill-common-timestamp">
-                </label>
-              </div>
-
-              <!-- Timestamp seed -->
-              <div class="field-pair even-bloc">
-                <div class="form-group">
-                  <label for="autofill-ts-common">Timestamp commun :</label>
-                  <select id="autofill-ts-common" disabled>
-                    <option value="now">Maintenant</option>
-                    <option value="custom">Personnalisé</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="ts-autofill-custom">Date & heure :</label>
-                  <input type="datetime-local" step="0.001" id="ts-autofill-custom" class="flatpickr-fix" disabled>
-                </div>
-              </div>
-
-              <!-- ULID monotone -->
-              <div class="field-pair odd-bloc">
-                <label class="checkbox-stack">
-                  <span>ULID monotones</span>
-                  <input type="checkbox" id="autofill-monotonic-ulid">
-                </label>
-              </div>
-              
-              <!-- Bouton de remplissage -->
-              <div class="controls-row">
-                <button type="button" id="autofill-btn" class="btn-action">
-                  <span class="btn-icon">📝</span>
-                  <span class="btn-label">Remplir</span>
-                </button>
-              </div>
+            <!-- Bouton de remplissage -->
+            <div class="controls-row">
+              <button type="button" id="autofill-btn" class="btn-action">
+                <span class="btn-icon">📝</span>
+                <span class="btn-label">Remplir</span>
+              </button>
             </div>
           </div>
-            <!--------------------------------------------------------------------------------------------------------------- -->
+        </div>
 
         <!-- Bloc 2 -->
         <div>

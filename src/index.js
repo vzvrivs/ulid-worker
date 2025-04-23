@@ -397,6 +397,9 @@ export function decodeTime(ulidStr) {
 `.trim();
   
 
+// ───────────────────────────────────────────────────────────
+// Dashboard logs
+// ───────────────────────────────────────────────────────────
 async function handleDebugLogs() {
   // Vous pouvez ajuster le CSS et le markup
   const html = `<!DOCTYPE html>

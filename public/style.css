@@ -232,7 +232,7 @@ pre.code-block {
   /* Assure-toi d’avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
   /* max‑height = line-height × 25 */
-  max-height: calc(1.4em * 25);
+  max-height: calc(1.4em * 35);
   overflow-y: auto;
   /* Conserve le padding et le reste de ton style */
 }
@@ -321,7 +321,7 @@ button {
   display: inline-flex;        /* s’aligne comme un mot */
   flex-direction: column;      /* input au‑dessus, texte en dessous */
   align-items: center;         /* centrage horizontal */
-  gap: 0.2rem;                 /* petite marge entre les deux */
+  gap: 0.25rem;                 /* petite marge entre les deux */
   cursor: pointer;             /* main sur tout le bloc */
   width: max-content;          /* ne s’étire pas à 100 % */
 }
@@ -330,6 +330,7 @@ button {
 input[type="checkbox"] {
   width: auto;
   margin: 0;                   /* retire le margin implicite */
+  accent-color: var(--heading); /* ou autre couleur du thème */
 }
 
 /* Un champ inactif ne ressemble pas à un champ actif */
@@ -337,3 +338,96 @@ input[type="checkbox"] {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ─── Select-box custom pour Timestamp commun ─── */
+/* Custom selectbox stylé */
+#gen-ts-common-selectbox {
+  border: 1px solid #aaa;
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+#gen-ts-common-selectbox .option {
+  flex: 1;
+  text-align: center;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  user-select: none;
+  background: #222;
+  color: #ccc;
+  border-right: 1px solid #444;
+}
+#gen-ts-common-selectbox .option:last-child {
+  border-right: none;
+}
+#gen-ts-common-selectbox .option:hover {
+  background-color: #333;
+}
+#gen-ts-common-selectbox .option.selected {
+  background-color: var(--heading);
+  color: #000;
+}
+
+/* Piles radio + input verticales */
+.radio-stack{
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+  align-items:flex-start;
+  flex:1;
+}
+
+.ts-input[readonly]{
+  opacity:.6;
+  cursor:not-allowed
+}
+
+#ts-preview{line-height:1.4;
+  margin-top:.5rem
+}
+
+.ts-valid{
+  font-size:0.8rem;
+  height:1rem;               /* réserve l’espace */
+}
+.ts-valid.ok   { color:#33ff33 }
+.ts-valid.bad  { color:#ff4444 }
+
+/* Groupe radio personnalisé */
+.ts-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Une ligne radio + input + validité */
+.ts-radio-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.ts-radio-line input[type="radio"] {
+  width: auto;
+  margin: 0;
+  accent-color: var(--heading);
+}
+
+.ts-radio-line .label {
+  min-width: 90px;
+}
+
+.ts-input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.ts-valid {
+  min-width: 5rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.ts-valid.ok   { color: #33ff33; }
+.ts-valid.bad  { color: #ff4444; }
