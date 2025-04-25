@@ -42,14 +42,16 @@
     <p>Un ULID est un identifiant unique universel, qui est lexicographiquement sortable et basé sur le temps. Il est souvent utilisé dans les bases de données et les systèmes distribués.</p>
     <p>Tu peux générer des ULID, les valider, et même remplir automatiquement des champs JSON avec des ULID. Amuse-toi bien !</p>
 
+    <!-- ░░░░░░░░░░░░░░░░░░░░░ -->
     <!-- ░░░ 1. Générateur ░░░ -->
+    <!-- ░░░░░░░░░░░░░░░░░░░░░ -->
     <section class="component">
       <h2>🎲 Générateur ULID</h2>
       <div class="row">
 
-        <!-- Bloc 1 : Entrée -->
-        <div>
-          
+        <!-- Bloc 1 : Générateur Params -->
+        <div id="gen-params">
+          <h3>Paramètres de génération :</h3>
           <!-- Nombre et format -->
           <div class="field-pair odd-bloc">
             <div class="form-group">
@@ -89,7 +91,7 @@
                 <option value="hex">Hexa</option>
               </select>
             </div>
-            <label class="checkbox-stack">
+            <label for="gen-bin" class="checkbox-stack">
               <span>Inclure binaire</span>
               <input type="checkbox" id="gen-bin">
             </label>
@@ -104,8 +106,8 @@
               <!-- select-box custom -->
               <div id="gen-ts-common-selectbox" class="ts-select">
                 <div class="option selected" data-value="no">Non</div>
-                <div class="option"             data-value="now">Maintenant</div>
-                <div class="option"             data-value="custom">Personnalisé</div>
+                <div class="option" data-value="now">Maintenant</div>
+                <div class="option" data-value="custom">Personnalisé</div>
               </div>
             </label>
           </div>
@@ -113,47 +115,50 @@
           <!-- ░░░ Type + valeur du timestamp custom ░░░ -->
           <div class="ts-radio-group odd-bloc">
             <label class="ts-radio-line">
-              <input type="radio" id="ts-type-iso" name="ts-type" value="iso" checked>
+              <input type="radio" id="gen-ts-type-iso" name="ts-type" value="iso" checked>
               <span class="label">ISO 8601</span>
-              <input id="ts-input-iso" class="ts-input" placeholder="1979-06-30T07:23:00.000Z" readonly>
-              <span id="ts-valid-iso" class="ts-valid"></span>
+              <input id="gen-ts-input-iso" class="ts-input" placeholder="1979-06-30T07:23:00.000Z" readonly>
+              <span id="gen-ts-valid-iso" class="ts-valid"></span>
             </label>
           
             <label class="ts-radio-line">
-              <input type="radio" id="ts-type-unix" name="ts-type" value="unix">
+              <input type="radio" id="gen-ts-type-unix" name="ts-type" value="unix">
               <span class="label">UNIX (ms)</span>
-              <input id="ts-input-unix" class="ts-input" placeholder="299575380000" readonly>
-              <span id="ts-valid-unix" class="ts-valid"></span>
+              <input id="gen-ts-input-unix" class="ts-input" placeholder="299575380000" readonly>
+              <span id="gen-ts-valid-unix" class="ts-valid"></span>
             </label>
           
             <label class="ts-radio-line">
-              <input type="radio" id="ts-type-crock" name="ts-type" value="crock">
+              <input type="radio" id="gen-ts-type-crock" name="ts-type" value="crock">
               <span class="label">Crockford</span>
-              <input id="ts-input-crock" class="ts-input" placeholder="01HZY9AJ4Z" readonly>
-              <span id="ts-valid-crock" class="ts-valid"></span>
+              <input id="gen-ts-input-crock" class="ts-input" placeholder="01HZY9AJ4Z" readonly>
+              <span id="gen-ts-valid-crock" class="ts-valid"></span>
             </label>
           </div>
           
 
           <!-- Bouton « Maintenant » + aperçu -->
           <div class="controls-row even-bloc">
-            <button type="button" id="ts-now-btn">⏲️ Maintenant</button>
+            <button type="button" id="gen-ts-now-btn">⏲️ Maintenant</button>
           </div>
 
-          <pre id="ts-preview" class="code-block">
+          <pre id="gen-ts-preview" class="code-block">
           📆 Date : —
           </pre>
 
-
-
           <!-- ULID monotone -->
           <div class="field-pair odd-bloc">
-            <label class="checkbox-stack">
+            <label for="gen-monotonic-ulid" class="checkbox-stack">
               <span>ULID monotones</span>
               <input type="checkbox" id="gen-monotonic-ulid">
             </label>
           </div>
           
+        </div>
+
+        <!-- Bloc 2 : Générateur Sortie -->
+        <div>
+          <h3>Génération :</h3>
           <!-- Bouton de génération -->
           <div class="controls-row">
             <button type="button" id="generate-btn" class="btn-action">
@@ -161,47 +166,44 @@
               <span class="btn-label">Générer</span>
             </button>
           </div>
-        </div>
 
-
-
-        <!-- Bloc 2 : Sortie -->
-        <div>
-          <label for="gen-output">ULID générés :</label>
-          <pre id="gen-output" class="code-block">// En attente</pre>
-          <div class="action-container">
-            <div class="action-pair">
-              <button type="button" onclick="copyText('gen-output',event)">
-                <span class="btn-icon">📋</span>
-                <span class="btn-label">Copier</span>
-              </button>
-              <button type="button" id="clear-gen-output-btn">
-                <span class="btn-icon">🧹</span>
-                <span class="btn-label">Effacer</span>
-              </button>
-            </div>
-            <div class="action-pair">
-              <label class="export-label">
-                Exporter en :
-                <select id="gen-export-format">
-                  <option value="json">JSON</option>
-                  <option value="csv">CSV</option>
-                  <option value="tsv">TSV</option>
-                  <option value="text">Text</option>
-                  <option value="joined">Joined</option>
-                </select>
-              </label>
-              <button type="button" id="download-gen-btn">
-                <span class="btn-icon">💾</span>
-                <span class="btn-label">Télécharger</span>
-              </button>
+          <div class="even-bloc">
+            <label for="gen-output">ULID générés :</label>
+            <pre id="gen-output" class="code-block">// En attente</pre>
+            <div class="action-container">
+              <div class="action-pair">
+                <button type="button" onclick="copyText('gen-output',event)">
+                  <span class="btn-icon">📋</span>
+                  <span class="btn-label">Copier</span>
+                </button>
+                <button type="button" id="clear-gen-output-btn">
+                  <span class="btn-icon">🧹</span>
+                  <span class="btn-label">Effacer</span>
+                </button>
+              </div>
+              <div class="action-pair">
+                <label class="export-label">
+                  Exporter en :
+                  <select id="gen-export-format">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="tsv">TSV</option>
+                    <option value="text">Text</option>
+                    <option value="joined">Joined</option>
+                  </select>
+                </label>
+                <button type="button" id="download-gen-btn">
+                  <span class="btn-icon">💾</span>
+                  <span class="btn-label">Télécharger</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Bloc 3 : Requête -->
-        <div class="span-full">
-          <h3>📎 Requête GET :</h3>
+        <!-- Bloc 3 : Générateur Requête -->
+        <div class="span-full even-bloc">
+          <h3>📎 Requête de génération :</h3>
           <pre id="req-gen" class="code-block">// En attente</pre>
           <div class="controls-row">
             <button type="button" onclick="copyText('req-gen',event)">
@@ -218,13 +220,234 @@
       </div>
     </section>
 
-    <!-- ░░░ 2. Vérificateur ULID ░░░ -->
+    <!-- ░░░░░░░░░░░░░░░░░░░░░░░░ -->
+    <!-- ░░░ 2. Autofill JSON ░░░ -->
+    <!-- ░░░░░░░░░░░░░░░░░░░░░░░░ -->
+    <section class="component">
+      <h2>🧪 Autofill JSON</h2>
+      <div class="row">
+
+        <!-- Bloc 1 : Autofill Entrée + Params -->
+        <div>
+
+          <div class="form-group even-bloc">
+            <label for="json-input">Entrée JSON :</label>
+
+            <!-- Beautify / Minify -->            
+            <div class="controls-row">
+              <button type="button" id="beautify-btn">
+                <span class="btn-icon">🖼️</span>
+                <span class="btn-label">Beautify</span>
+              </button>
+              <button type="button" id="minify-btn">
+                <span class="btn-icon">🗜️</span>
+                <span class="btn-label">Minify</span>
+              </button>
+            </div>
+
+            <!-- Textarea Input JSON-->
+            <textarea id="json-input" rows="8" placeholder='{"key_uid":null}'></textarea>
+            <div id="json-validity"></div>
+            <div class="controls-row">
+              <button type="button" id="paste-json-btn">
+                <span class="btn-icon">📥</span>
+                <span class="btn-label">Coller</span>
+              </button>
+              <button type="button" id="clear-json-btn">
+                <span class="btn-icon">🧼</span>
+                <span class="btn-label">Effacer</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Clé et valeur -->
+          <div class="form-group odd-bloc" style="margin-block:1rem;">
+            <div class="field-pair" style="margin-block:0;">
+              <div>
+                <label for="autofill-key">Clé terminant par :</label>
+                <input id="autofill-key" value="_uid" placeholder="_uid">
+              </div>
+              <div>
+                <label for="autofill-value">Valeur à remplacer :</label>
+                <input id="autofill-value" value="null" placeholder="null">
+              </div>
+            </div>
+            <label for="autofill-insert" class="checkbox-stack">
+              <span>Valeur(s) à insérer :</span>
+              <div id="autofill-insert" class="checkbox-row">
+                <label for="autofill-insert-unix" class="checkbox-stack">
+                  <span>Unix (t)</span>
+                  <input type="checkbox" id="autofill-insert-unix">
+                </label>
+                <label for="autofill-insert-iso" class="checkbox-stack">
+                  <span>ISO (ts)</span>
+                  <input type="checkbox" id="autofill-insert-iso">
+                </label>
+                <label for="autofill-insert-ulid" class="checkbox-stack">
+                  <span>ULID (ulid)</span>
+                  <input type="checkbox" id="autofill-insert-ulid" checked>
+                </label>
+              </div>
+            </label>  
+          </div>
+
+          <!-- Préfixe et suffixe -->
+          <div class="field-pair even-bloc">
+            <div>
+              <label for="autofill-prefix">Préfixe :</label>
+              <input id="autofill-prefix" placeholder="ex : prefix-">
+            </div>
+            <div>
+              <label for="autofill-suffix">Suffixe :</label>
+              <input id="autofill-suffix" placeholder="ex : -suffix">
+            </div>
+          </div>
+
+          <!-- Base et binaire -->
+          <div class="field-pair odd-bloc">
+            <div>
+              <label for="autofill-base">Base :</label>
+              <select id="autofill-base">
+                <option value="crockford">Base32</option>
+                <option value="hex">Hexa</option>
+              </select>
+            </div>
+            <label for="autofill-bin" class="checkbox-stack">
+              <span>Inclure binaire</span>
+              <input type="checkbox" id="autofill-bin">
+            </label>
+          </div> 
+
+          <!-- ░░░ Timestamp commun ░░░ -->
+          <div class="field-pair even-bloc">
+            <label for="autofill-ts-common-selectbox" class="checkbox-stack">
+              <span>Timestamp commun</span>
+
+              <!-- select-box custom -->
+              <div id="autofill-ts-common-selectbox" class="ts-select">
+                <div class="option selected" data-value="no">Non</div>
+                <div class="option" data-value="now">Maintenant</div>
+                <div class="option" data-value="custom">Personnalisé</div>
+              </div>
+            </label>
+          </div>
+
+          <!-- ░░░ Type + valeur du timestamp custom ░░░ -->
+          <div class="ts-radio-group odd-bloc">
+            <label class="ts-radio-line">
+              <input type="radio" id="autofill-ts-type-iso" name="autofill-ts-type" value="iso" checked>
+              <span class="label">ISO 8601</span>
+              <input id="autofill-ts-input-iso" class="ts-input" placeholder="1979-06-30T07:23:00.000Z" readonly>
+              <span id="autofill-ts-valid-iso" class="ts-valid"></span>
+            </label>
+          
+            <label class="ts-radio-line">
+              <input type="radio" id="autofill-ts-type-unix" name="autofill-ts-type" value="unix">
+              <span class="label">UNIX (ms)</span>
+              <input id="autofill-ts-input-unix" class="ts-input" placeholder="299575380000" readonly>
+              <span id="autofill-ts-valid-unix" class="ts-valid"></span>
+            </label>
+          
+            <label class="ts-radio-line">
+              <input type="radio" id="autofill-ts-type-crock" name="autofill-ts-type" value="crock">
+              <span class="label">Crockford</span>
+              <input id="autofill-ts-input-crock" class="ts-input" placeholder="01HZY9AJ4Z" readonly>
+              <span id="autofill-ts-valid-crock" class="ts-valid"></span>
+            </label>
+          </div>
+          
+
+          <!-- Bouton « Maintenant » + aperçu -->
+          <div class="controls-row even-bloc">
+            <button type="button" id="autofill-ts-now-btn">⏲️ Maintenant</button>
+          </div>
+
+          <pre id="autofill-ts-preview" class="code-block">
+          📆 Date : —
+          </pre>
+
+          <!-- ULID monotone -->
+          <div class="field-pair odd-bloc">
+            <label for="autofill-gen-monotonic-ulid" class="checkbox-stack">
+              <span>ULID monotones</span>
+              <input type="checkbox" id="autofill-gen-monotonic-ulid">
+            </label>
+          </div>
+            
+        </div>
+
+        <!-- Bloc 2 : Autofill Sortie -->
+        <div>
+          <!-- Bouton de remplissage -->
+          <div class="controls-row">
+            <button type="button" id="autofill-btn" class="btn-action">
+              <span class="btn-icon">📝</span>
+              <span class="btn-label">Remplir</span>
+            </button>
+          </div>
+
+          <div class="even-bloc">
+            <label for="json-output">Sortie JSON :</label>
+            <pre id="json-output" class="code-block">// En attente</pre>
+            <div id="autofill-count" class="ts-valid"></div>
+            <div class="action-container">
+              <div class="action-pair">
+                <button type="button" onclick="copyText('json-output',event)">
+                  <span class="btn-icon">📋</span>
+                  <span class="btn-label">Copier</span>
+                </button>
+                <button type="button" id="clear-json-output-btn">
+                  <span class="btn-icon">🧹</span>
+                  <span class="btn-label">Effacer</span>
+                </button>
+              </div>
+              <div class="action-pair">
+                <label class="export-label">Exporter en :
+                  <select id="autofill-export-format">
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
+                    <option value="tsv">TSV</option>
+                    <option value="text">Text</option>
+                    <option value="joined">Joined</option>
+                  </select>
+                </label>
+                <button type="button" id="download-autofill-btn">
+                  <span class="btn-icon">💾</span>
+                  <span class="btn-label">Télécharger</span>
+                </button>
+              </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Bloc 3 : Autofill requête -->
+        <div class="span-full even-bloc">
+          <h3>📨 Requête POST :</h3>
+          <pre id="req-autofill-full" class="code-block">// En attente</pre>
+          <div class="controls-row">
+            <button type="button" onclick="copyText('req-autofill-full',event)">
+              <span class="btn-icon">📋</span>
+              <span class="btn-label">Copier</span>
+            </button>
+            <button type="button" id="clear-req-autofill-btn">
+              <span class="btn-icon">🧹</span>
+              <span class="btn-label">Effacer</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ -->
+    <!-- ░░░ 3. Vérificateur ULID ░░░ -->
+    <!-- ░░░░░░░░░░░░░░░░░░░░░░░░░░░░ -->
     <section class="component">
       <h2>🔍 Vérificateur ULID</h2>
       <div class="row">
 
-        <!-- Bloc 1 -->
-        <div>
+        <!-- Bloc 1 : Vérificateur Entrée -->
+        <div class="odd-bloc">
           <label for="check-input">ULID à vérifier :</label>
           <input id="check-input" type="text" placeholder="01JR…">
           <!-- champ + checkbox… -->
@@ -244,8 +467,8 @@
           </div>
         </div>
 
-        <!-- Bloc 2 -->
-        <div>
+        <!-- Bloc 2 : Vérificateur Sortie -->
+        <div class="even-bloc">
           <label for="check-output">Résultat :</label>
           <pre id="check-output" class="code-block">// En attente</pre>
           <div class="controls-row">
@@ -260,8 +483,8 @@
           </div>
         </div>
 
-        <!-- Bloc 3 -->
-        <div class="span-full">
+        <!-- Bloc 3 : Vérificateur Requête -->
+        <div class="span-full even-bloc">
           <h3>📎 Requête GET :</h3>
           <pre id="req-check" class="code-block">// En attente</pre>
           <div class="controls-row">
@@ -278,105 +501,6 @@
 
       </div>
     </section>
-
-    <!-- ░░░ 3. Autofill JSON ░░░ -->
-    <section class="component">
-      <h2>🧪 Autofill JSON</h2>
-      <div class="row">
-
-        <!-- Bloc 1 -->
-        <div>
-          <div class="form-group">
-            <label for="json-input">Entrée JSON :</label>
-            <!-- ➡️ Nouveaux boutons Beautify / Minify -->
-            <div class="action-container">
-              <div class="action-pair">
-                <button type="button" id="beautify-btn">
-                  <span class="btn-icon">🖼️</span>
-                  <span class="btn-label">Beautify</span>
-                </button>
-                <button type="button" id="minify-btn">
-                  <span class="btn-icon">🗜️</span>
-                  <span class="btn-label">Minify</span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <textarea id="json-input" rows="18" placeholder='{"key":null}'></textarea>
-          <!-- Ajouté pour l’état "JSON valide / invalide" -->
-          <div id="json-validity"></div>
-          <!-- textarea + validité… -->
-          <div class="controls-row">
-            <button type="button" id="paste-json-btn">
-              <span class="btn-icon">📥</span>
-              <span class="btn-label">Coller</span>
-            </button>
-            <button type="button" id="clear-json-btn">
-              <span class="btn-icon">🧼</span>
-              <span class="btn-label">Effacer</span>
-            </button>
-            <!-- Bouton de remplissage -->
-            <div class="controls-row">
-              <button type="button" id="autofill-btn" class="btn-action">
-                <span class="btn-icon">📝</span>
-                <span class="btn-label">Remplir</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bloc 2 -->
-        <div>
-          <label for="json-output">Sortie JSON :</label>
-          <pre id="json-output" class="code-block">// En attente</pre>
-          <div class="action-container">
-            <div class="action-pair">
-              <button type="button" onclick="copyText('json-output',event)">
-                <span class="btn-icon">📋</span>
-                <span class="btn-label">Copier</span>
-              </button>
-              <button type="button" id="clear-json-output-btn">
-                <span class="btn-icon">🧹</span>
-                <span class="btn-label">Effacer</span>
-              </button>
-            </div>
-            <div class="action-pair">
-              <label class="export-label">Exporter en :
-                <select id="autofill-export-format">
-                  <option value="json">JSON</option>
-                  <option value="csv">CSV</option>
-                  <option value="tsv">TSV</option>
-                  <option value="text">Text</option>
-                  <option value="joined">Joined</option>
-                </select>
-              </label>
-              <button type="button" id="download-autofill-btn">
-                <span class="btn-icon">💾</span>
-                <span class="btn-label">Télécharger</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bloc 3 -->
-        <div class="span-full">
-          <h3>📨 Requête POST :</h3>
-          <pre id="req-autofill-full" class="code-block">// En attente</pre>
-          <div class="controls-row">
-            <button type="button" onclick="copyText('req-autofill-full',event)">
-              <span class="btn-icon">📋</span>
-              <span class="btn-label">Copier</span>
-            </button>
-            <button type="button" id="clear-req-autofill-btn">
-              <span class="btn-icon">🧹</span>
-              <span class="btn-label">Effacer</span>
-            </button>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
   </main>
 
   <footer>ULID Playground v1 • Codé avec 💚 par Raphaël</footer>

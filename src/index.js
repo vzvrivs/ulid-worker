@@ -195,11 +195,11 @@ async function handleUlid(request) {
   const base      = url.searchParams.get('base')   || 'crockford';
   const bin       = url.searchParams.get('bin') === 'true';
   const format    = url.searchParams.get('format')|| 'json';
+  const monotonic = url.searchParams.get('monotonic') === 'true';
   const forcedTs  = url.searchParams.has('timestamp')
                     ? parseInt(url.searchParams.get('timestamp'),10)
-                    : null;
-  const monotonic = url.searchParams.get('monotonic') === 'true';
-
+                    : (monotonic ? Date.now() : null);
+  
   // DEBUG sur les paramètres de génération
   await log("DEBUG", "Generating ULID batch", {
     n, pretty, prefix, suffix, base, bin, format,
@@ -271,21 +271,68 @@ async function handleAutofill(request) {
 
   await log("INFO", "Handling /autofill request", { size });
 
-  // Injection dans les clés *_uid
+  // ── 1. Lecture des query-params ─────────────────────────
+  const url        = new URL(request.url);
+  const keySuffix  = url.searchParams.get('key')   || '_uid';
+  const rawVal     = url.searchParams.get('value') ?? 'null';
+  // On essaie de parser rawVal comme JSON (null, nombre, chaîne entre guillemets, booléen…)
+  let matchValue;
+  if (rawVal === "*" || rawVal === "") {
+    matchValue = () => true;
+  } else {
+    try {
+      const parsed = JSON.parse(rawVal);
+      matchValue = v => v === parsed;
+    } catch {
+      // sinon on compare en string
+      matchValue = v => String(v) === rawVal;
+    }
+  }
+
+  const fields = (url.searchParams.get('fields') || 't,ts,ulid')
+        .split(',').map(f => f.trim()).filter(Boolean);
+
+  const prefix = url.searchParams.get('prefix') || '';
+  const suffix = url.searchParams.get('suffix') || '';
+  const base   = url.searchParams.get('base')   || 'crockford';
+  const bin    = url.searchParams.get('bin') === 'true';
+  const mono   = url.searchParams.get('monotonic') === 'true';
+  const forced = url.searchParams.has('timestamp')
+                 ? Number(url.searchParams.get('timestamp')) : null;
+
+  const gen = mono ? monotonicFactory() : randomULID;
+
+  // Fabrique le remplacement selon les « fields »
+  const makeRepl = () => {
+    const raw   = forced !== null ? gen(forced) : gen();
+    const built = buildULIDObject(raw, { prefix, suffix, base, bin });
+    // Si un seul champ demandé, on renvoie un primitif
+    if (fields.length === 1) {
+      switch (fields[0]) {
+        case 'ulid': return built.ulid;
+        case 't':   return built.t;
+        case 'ts':  return built.ts;
+        case 'bin': return built.bin;
+      }
+    }
+    // Sinon on renvoie un objet combiné
+    const o = {};
+    if (fields.includes('ulid')) o.ulid = built.ulid;
+    if (fields.includes('t'))   o.t   = built.t;
+    if (fields.includes('ts'))  o.ts  = built.ts;
+    if (bin && fields.includes('bin')) o.bin = built.bin;
+    return o;
+  };
+
+  // ── 2. Parcours récursif & injection ────────────────────
   let filled = 0;
   const inject = obj => {
     for (const k in obj) {
       const v = obj[k];
-      if (v === null && k.endsWith('_uid')) {
-        const id = randomULID();
-        const t  = decodeTime(id);
-        obj[k]    = { uid:id, t, ts:new Date(t).toISOString() };
-        filled++;
-      } else if (Array.isArray(v)) {
-        v.forEach(inject);
-      } else if (v && typeof v === 'object') {
-        inject(v);
-      }
+      if (k.endsWith(keySuffix) && matchValue(v)) {
+        obj[k] = makeRepl(); filled++;
+      } else if (Array.isArray(v)) v.forEach(inject);
+      else if (v && typeof v === 'object') inject(v);
     }
   };
   inject(body);

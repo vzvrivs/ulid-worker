@@ -2,8 +2,9 @@
 	"files.associations": {
 		"wrangler.json": "jsonc"
 	},
-	"workbench.preferredDarkColorTheme": "Bearded Theme Coffee",
+	"workbench.preferredDarkColorTheme": "Best Themes - Dracula Redefined",
 	"workbench.preferredLightColorTheme": "Bearded Theme Coffee Cream",
 	"workbench.colorTheme": "Bearded Theme feat. Mintshake D Raynh",
-	"window.autoDetectColorScheme": true
+	"window.autoDetectColorScheme": true,
+
 }

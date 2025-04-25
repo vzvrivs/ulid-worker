@@ -32,15 +32,6 @@ document.head.append(toastStyle);
   }
 })();
 
-// charge Flatpickr pour un vrai date-time picker (avec ms)
-const fpScript = document.createElement("script");
-fpScript.src = "https://cdn.jsdelivr.net/npm/flatpickr";
-document.head.append(fpScript);
-const fpCss = document.createElement("link");
-fpCss.rel = "stylesheet";
-fpCss.href = "https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css";
-document.head.append(fpCss);
-
 // === 🍔 Script burger menu ===
 // -----------------------------------------------
 // Lorsque l'on clique sur le bouton hamburger,
@@ -220,29 +211,113 @@ const updateJsonValidity = debounce(() => {
   validityEl.style.color   = isValid ? "#33ff33" : "#ff4444";
 }, 300);
 
-// === 🧠 Autofill JSON ===
-// -----------------------------------------------
-// Envoie le JSON à l'API /autofill et affiche la requête,
-// puis met à jour json-output et req-autofill-full.
+/* ---------------------------------------------------------------
+   🧪 Autofill JSON — nouvelle version
+   ---------------------------------------------------------------
+   - Lit les trois check-boxes d’insertion (Unix / ISO / ULID)
+   - Construit un paramètre  fields=t,ts,ulid  passé au Worker
+   - Vérifie qu’au moins une case est cochée
+   - Affiche la requête, appelle /autofill, affiche le résultat
+   - Met à jour le compteur de remplacements
+---------------------------------------------------------------- */
 window.autofillJSON = async () => {
-  try {
-    const input = $("json-input").value;
-    $("req-autofill-full").textContent =
-      `POST /autofill\nContent-Type: application/json\n\n` +
-      JSON.stringify(JSON.parse(input), null, 2);
 
-    const res = await fetch("/autofill", {
-      method: "POST",
-      headers:{ "Content-Type":"application/json" },
-      body: input
-    });
-    const data = await res.json();
-    $("json-output").textContent = JSON.stringify(data, null, 2);
-  } catch {
-    $("req-autofill-full").textContent = "// JSON invalide ❌";
-    $("json-output").textContent   = "// JSON invalide ❌";
+  /* 0️⃣  Lecture / validation du JSON source ------------------ */
+  const rawInput = $("json-input").value;
+  let jsonInput;
+  try { jsonInput = JSON.parse(rawInput); }
+  catch { showToast("❌ JSON invalide !"); return; }
+
+  /* 1️⃣  Paramètres « clé / valeur » à remplacer -------------- */
+  //   ce sont les SUFFIXE et VALEUR d’origine que l’on va remplacer
+  const keySuffixParam  = encodeURIComponent($("autofill-key").value.trim()   || "_uid");
+  const valueMatchParam = encodeURIComponent($("autofill-value").value.trim() || "null");
+
+  /* 2️⃣  Options ULID classiques ------------------------------ */
+  const prefix   = encodeURIComponent($("autofill-prefix").value);
+  const suffix   = encodeURIComponent($("autofill-suffix").value);
+  const base     = $("autofill-base").value;
+  const bin      = $("autofill-bin").checked                     ? "&bin=true"       : "";
+  const mono     = $("autofill-gen-monotonic-ulid").checked      ? "&monotonic=true" : "";
+  const tsParam  = getAutofillTsParam(); // ⏲️ timestamp commun (déjà implémenté)
+
+  /* 3️⃣  ✨ Sélection des champs à insérer --------------------- */
+  const wantUnix = $("autofill-insert-unix").checked;  // t
+  const wantIso  = $("autofill-insert-iso").checked;   // ts
+  const wantUlid = $("autofill-insert-ulid").checked;  // ulid
+
+  // On s’assure qu’au moins UNE case est cochée
+  if (!(wantUnix || wantIso || wantUlid)) {
+    showToast("⚠️ Choisis au moins un champ à insérer !");
+    return;
   }
-};
+
+  // Ordre imposé : t (unix) - ts (iso) - ulid (ulid)
+  const fields = [];
+  if (wantUnix) fields.push("t");
+  if (wantIso)  fields.push("ts");
+  if (wantUlid) fields.push("ulid");
+  const fieldsParam = "&fields=" + fields.join(",");
+
+  /* 4️⃣  Construction de l’URL finale ------------------------- */
+  const url = `/autofill`
+    + `?key=${keySuffixParam}&value=${valueMatchParam}`
+    + `&prefix=${prefix}&suffix=${suffix}&base=${base}`
+    + bin + mono + tsParam + fieldsParam;
+
+  /* 5️⃣  Affichage de la requête simulée ---------------------- */
+  $("req-autofill-full").textContent =
+    `POST ${url}\nContent-Type: application/json\n\n`
+    + JSON.stringify(jsonInput, null, 2);
+
+  /* 6️⃣  Appel réseau ---------------------------------------- */
+  const res  = await fetch(url, {
+    method : "POST",
+    headers: { "Content-Type": "application/json" },
+    body   : JSON.stringify(jsonInput)
+  });
+  const data = await res.json();
+  $("json-output").textContent = JSON.stringify(data, null, 2);
+
+  /* 7️⃣  Comptage des remplacements --------------------------- */
+  //   On compte chaque fois qu’une clé se termine par keySuffix
+  //   et que sa valeur AVANT correspondait à valueMatch.
+  const keySuffixClean  = $("autofill-key").value.trim()   || "_uid";
+  const valueMatchClean = $("autofill-value").value.trim() || "null";
+
+  function countRepl(orig, neu) {
+    let cnt = 0;
+    if (orig && typeof orig === "object") {
+      const isArr = Array.isArray(orig);
+      const keys  = isArr ? orig.keys() : Object.keys(orig);
+      for (const k of keys) {
+        const oVal = isArr ? orig[k] : orig[k];
+        const nVal = isArr ? neu[k]  : neu[k];
+
+        // Si la clé MATCHE et la valeur d’origine = valeur recherchée
+        if (!isArr && k.endsWith(keySuffixClean)
+            && ((oVal === null && valueMatchClean === "null")
+                || String(oVal) === valueMatchClean)) {
+          cnt++;
+        }
+        // Descente récursive éventuelle
+        if (oVal && typeof oVal === "object") {
+          cnt += countRepl(oVal, nVal);
+        }
+      }
+    }
+    return cnt;
+  }
+
+  const replaced = countRepl(jsonInput, data);
+  $("autofill-count").textContent =
+    replaced
+      ? `🔄 ${replaced} remplacement (s) effectué (s)`
+      : `ℹ️ Aucun remplacement`;
+
+}; // ← fin de autofillJSON()
+
+
 
 // === 💾 Télécharger Autofill ===
 // -----------------------------------------------
@@ -310,22 +385,8 @@ window.generateULID = async () => {
   const format   = $("gen-format").value;
 
 
-/* ---- Timestamp commun ---- */
-let tsParam="";
-const tsBoxVal=document.querySelector("#gen-ts-common-selectbox .selected").dataset.value;
-if(tsBoxVal==="now") tsParam=`&timestamp=${Date.now()}`;
-else if(tsBoxVal==="custom"){
-  const ms =   $("ts-type-iso").checked   ? Date.parse($("ts-input-iso").value.trim())
-            : $("ts-type-unix").checked  ? Number($("ts-input-unix").value.trim())
-            : decodeCrock($("ts-input-crock").value.trim());
-  if(!ms || Number.isNaN(ms)){
-    showToast("❌ Timestamp custom invalide !");
-    return;
-  }
-  tsParam=`&timestamp=${ms}`;
-}
-/* --------------------------- */
-
+  // ── Lecture du timestamp commun via getGenTsParam ──
+  const tsParam = getGenTsParam();
   
 
   const monoParam= $("gen-monotonic-ulid").checked   ? `&monotonic=true`         : "";
@@ -441,6 +502,10 @@ window.checkULID = async () => {
 // === 🚀 Init DOMContentLoaded — liaison des handlers ===
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* ⏲️ Initialise les deux widgets Timestamp */
+  window.getGenTsParam      = initTimestampUI("gen");
+  window.getAutofillTsParam = initTimestampUI("autofill");
+
   // Nouveau : boutons Beautify / Minify
   $("beautify-btn")?.addEventListener("click", beautifyJSON);
   $("minify-btn")?.addEventListener("click",  minifyJSON);
@@ -513,137 +578,111 @@ function humanize(ms){
   })+" UTC";
 }
 
-/* ---------- Sélecteur custom “Timestamp commun” ---------- */
-function initTimestampUI(){
-  const box   = $("gen-ts-common-selectbox");
-  const opts  = box.querySelectorAll(".option");
+/** Genère toutes les fonctions / listeners du mini-UI Timestamp
+ *  @param {string} prefix  "gen"  ou "autofill"
+ *  @returns {()=>string}   fonction qui renvoie "&timestamp=…" ou ""
+ */
+function initTimestampUI(prefix) {
+  // IDs dynamiques
+  const selBox = $(`${prefix}-ts-common-selectbox`);
+  const isoRad = $(`${prefix}-ts-type-iso`);
+  const unixRad= $(`${prefix}-ts-type-unix`);
+  const crockRad=$( `${prefix}-ts-type-crock`);
+  const isoIn  = $(`${prefix}-ts-input-iso`);
+  const unixIn = $(`${prefix}-ts-input-unix`);
+  const crockIn= $(`${prefix}-ts-input-crock`);
+  const vIso   = $(`${prefix}-ts-valid-iso`);
+  const vUnix  = $(`${prefix}-ts-valid-unix`);
+  const vCrock = $(`${prefix}-ts-valid-crock`);
+  const preview= $(`${prefix}-ts-preview`);
+  const nowBtn = $(`${prefix}-ts-now-btn`);
+  const options= selBox.querySelectorAll(".option");
 
-  const isoRad=$("ts-type-iso"),   unixRad=$("ts-type-unix"),   crockRad=$("ts-type-crock");
-  const isoIn = $("ts-input-iso"), unixIn = $("ts-input-unix"), crockIn = $("ts-input-crock");
-  const preview=$("ts-preview"),   nowBtn=$("ts-now-btn");
+  let mode="no";         // no | now | custom
+  let type="iso";        // iso | unix | crock
 
-  const vIso=$("ts-valid-iso"), vUnix=$("ts-valid-unix"), vCrock=$("ts-valid-crock");
+  /* ---------- helpers UI ---------- */
+  const clearIndicators = () => clearValid(vIso,vUnix,vCrock);
 
-  let mode="no"; let type="iso";
+  const syncAndPreview = () => {
+    clearIndicators();
+    let raw, ms, ok=false;
 
-  const updatePreview = () => {
-    // 1) On efface d’abord tous les indicateurs
-    clearValid(vIso, vUnix, vCrock);
-  
-    let raw, ms, ok;
-  
-    if (type === "iso") {
+    if (type==="iso") {
       raw = isoIn.value.trim();
-      // Si le champ est vide, on ne fait rien
-      if (!raw) {
-        preview.textContent = "📆 Date : —";
-        return;
-      }
-      ms = Date.parse(raw);
-      ok = !Number.isNaN(ms);
-      setValid(vIso, ok);
-    }
-    else if (type === "unix") {
+      if (!raw) { preview.textContent="📆 Date : —"; return; }
+      ms = Date.parse(raw);           ok=!isNaN(ms); setValid(vIso,ok);
+    } else if (type==="unix") {
       raw = unixIn.value.trim();
-      if (!raw) {
-        preview.textContent = "📆 Date : —";
-        return;
-      }
-      ms = Number(raw);
-      ok = Number.isFinite(ms) && ms > 0;
-      setValid(vUnix, ok);
-    }
-    else { // crockford
+      if (!raw) { preview.textContent="📆 Date : —"; return; }
+      ms = Number(raw);               ok=Number.isFinite(ms)&&ms>0; setValid(vUnix,ok);
+    } else {
       raw = crockIn.value.trim();
-      if (!raw) {
-        preview.textContent = "📆 Date : —";
-        return;
-      }
-      ms = decodeCrock(raw);
-      ok = !Number.isNaN(ms);
-      setValid(vCrock, ok);
+      if (!raw) { preview.textContent="📆 Date : —"; return; }
+      ms = decodeCrock(raw);          ok=!isNaN(ms); setValid(vCrock,ok);
     }
-  
-    // Si invalide, on arrête là
-    if (!ok) {
-      preview.textContent = "📆 Date : —";
-      return;
-    }
-  
-    // 2) Si valide, on synchronise et on affiche la date
+
+    if (!ok) { preview.textContent="📆 Date : —"; return; }
+
+    // synchro des trois champs
     isoIn.value   = new Date(ms).toISOString();
     unixIn.value  = String(ms);
     crockIn.value = encodeTime(ms);
-    preview.textContent = "📆 Date : " + humanize(ms);
-  };
-  
-
-  /* ----- State helpers ----- */
-  const setMode = m => {
-    mode = m;
-    opts.forEach(o => o.classList.toggle("selected", o.dataset.value === m));
-    const custom = m === "custom";
-
-    [isoRad, unixRad, crockRad].forEach(r => r.disabled = !custom);
-    // Si on n'est PAS en custom, on désactive et vide tous les inputs
-    if (!custom) {
-       [isoIn, unixIn, crockIn].forEach(i => {
-         i.readOnly = true;
-         i.value = "";
-       });
-       preview.textContent = "📆 Date : —";
-     } else {
-       // En mode custom, on laisse la radio ISO cochée par défaut
-       // et on active directement son input via handleTypeChange
-       handleTypeChange();
-     }
-
-    // Mets à jour l’aperçu si une valeur valide existe déjà
-    updatePreview();
+    preview.textContent = "📆 Date : "+humanize(ms);
   };
 
-  const handleTypeChange = () => {
-    type = isoRad.checked ? "iso" : unixRad.checked ? "unix" : "crock";
-
-    [isoIn, unixIn, crockIn].forEach(i => i.readOnly = true);
-    if (type === "iso")   isoIn.readOnly = false;
-    if (type === "unix")  unixIn.readOnly = false;
-    if (type === "crock") crockIn.readOnly = false;
-
-    // Vider les anciens indicateurs
-    clearValid(vIso, vUnix, vCrock);
-    // Mettre à jour l’aperçu si la nouvelle valeur est valide (ou le vider)
-    updatePreview();
+  const applyType = () => {
+    [isoIn,unixIn,crockIn].forEach(i=>i.readOnly=true);
+    if (type==="iso") isoIn.readOnly=false;
+    if (type==="unix")unixIn.readOnly=false;
+    if (type==="crock")crockIn.readOnly=false;
+    clearIndicators();  preview.textContent="📆 Date : —";
   };
 
-  /* --- listeners de saisie --- */
-  [isoIn, unixIn, crockIn].forEach(input => {
-    input.addEventListener("input", () => {
-      // on nettoie les anciens messages sous *tous* les inputs
-      clearValid(vIso, vUnix, vCrock);
-      // et on affiche l’aperçu si valide
-      updatePreview();
+  const setMode = m =>{
+    mode=m; options.forEach(o=>o.classList.toggle("selected",o.dataset.value===m));
+    const custom = m==="custom";
+    [isoRad,unixRad,crockRad].forEach(r=>r.disabled=!custom);
+    if (!custom){
+      [isoIn,unixIn,crockIn].forEach(i=>{i.readOnly=true;i.value="";});
+      preview.textContent="📆 Date : —";
+    } else {
+      // ISO par défaut
+      isoRad.checked=true; type="iso"; applyType();
+    }
+  };
+
+  /* ---------- listeners ---------- */
+  options.forEach(o=>o.addEventListener("click",()=>setMode(o.dataset.value)));
+  [isoRad,unixRad,crockRad].forEach(r=>{
+    r.addEventListener("change",()=>{
+      type = isoRad.checked?"iso":unixRad.checked?"unix":"crock";
+      applyType(); syncAndPreview();
     });
   });
+  [isoIn,unixIn,crockIn].forEach(i=>i.addEventListener("input",syncAndPreview));
 
-  nowBtn.addEventListener("click", ()=>{
+  nowBtn?.addEventListener("click",()=>{
     const ms=Date.now();
     isoIn.value=new Date(ms).toISOString();
     unixIn.value=String(ms);
     crockIn.value=encodeTime(ms);
-    clearValid(vIso,vUnix,vCrock);
-    isoRad.checked=true; handleTypeChange();
+    isoRad.checked=true; type="iso"; applyType();
     setValid(vIso,true);
-    preview.textContent="📆 Date : " + humanize(ms);
+    preview.textContent="📆 Date : "+humanize(ms);
   });
 
-
-  /* --- listeners --- */
-  opts.forEach(o=>o.addEventListener("click",()=>setMode(o.dataset.value)));
-  [isoRad,unixRad,crockRad].forEach(r=>r.addEventListener("change",handleTypeChange));
-  [isoIn,unixIn,crockIn].forEach(i=>i.addEventListener("input",updatePreview));
-
+  // init
   setMode("no");
-}
-document.addEventListener("DOMContentLoaded", initTimestampUI);
 
+  /* ---------- fonction utilitaire renvoyée ---------- */
+  return () => {
+    if (mode==="now")         return `&timestamp=${Date.now()}`;
+    if (mode!=="custom")      return "";
+    // custom
+    const ms = type==="iso"   ? Date.parse(isoIn.value.trim())
+              : type==="unix" ? Number(unixIn.value.trim())
+              : decodeCrock(crockIn.value.trim());
+    return (!ms||isNaN(ms)) ? "" : `&timestamp=${ms}`;
+  };
+}
