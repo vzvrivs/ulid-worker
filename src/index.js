@@ -1,3 +1,5 @@
+import { rawToBinary } from '../public/helpers.js'
+
 // ───────────────────────────────────────────────────────────
 // Logger JSON structuré avec niveaux contrôlés par ENV
 // ───────────────────────────────────────────────────────────
@@ -125,7 +127,7 @@ async function handleRequest(event) {
 // ───────────────────────────────────────────────────────────
 // Helper : construit objet ULID { t, ts, ulid, [bin] }
 // ───────────────────────────────────────────────────────────
-function buildULIDObject(rawId, { prefix='', suffix='', base='crockford', bin=false } = {}) {
+function buildULIDObject(rawId, { base='crockford', bin=false } = {}) {
   const t  = decodeTime(rawId);
   const ts = new Date(t).toISOString();
 
@@ -136,17 +138,9 @@ function buildULIDObject(rawId, { prefix='', suffix='', base='crockford', bin=fa
     formatted      = asBigInt.toString(16).padStart(26,'0');
   }
 
-  const res = { t, ts, ulid: prefix+formatted+suffix };
+  const res = { t, ts, ulid: formatted };
   if (bin) res.bin = rawToBinary(rawId);
   return res;
-}
-
-// Conversion Base32 → binaire (pour bin optionnel)
-function rawToBinary(str) {
-  const alphabet = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-  return [...str]
-    .map(c => alphabet.indexOf(c).toString(2).padStart(5,'0'))
-    .join('');
 }
 
 // ───────────────────────────────────────────────────────────
@@ -156,7 +150,7 @@ async function handleUlid(request) {
   const url = new URL(request.url);
 
   // A) Validation des params autorisés
-  const allowed = ["check","n","pretty","prefix","suffix","base","bin","format","timestamp","monotonic"];
+  const allowed = ["check","n","pretty","base","bin","format","timestamp","monotonic","fields"];
   const invalid = [...url.searchParams.keys()].filter(k=>!allowed.includes(k));
   if (invalid.length) {
     await log("WARN", "Unsupported query parameter(s)", { invalid });
@@ -190,8 +184,6 @@ async function handleUlid(request) {
   // C) Mode “generate” (lot) – lecture des options
   const n         = Math.min(parseInt(url.searchParams.get('n'))||1, 1000);
   const pretty    = url.searchParams.get('pretty') === 'true';
-  const prefix    = url.searchParams.get('prefix') || '';
-  const suffix    = url.searchParams.get('suffix') || '';
   const base      = url.searchParams.get('base')   || 'crockford';
   const bin       = url.searchParams.get('bin') === 'true';
   const format    = url.searchParams.get('format')|| 'json';
@@ -200,29 +192,79 @@ async function handleUlid(request) {
                     ? parseInt(url.searchParams.get('timestamp'),10)
                     : (monotonic ? Date.now() : null);
   
+
+  
   // DEBUG sur les paramètres de génération
   await log("DEBUG", "Generating ULID batch", {
-    n, pretty, prefix, suffix, base, bin, format,
+    n, pretty, base, bin, format,
     forcedTs: forcedTs===null?'auto':forcedTs,
     monotonic
   });
 
   // D) Génération des ULID
   const list = [];
-  if (monotonic) {
-    const m = monotonicFactory();
-    for (let i=0; i<n; i++) {
-      const raw = forcedTs!==null ? m(forcedTs) : m();
-      list.push(buildULIDObject(raw, { prefix, suffix, base, bin }));
-    }
-  } else {
-    for (let i=0; i<n; i++) {
-      const raw = forcedTs!==null
-        ? randomULID(forcedTs)
-        : randomULID();
-      list.push(buildULIDObject(raw, { prefix, suffix, base, bin }));
+const fields = (url.searchParams.get('fields') || 't,ts,ulid')
+  .split(',')
+  .map(f => f.trim())
+  .filter(Boolean);
+
+const forceBin = fields.includes('ulid') && bin;
+
+if (monotonic) {
+  const m = monotonicFactory();
+  for (let i=0; i<n; i++) {
+    const raw = forcedTs !== null ? m(forcedTs) : m();
+    const built = buildULIDObject(raw, { base, bin: forceBin });
+
+    if (fields.length === 1 && fields[0] === 'ulid') {
+      if (bin) {
+        list.push({ ulid: built.ulid, bin: built.bin });
+      } else {
+        list.push(built.ulid);
+      }
+    } else if (fields.length === 1 && fields[0] === 't') {
+      list.push(built.t);
+    } else if (fields.length === 1 && fields[0] === 'ts') {
+      list.push(built.ts);
+    } else {
+      const selected = {};
+      for (const field of fields) {
+        if (field === 't') selected.t = built.t;
+        else if (field === 'ts') selected.ts = built.ts;
+        else if (field === 'ulid') selected.ulid = built.ulid;
+      }
+      if (forceBin) selected.bin = built.bin;
+      list.push(selected);
     }
   }
+} else {
+  for (let i=0; i<n; i++) {
+    const raw = forcedTs !== null ? randomULID(forcedTs) : randomULID();
+    const built = buildULIDObject(raw, { base, bin: forceBin });
+
+    if (fields.length === 1 && fields[0] === 'ulid') {
+      if (bin) {
+        list.push({ ulid: built.ulid, bin: built.bin });
+      } else {
+        list.push(built.ulid);
+      }
+    } else if (fields.length === 1 && fields[0] === 't') {
+      list.push(built.t);
+    } else if (fields.length === 1 && fields[0] === 'ts') {
+      list.push(built.ts);
+    } else {
+      const selected = {};
+      for (const field of fields) {
+        if (field === 't') selected.t = built.t;
+        else if (field === 'ts') selected.ts = built.ts;
+        else if (field === 'ulid') selected.ulid = built.ulid;
+      }
+      if (forceBin) selected.bin = built.bin;
+      list.push(selected);
+    }
+  }
+}
+
 
   // E) Formats texte (csv, tsv, text, joined)
   if (['csv','tsv','text','joined'].includes(format)) {
@@ -292,37 +334,50 @@ async function handleAutofill(request) {
   const fields = (url.searchParams.get('fields') || 't,ts,ulid')
         .split(',').map(f => f.trim()).filter(Boolean);
 
-  const prefix = url.searchParams.get('prefix') || '';
-  const suffix = url.searchParams.get('suffix') || '';
   const base   = url.searchParams.get('base')   || 'crockford';
   const bin    = url.searchParams.get('bin') === 'true';
   const mono   = url.searchParams.get('monotonic') === 'true';
+  // Si on demande du monotone ET qu’on n’a pas de timestamp custom,
+  // on force tous les ULID à utiliser Date.now() commun
   const forced = url.searchParams.has('timestamp')
-                 ? Number(url.searchParams.get('timestamp')) : null;
+                 ? Number(url.searchParams.get('timestamp'))
+                 : (mono ? Date.now() : null);
 
   const gen = mono ? monotonicFactory() : randomULID;
 
   // Fabrique le remplacement selon les « fields »
   const makeRepl = () => {
     const raw   = forced !== null ? gen(forced) : gen();
-    const built = buildULIDObject(raw, { prefix, suffix, base, bin });
-    // Si un seul champ demandé, on renvoie un primitif
-    if (fields.length === 1) {
-      switch (fields[0]) {
-        case 'ulid': return built.ulid;
-        case 't':   return built.t;
-        case 'ts':  return built.ts;
-        case 'bin': return built.bin;
+    const built = buildULIDObject(raw, { base, bin: fields.includes('ulid') && bin });
+  
+    if (fields.length === 1 && fields[0] === 'ulid') {
+      if (bin) {
+        return { ulid: built.ulid, bin: built.bin };
+      } else {
+        return built.ulid;
       }
     }
-    // Sinon on renvoie un objet combiné
+    if (fields.length === 1 && fields[0] === 't') return built.t;
+    if (fields.length === 1 && fields[0] === 'ts') return built.ts;
+    if (fields.length === 1 && fields[0] === 'bin') return built.bin;
+  
     const o = {};
-    if (fields.includes('ulid')) o.ulid = built.ulid;
-    if (fields.includes('t'))   o.t   = built.t;
-    if (fields.includes('ts'))  o.ts  = built.ts;
-    if (bin && fields.includes('bin')) o.bin = built.bin;
+    for (const field of fields) {
+      if (field === 't')      o.t = built.t;
+      else if (field === 'ts')o.ts = built.ts;
+      else if (field === 'ulid') o.ulid = built.ulid;
+    }
+  
+    // 🔥 Ajout spécial bin si ulid sélectionné ET binaire activé
+    if (fields.includes('ulid') && bin) {
+      o.bin = built.bin;
+    }
+  
     return o;
   };
+  
+  
+  
 
   // ── 2. Parcours récursif & injection ────────────────────
   let filled = 0;
@@ -339,9 +394,12 @@ async function handleAutofill(request) {
 
   await log("DEBUG", "Autofill injection complete", { filled });
 
-  return new Response(JSON.stringify(body, null, 2), {
+  const pretty = url.searchParams.get('pretty') === 'true';
+
+  return new Response(JSON.stringify(body, null, pretty ? 2 : 0), {
     headers: { 'Content-Type':'application/json' }
   });
+
 }
   
 // ───────────────────────────────────────────────────────────
@@ -370,8 +428,6 @@ function handleAutoDoc(request) {
 			check:   "ULID à analyser pour vérifier sa validité",
 			n:       "Nombre de ULID à générer (max 1000)",
 			pretty:  "Format JSON lisible (indenté)",
-			prefix:  "Ajoute un préfixe aux ULID générés",
-			suffix:  "Ajoute un suffixe aux ULID générés",
 			base:    "Base de sortie : crockford (par défaut) ou hex",
 			bin:     "Ajoute le ULID en binaire (true/false)",
 			format:  "Format de sortie : json, csv, tsv, text, joined",

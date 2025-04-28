@@ -82,7 +82,7 @@ h1, h2, h3 {
 
 h2 {
   border-bottom-style: dotted;
-  //margin-top: var(--space-md);
+  /*margin-top: var(--space-md);*/
   padding-bottom: var(--space-xs);
 }
 
@@ -90,19 +90,21 @@ h3 {
   border-bottom-style: none;
   font-variant-caps: small-caps;
   margin-top: var(--space-md);
+  margin-left: var(--space-lg);
   padding-bottom: var(--space-xs);
 }
 
 label, input, select, textarea, button {
   font-family: var(--font-mono);
   font-size: var(--font-size-base);
+  padding-inline: var(--space-sm);
 }
 
 input, select, textarea {
   background: var(--input-bg);
   color: var(--text);
   border: var(--input-border);
-  padding: var(--space-sm);
+  /*padding: var(--space-sm);*/
   margin: var(--space-xs) 0;
   width: 100%;
 }
@@ -130,8 +132,7 @@ button:hover {
 
 pre {
   background: var(--code-bg);
-  padding: var(--space-xl);
-  margin-top: var(--space-sm);
+  margin: var(--space-sm);
   border-left: var(--code-border);
   overflow-x: auto;
 }
@@ -205,7 +206,8 @@ footer {
   flex-wrap:wrap;
   align-items:center;
   gap:var(--space-md);
-  margin-block: 1rem;
+  margin-block: 0.5rem;
+  padding-inline: var(--space-sm);
 }
 
 /* ─── En `.field-pair`, enfants côte-à-côte ─── */
@@ -214,50 +216,111 @@ footer {
   min-width: 0; /* autorise à rapetisser en-dessous du contenu */
 }
 
+.field-pair-in-form-group{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:var(--space-md);
+  margin-block:0;
+  padding-inline: 0;
+}
+
+/* ─── En `.field-pair`, enfants côte-à-côte ─── */
+.field-pair-in-form-group > * {
+  flex: 1;      /* chaque colonne prend 1 part */
+  min-width: 0; /* autorise à rapetisser en-dessous du contenu */
+}
+
+.form-group {
+  padding-inline: var(--space-sm);
+  margin-block:.5rem;
+}
+
 .odd-bloc{
   border-style: solid;
   border-color: var(--field-even-background);
-  padding-block: 0.125rem;
+  padding-block: var(--space-xs);
 }
 
 .even-bloc{
+  
   background: var(--field-even-background);
-  margin-block: 0rem;
-  padding-block: 0.25rem;
+  padding-block: var(--space-xs);
+}
+
+.maintenant-btn {
+  display:flex;
+  flex-wrap:no-wrap;
+  align-items:center;
 }
 
 .export-label{
-  display:flex;
-  flex-direction:column;
-  gap:var(--space-xs);
-  font-size:var(--font-size-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
   width: auto;
   min-width: auto;
 }
 .export-label select{
-  width:100%;
+  width: 100%;
   min-width: 4rem;
 }
 
+/*textarea.input {
+  margin-inline: var(--space-sm);
+  width: 100%;
+}*/
+
+.check-params {
+  padding-inline: var(--space-sm);
+}
+
 /* ===== Bloc code ===== */
-/* Limiter la hauteur des <pre> à 35 lignes et activer le scroll vertical */
+/* Limiter la hauteur des <pre> à 17 lignes et activer le scroll vertical */
 pre.code-block {
+  line-height: 1.4;
+  overflow-y: auto;
+}
+
+pre.code-block-out-gen {
   /* Assure-toi d’avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
-  /* max‑height = line-height × 35 */
-  max-height: calc(1.4em * 35);
+  /* max‑height = line-height × 17 */
+  max-height: calc(1.4em * 22);
+  /* max-height: 100%; */
   overflow-y: auto;
   /* Conserve le padding et le reste de ton style */
 }
 
-.code-block{
-  background:var(--code-bg);
-  padding:var(--space-md);
-  border-left:var(--code-border);
-  //overflow-x:auto;
-  //overflow-x:hidden;
-  white-space:pre-wrap;
-  word-break: break-all;
+pre.code-block-out-autofill {
+  /* Assure-toi d’avoir un line-height connu (ici 1.4) */
+  line-height: 1.4;
+  /* max‑height = line-height × 17 */
+  max-height: calc(1.4em * 37);
+  /* max-height: 100%; */
+  overflow-y: auto;
+  /* Conserve le padding et le reste de ton style */
+}
+
+pre.code-block-req {
+  /* Assure-toi d’avoir un line-height connu (ici 1.4) */
+  line-height: 1.4;
+  /* max‑height = line-height × 17 */
+  max-height: calc(1.4em * 8);
+  /* max-height: 100%; */
+  overflow-y: auto;
+  /* Conserve le padding et le reste de ton style */
+}
+
+/* === Code Block Styling === */
+.code-block, .code-block-out-gen, .code-block-out-autofill, .code-block-req-autofill {
+  background: var(--code-bg);
+  color: var(--code-color);
+  padding: var(--space-md);
+  border-left: var(--code-border);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* ===== Boutons en deux lignes ===== */
@@ -272,7 +335,7 @@ button {
 }
 
 /* Icône et texte distincts */
-.btn-icon {
+/*.btn-icon {
   display: block;
   font-size: 1.5em;
   line-height: 1;
@@ -282,7 +345,10 @@ button {
   display: block;
   font-size: 0.9em;
   margin-top: 0.1em;
-}
+}*/
+
+.btn-icon { font-size: 1.2em; line-height: 1; }
+.btn-label { font-size: 0.85em; margin-top: var(--space-xs); }
 
 /* Boutons d’action principaux (Générer, Vérifier, Remplir) */
 .btn-action {
@@ -291,10 +357,10 @@ button {
   padding-block: 1rem;
   margin: 1.5rem;
   border: double;
-  //border-style: dotted;
-  //border-radius: 6px;
-  //font-weight: bold;
-  //box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  /*border-style: dotted;
+  border-radius: 6px;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);*/
 }
 
 
@@ -324,18 +390,27 @@ button {
   display: flex;        /* s’aligne comme un mot */
   flex-direction: column;      /* input au‑dessus, texte en dessous */
   align-items: center;         /* centrage horizontal */
-  gap: 0.25rem;                 /* petite marge entre les deux */
+  /*gap: 0.25rem;                 /* petite marge entre les deux */
   cursor: pointer;             /* main sur tout le bloc */
-  //width: max-content;          /* ne s’étire pas à 100 % */
-  //padding-inline: var(--space-xs);
-  padding-block: var(--space-xs);
-  //border: yellow solid;
+  padding-block: 0;
+  /* border: yellow solid; */
+
+  align-self: stretch;
+  margin: 0;
+  padding-inline: var(--space-sm);
 }
+/*
+.checkbox-stack > pre {
+  align-self: stretch;
+  margin: 0;
+  padding-inline: var(--space-sm);
+}*/
+
 
 /* L’input lui‑même : enlève l’héritage "width:100%" */
 input[type="checkbox"] {
   width: auto;
-  //margin: 0;                   /* retire le margin implicite */
+  /* margin: 0;                   /* retire le margin implicite */
   accent-color: var(--heading); /* ou autre couleur du thème */
 }
 
@@ -351,12 +426,12 @@ input[type="checkbox"] {
   cursor: pointer;            /* main sur tout le bloc */
   width: auto;                /* ne s’étire pas à 100 % */
   gap: var(--space-xl);     /* pour espacer les checkboxes */
-  //border: red solid;
+  /* border: red solid; */
 }
 
 /* ─── Select-box custom pour Timestamp commun ─── */
 .ts-select {
-  border: 1px solid #aaa;
+  border: 1px solid var(--heading);
   display: flex;
   gap: 0.3rem;
   margin-top: 0.4rem;
@@ -369,7 +444,7 @@ input[type="checkbox"] {
   user-select: none;
   background: #222;
   color: #ccc;
-  border-right: 1px solid #444;
+  /*border-inline: 1px solid var(--bg);*/
 }
 .ts-select .option:last-child {
   border-right: none;
@@ -446,3 +521,129 @@ input[type="checkbox"] {
 
 .ts-valid.ok   { color: #33ff33; }
 .ts-valid.bad  { color: #ff4444; }
+
+
+/* === Container & Grid Setup === */
+.main-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+/* Each “row” of form + output spans one grid row; we’ll wrap pairs in .grid-row */
+.grid-row {
+  display: contents; /* allows children to participate in the parent grid */
+}
+
+/* Alternating background for logical rows */
+.grid-row:nth-child(odd) > * {
+  background: var(--field-even-background);
+}
+.grid-row:nth-child(even) > * {
+  background: transparent;
+}
+
+/* === Form & Output Panels === */
+.panel {
+  padding: var(--space-md);
+  border: 1px solid var(--field-odd-border);
+  border-radius: var(--radius-sm);
+}
+
+/* Ensure code blocks don’t overflow */
+.panel pre {
+  max-height: calc(1.4em * 20);
+  overflow-y: auto;
+}
+
+/* === Responsive tweaks === */
+@media (max-width: 640px) {
+  .main-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* === Button Styling === */
+.btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  border: double 2px var(--button-color);
+  border-radius: var(--radius-sm);
+  background: var(--button-bg);
+  color: var(--button-color);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.btn:hover {
+  background: var(--button-hover-bg);
+  color: var(--button-hover-color);
+}
+
+/* --- sablier --- */
+button.pending {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* --- checkbox-list --- */
+.span-list-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.sortable-list {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--space-xs);
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-md);
+  width: 100%;
+  margin-block: var(--sapce-md);
+  gap: 1px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: 0.2rem 0.4rem;
+  line-height: 1.2;
+  margin: 0;
+  background: var(--bg);
+}
+
+.left-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.move-controls {}
+
+.up-btn, .down-btn {
+  padding-block: 0;
+  padding-inline: var(--space-sm);
+  /* font-size: 1.2rem; */
+  cursor: pointer;
+  border: none;
+  transition: var(--transition-slow);
+}
+
+.sortable-list button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Ajout pour les éléments décochés */
+.unchecked {
+  opacity: 0.5;

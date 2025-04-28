@@ -1,75 +1,101 @@
-// ==== Toast simple ====
-function showToast(msg, duration = 3000) {
-  const t = document.createElement("div");
-  t.className = "toast";
-  t.textContent = msg;
-  document.body.append(t);
-  setTimeout(() => t.remove(), duration);
+import {
+  encodeTime, decodeCrock, humanize,
+  validateJSON, showToast, debounce,
+  setValid, clearValid
+} from '/helpers.js';
+
+// ╭──────────────────────────────────────────────────────────────╮
+// │  🌗  THEME PERSISTENCE & TOGGLE                             │
+// ╰──────────────────────────────────────────────────────────────╯
+(() => {
+  const stored = localStorage.getItem('ulid-theme');
+  if (stored === 'dark' || stored === 'light') {
+    document.documentElement.setAttribute('data-theme', stored);
+  }
+})();
+
+function toggleDarkMode () {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const newTheme = isDark ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('ulid-theme', newTheme);
 }
-// style minimal pour le toast
-const toastStyle = document.createElement("style");
+
+// ╭──────────────────────────────────────────────────────────────╮
+// │  🍔  MOBILE BURGER                                          │
+// ╰──────────────────────────────────────────────────────────────╯
+document.querySelector('.burger-btn')?.addEventListener('click', () => {
+  document.querySelector('.ulid-nav')?.classList.toggle('show');
+});
+
+// ╭──────────────────────────────────────────────────────────────╮
+// │  🔔  TOAST STYLES                                           │
+// ╰──────────────────────────────────────────────────────────────╯
+const toastStyle = document.createElement('style');
 toastStyle.textContent = `
 .toast {
   position: fixed;
   bottom: 1rem; left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.8);
-  color: #fff; padding: 0.5rem 1rem;
+  background: rgba(0,0,0,0.85);
+  color: #fff; padding: .5rem 1rem;
   border-radius: 4px; z-index: 9999;
   font-family: sans-serif;
-}
-`;
+}`;
 document.head.append(toastStyle);
 
-// 🔄 Appliquer le thème enregistré dès le chargement
-// -----------------------------------------------
-// On lit `ulid-theme` dans localStorage et on applique
-// le data-theme ("dark" ou "light") sur <html>.
-(() => {
-  const stored = localStorage.getItem("ulid-theme");
-  if (stored === "dark" || stored === "light") {
-    document.documentElement.setAttribute("data-theme", stored);
+// ╭──────────────────────────────────────────────────────────────╮
+// │  🧰  DOM HELPERS                                            │
+// ╰──────────────────────────────────────────────────────────────╯
+const $ = (id) => document.getElementById(id);
+
+  /* Détection des clés sélectionnées et de leur ordre */
+  function getSelectedKeys(containerId) {
+    const container = document.getElementById(containerId)?.querySelector('.sortable-list');
+    if (!container) return [];
+  
+    const keys = [];
+    container.querySelectorAll('.list-item').forEach(item => {
+      const input = item.querySelector('input[type="checkbox"]');
+      const label = item.querySelector('label');
+      if (input?.checked && label) {
+        const text = label.textContent.trim();
+        if (text.includes('UNIX')) keys.push('t');
+        else if (text.includes('ISO')) keys.push('ts');
+        else if (text.includes('ulid')) keys.push('ulid');
+        else console.warn('clé inconnue', text);
+      }
+    });
+  
+    return keys;
   }
-})();
-
-// === 🍔 Script burger menu ===
-// -----------------------------------------------
-// Lorsque l'on clique sur le bouton hamburger,
-// on bascule la classe 'show' sur la nav pour
-// afficher/masquer le menu mobile.
-document.querySelector('.burger-btn')?.addEventListener('click', () => {
-  document.querySelector('.ulid-nav')?.classList.toggle('show');
-});
-
-// === 🌓 Gestion du thème ===
-// -----------------------------------------------
-// Fonction toggle pour changer le thème et le
-// réenregistrer en localStorage.
-function toggleDarkMode() {
-  const html = document.documentElement;
-  const isDark = html.getAttribute("data-theme") === "dark";
-  const newTheme = isDark ? "light" : "dark";
-  html.setAttribute("data-theme", newTheme);
-  localStorage.setItem("ulid-theme", newTheme);
-}
-
-// === 🧪 Playground.js — utilitaires DOM ===
-// -----------------------------------------------
-// Raccourci pour document.getElementById
-const $ = id => document.getElementById(id);
-
-// Debounce : exécute fn(...args) uniquement après
-// `delay` ms sans nouvel appel.
-const debounce = (fn, delay = 300) => {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => fn(...args), delay);
-  };
-};
+  /* Fin de Détection des clés sélectionnées et de leur ordre */
 
 // ─── Beautify / Minify JSON ───
-function beautifyJSON() {
+function beautifyGenOutput() {
+  const pre = $("gen-output");
+  try {
+    const obj = JSON.parse(pre.textContent);
+    pre.textContent = JSON.stringify(obj, null, 2);
+    updateJsonValidity();
+  } catch {
+    showToast("❌ JSON invalide !");
+  }
+}
+
+function minifyGenOutput() {
+  const pre = $("gen-output");
+  try {
+    const obj = JSON.parse(pre.textContent);
+    pre.textContent = JSON.stringify(obj);
+    updateJsonValidity();
+  } catch {
+    showToast("❌ JSON invalide !");
+  }
+}
+
+function beautifyAutofillInput() {
   const input = $("json-input");
   try {
     const obj = JSON.parse(input.value);
@@ -80,7 +106,7 @@ function beautifyJSON() {
   }
 }
 
-function minifyJSON() {
+function minifyAutofillInput() {
   const input = $("json-input");
   try {
     const obj = JSON.parse(input.value);
@@ -91,48 +117,45 @@ function minifyJSON() {
   }
 }
 
-
-/* --- Crockford <-> ms helpers --- */
-const CF_ALPH = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-function encodeTime(ms,len=10){
-  let s="";while(len--){s=CF_ALPH[ms%32]+s;ms=Math.floor(ms/32);}return s;
-}
-function decodeCrock(str){       // 10 car. => ms
-  if(!/^[0-9A-HJKMNP-TV-Z]{10}$/i.test(str)) return NaN;
-  let v=0;for(const c of str.toUpperCase()){
-    const i=CF_ALPH.indexOf(c); if(i<0) return NaN;
-    v=v*32+i;
-  }
-  return v;                      // ms
-}
-function humanize(ms){
-  return new Date(ms).toLocaleString("fr-FR",{
-    weekday:"long",day:"2-digit",month:"long",year:"numeric",
-    hour:"2-digit",minute:"2-digit",second:"2-digit",
-    hour12:false,timeZone:"UTC"
-  })+" UTC";
-}
-
-function setValid(el, ok){
-  el.textContent = ok ? "✅ Valide" : "❌ Invalide";
-  el.className   = "ts-valid " + (ok ? "ok" : "bad");
-}
-function clearValid(...els){
-  els.forEach(e=>{ e.textContent=""; e.className="ts-valid"; });
-}
-
-
-// === ✅ Validation JSON ===
-// -----------------------------------------------
-// Renvoie true si `str` est un JSON valide.
-const validateJSON = str => {
+function beautifyAutofillOutput() {
+  const pre = $("json-output");
   try {
-    JSON.parse(str);
-    return true;
+    const obj = JSON.parse(pre.textContent);
+    pre.textContent = JSON.stringify(obj, null, 2);
+    updateJsonValidity();
   } catch {
-    return false;
+    showToast("❌ JSON invalide !");
   }
-};
+}
+
+function minifyAutofillOutput() {
+  const pre = $("json-output");
+  try {
+    const obj = JSON.parse(pre.textContent);
+    pre.textContent = JSON.stringify(obj);
+    updateJsonValidity();
+  } catch {
+    showToast("❌ JSON invalide !");
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // === 📋 Copier texte (2 spans btn-icon / btn-label) ===
 // -----------------------------------------------
@@ -197,8 +220,6 @@ window.pasteTo = async (targetId, callback) => {
   }
 };
 
-
-
 // === ✅ Validation JSON en temps réel ===
 // -----------------------------------------------
 // Affiche "✅ JSON valide" ou "❌ JSON invalide" sous
@@ -221,12 +242,20 @@ const updateJsonValidity = debounce(() => {
    - Met à jour le compteur de remplacements
 ---------------------------------------------------------------- */
 window.autofillJSON = async () => {
+  const btn = $("autofill-btn");
+  btn.disabled = true;
+  btn.classList.add("pending");
 
   /* 0️⃣  Lecture / validation du JSON source ------------------ */
   const rawInput = $("json-input").value;
   let jsonInput;
   try { jsonInput = JSON.parse(rawInput); }
-  catch { showToast("❌ JSON invalide !"); return; }
+  catch {
+    showToast("❌ JSON invalide !");
+    btn.disabled = false;
+    btn.classList.remove("pending");
+    return;
+  }
 
   /* 1️⃣  Paramètres « clé / valeur » à remplacer -------------- */
   //   ce sont les SUFFIXE et VALEUR d’origine que l’on va remplacer
@@ -234,36 +263,32 @@ window.autofillJSON = async () => {
   const valueMatchParam = encodeURIComponent($("autofill-value").value.trim() || "null");
 
   /* 2️⃣  Options ULID classiques ------------------------------ */
-  const prefix   = encodeURIComponent($("autofill-prefix").value);
-  const suffix   = encodeURIComponent($("autofill-suffix").value);
+  //const prefix   = encodeURIComponent($("autofill-prefix").value);
+  //const suffix   = encodeURIComponent($("autofill-suffix").value);
   const base     = $("autofill-base").value;
   const bin      = $("autofill-bin").checked                     ? "&bin=true"       : "";
   const mono     = $("autofill-gen-monotonic-ulid").checked      ? "&monotonic=true" : "";
   const tsParam  = getAutofillTsParam(); // ⏲️ timestamp commun (déjà implémenté)
 
-  /* 3️⃣  ✨ Sélection des champs à insérer --------------------- */
-  const wantUnix = $("autofill-insert-unix").checked;  // t
-  const wantIso  = $("autofill-insert-iso").checked;   // ts
-  const wantUlid = $("autofill-insert-ulid").checked;  // ulid
-
-  // On s’assure qu’au moins UNE case est cochée
-  if (!(wantUnix || wantIso || wantUlid)) {
+  /* 3️⃣  ✨ Sélection dynamique dans autofill-keys --------------------- */
+  const fields = getSelectedKeys('autofill-keys');
+  if (!fields.length) {
     showToast("⚠️ Choisis au moins un champ à insérer !");
+    btn.disabled = false;
+    btn.classList.remove("pending");
     return;
   }
-
-  // Ordre imposé : t (unix) - ts (iso) - ulid (ulid)
-  const fields = [];
-  if (wantUnix) fields.push("t");
-  if (wantIso)  fields.push("ts");
-  if (wantUlid) fields.push("ulid");
   const fieldsParam = "&fields=" + fields.join(",");
+
+  const jsonInputOriginal = JSON.parse(JSON.stringify(jsonInput)); // copie profonde
 
   /* 4️⃣  Construction de l’URL finale ------------------------- */
   const url = `/autofill`
-    + `?key=${keySuffixParam}&value=${valueMatchParam}`
-    + `&prefix=${prefix}&suffix=${suffix}&base=${base}`
-    + bin + mono + tsParam + fieldsParam;
+  + `?key=${keySuffixParam}&value=${valueMatchParam}`
+  // + `&prefix=${prefix}&suffix=${suffix}
+  + `&base=${base}`
+  + bin + mono + tsParam + fieldsParam;
+
 
   /* 5️⃣  Affichage de la requête simulée ---------------------- */
   $("req-autofill-full").textContent =
@@ -276,100 +301,167 @@ window.autofillJSON = async () => {
     headers: { "Content-Type": "application/json" },
     body   : JSON.stringify(jsonInput)
   });
+  if (!res.ok) {
+    showToast(`❌ Erreur ${res.status} : ${res.statusText}`);
+    $("json-output").textContent = "// ⚠️ Échec de la requête";
+    btn.disabled = false;
+    btn.classList.remove("pending");
+    return;
+  }
   const data = await res.json();
+  if (data.error) {
+    showToast("❌ " + data.error);
+    $("json-output").textContent = JSON.stringify(data, null, 2);
+    return;
+  }  
   $("json-output").textContent = JSON.stringify(data, null, 2);
 
   /* 7️⃣  Comptage des remplacements --------------------------- */
   //   On compte chaque fois qu’une clé se termine par keySuffix
   //   et que sa valeur AVANT correspondait à valueMatch.
+  // Lecture des paramètres choisis
   const keySuffixClean  = $("autofill-key").value.trim()   || "_uid";
-  const valueMatchClean = $("autofill-value").value.trim() || "null";
+  const rawValueMatch   = $("autofill-value").value.trim() || "null";
 
-  function countRepl(orig, neu) {
-    let cnt = 0;
-    if (orig && typeof orig === "object") {
-      const isArr = Array.isArray(orig);
-      const keys  = isArr ? orig.keys() : Object.keys(orig);
-      for (const k of keys) {
-        const oVal = isArr ? orig[k] : orig[k];
-        const nVal = isArr ? neu[k]  : neu[k];
-
-        // Si la clé MATCHE et la valeur d’origine = valeur recherchée
-        if (!isArr && k.endsWith(keySuffixClean)
-            && ((oVal === null && valueMatchClean === "null")
-                || String(oVal) === valueMatchClean)) {
-          cnt++;
-        }
-        // Descente récursive éventuelle
-        if (oVal && typeof oVal === "object") {
-          cnt += countRepl(oVal, nVal);
-        }
-      }
+  // Détermine la fonction de comparaison exacte comme côté serveur
+  let matchValueFn;
+  if (rawValueMatch === "*" || rawValueMatch === "") {
+    matchValueFn = () => true;
+  } else {
+    let parsedValue;
+    try {
+      parsedValue = JSON.parse(rawValueMatch);
+      matchValueFn = (val) => val === parsedValue;
+    } catch {
+      matchValueFn = (val) => String(val) === rawValueMatch;
     }
-    return cnt;
   }
 
-  const replaced = countRepl(jsonInput, data);
+  // Fonction corrigée pour compter précisément les remplacements
+function countRepl(orig) { // ← un seul paramètre !
+  let cnt = 0;
+  if (orig && typeof orig === "object") {
+    const isArr = Array.isArray(orig);
+    const keys  = isArr ? orig.keys() : Object.keys(orig);
+    for (const k of keys) {
+      const oVal = orig[k];
+
+      if (!isArr && k.endsWith(keySuffixClean) && matchValueFn(oVal)) {
+        cnt++;
+      }
+
+      if (oVal && typeof oVal === "object") {
+        cnt += countRepl(oVal); // appel récursif avec un seul paramètre
+      }
+    }
+  }
+  return cnt;
+}
+
+
+
+  const replaced = countRepl(jsonInputOriginal);
   $("autofill-count").textContent =
     replaced
-      ? `🔄 ${replaced} remplacement (s) effectué (s)`
+      ? `🔄 ${replaced} remplacement(s) effectué(s)`
       : `ℹ️ Aucun remplacement`;
 
-}; // ← fin de autofillJSON()
+  btn.disabled = false;
+  btn.classList.remove("pending");
+}; // ← fin de AutofillJSON()
 
-
-
-// === 💾 Télécharger Autofill ===
+// === 💾 Utilitaire générique pour télécharger un résultat ===
 // -----------------------------------------------
 // Génère un nom de fichier horodaté + ULID, crée un Blob
 // et déclenche le téléchargement.
-window.downloadAutofill = async () => {
-  const format = $("autofill-export-format").value;
-  const raw    = $("json-output").textContent.trim();
-  if (!raw || raw === "// En attente") {
+
+// === sécurise les champs CSV/TSV ===
+function escapeField(field, delim) {
+  if (typeof field !== 'string') field = String(field ?? '');
+  if (field.includes(delim) || field.includes('"') || field.includes('\n') || field.includes('\r')) {
+    return '"' + field.replace(/"/g, '""') + '"';
+  }
+  return field;
+}
+
+// === downloadResult v2 ===
+async function downloadResult(outputId, formatId) {
+  const format = formatId ? (document.getElementById(formatId)?.value || 'json') : 'json';
+  const raw = document.getElementById(outputId).textContent.trim();
+  if (!raw || raw.startsWith("//")) {
     alert("Aucune donnée à exporter !");
     return;
   }
 
-  // 1️⃣ Date/heure format YYYY-MM-DD_HH-MM-SS
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
-  const datePart = [
-    now.getFullYear(),
-    pad(now.getMonth()+1),
-    pad(now.getDate())
-  ].join("-") + "_" +
-  [pad(now.getHours()), pad(now.getMinutes()), pad(now.getSeconds())].join("-");
+  const datePart = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 
-  // 2️⃣ Récupération d’un ULID unique pour le nom de fichier
   let fileUlid = "noid";
   try {
-    fileUlid = await (await fetch("/ulid?n=1&format=text")).text();
-  } catch {
-    console.warn("Impossible de récupérer un ULID pour le filename.");
-  }
+    const ulidRes = await fetch("/ulid?n=1&format=text");
+    if (ulidRes.ok) fileUlid = (await ulidRes.text()).trim();
+  } catch {}
 
-  // 3️⃣ Nom du fichier
   const filename = `${datePart}_${fileUlid}.${format}`;
 
-  // 4️⃣ Construction du contenu et download
   let result = raw;
   try {
     const parsed = JSON.parse(raw);
-    result = format === "json"
-      ? JSON.stringify(parsed, null, 2)
-      : JSON.stringify(parsed, null, 2);
-  } catch {}
+    const isArray = Array.isArray(parsed);
+
+    if ((format === "csv" || format === "tsv" || format === "text" || format === "joined") && isArray) {
+      const delim = format === "csv" ? "," : format === "tsv" ? "\t" : "\n";
+      const fields = getSelectedKeys('gen-keys'); // ⬅️ très important : ordre sortable-list
+
+      const allValues = [];
+      for (const field of fields) {
+        for (const obj of parsed) {
+          if (typeof obj === "object" && obj[field] !== undefined) {
+            allValues.push(String(obj[field]));
+          } else if (typeof obj !== "object" && field === "ulid") {
+            allValues.push(String(obj)); // cas primitif (ulid seul)
+          }
+        }
+      }
+
+      if (format === "csv" || format === "tsv") {
+        result = allValues.map(val => escapeField(val, delim)).join(delim);
+      } else if (format === "text") {
+        result = allValues.join("\n\n");
+      } else if (format === "joined") {
+        result = allValues.join("");
+      }
+    }
+
+    else if (format === "json") {
+      result = raw; // 🎯 Réplique directe du contenu affiché
+    }
+    
+
+  } catch {
+    // si JSON.parse échoue => on garde raw
+  }
+
   const blob = new Blob([result], { type: "text/plain" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-};
+}
+
+
+
+// === 💾 Raccourcis pour Playground ===
+window.downloadConverted = () =>
+  downloadResult("gen-output", "gen-export-format");
+
+window.downloadAutofill  = () =>
+  downloadResult("json-output", "autofill-export-format");
 
 // === 🎲 Génération ULID ===
 // -----------------------------------------------
@@ -377,138 +469,217 @@ window.downloadAutofill = async () => {
 // + flags timestamp et monotonic, affiche la requête,
 // puis met à jour gen-output.
 window.generateULID = async () => {
-  const n        = +$("gen-count").value || 1;
-  const prefix   = encodeURIComponent($("gen-prefix").value);
-  const suffix   = encodeURIComponent($("gen-suffix").value);
-  const base     = $("gen-base").value;
-  const bin      = $("gen-bin").checked   ? "&bin=true"    : "";
-  const format   = $("gen-format").value;
+  const btn = $("generate-btn");
+  btn.disabled = true;
+  btn.classList.add("pending");
 
+  const n         = +$("gen-count").value || 1;
+  // const prefix    = encodeURIComponent($("gen-prefix").value);
+  // const suffix    = encodeURIComponent($("gen-suffix").value);
+  const base      = $("gen-base").value;
+  const bin       = $("gen-bin").checked   ? "&bin=true"    : "";
+  const format    = $("gen-format").value;
+  const tsParam   = getGenTsParam();
+  const monoParam = $("gen-monotonic-ulid").checked   ? `&monotonic=true` : "";
 
-  // ── Lecture du timestamp commun via getGenTsParam ──
-  const tsParam = getGenTsParam();
-  
-
-  const monoParam= $("gen-monotonic-ulid").checked   ? `&monotonic=true`         : "";
+  const fields = getSelectedKeys('gen-keys');
+  if (!fields.length) {
+    showToast("⚠️ Choisis au moins un champ à générer !");
+    btn.disabled = false;
+    btn.classList.remove("pending");
+    return;
+  }
+  const fieldsParam = `&fields=${fields.join(",")}`;
 
   const url = `/ulid`
     + `?n=${n}` + tsParam + monoParam
-    + `&prefix=${prefix}`
-    + `&suffix=${suffix}`
+    // + `&prefix=${prefix}`
+    // + `&suffix=${suffix}`
     + `&base=${base}` + bin
     + `&format=${format}`
+    + fieldsParam
     + `&pretty=true`;
 
   $("req-gen").textContent = `GET ${url}`;
-  const res    = await fetch(url);
-  const isText = ["csv","tsv","joined","text"].includes(format);
-  const data   = isText ? await res.text() : await res.json();
-  $("gen-output").textContent = isText
-    ? data
-    : JSON.stringify(data, null, 2);
-  $("gen-output").scrollTop = 0;
-};
 
-// === 💾 Télécharger ULID ===
-// -----------------------------------------------
-// Même principe que downloadAutofill, mais pour ULID
-window.downloadConverted = async () => {
-  const format = $("gen-export-format").value;
-  const raw    = $("gen-output").textContent.trim();
-  if (!raw || raw === "// Résultat ici") {
-    alert("Aucun contenu à exporter !");
+  const res = await fetch(url);
+  if (!res.ok) {
+    showToast(`❌ Erreur ${res.status} : ${res.statusText}`);
+    $("gen-output").textContent = "// ⚠️ Échec de la requête";
+    btn.disabled = false;
+    btn.classList.remove("pending");
     return;
   }
 
-  // Préparation du contenu selon le format
-  let result = raw;
-  try {
-    const parsed = JSON.parse(raw);
-    switch (format) {
-      case "json":   result = JSON.stringify(parsed, null, 2); break;
-      case "csv":    result = parsed.map(e=>e.ulid).join("\n"); break;
-      case "tsv":    result = parsed.map(e=>e.ulid).join("\t"); break;
-      case "text":   result = parsed.map(e=>e.ulid).join("\n\n"); break;
-      case "joined": result = parsed.map(e=>e.ulid).join(""); break;
-    }
-  } catch {}
-
-  // Timestamp + ULID pour le nom
-  const now = new Date();
-  const pad = n => String(n).padStart(2, "0");
-  const datePart = [
-    now.getFullYear(),
-    pad(now.getMonth()+1),
-    pad(now.getDate())
-  ].join("-") + "_" +
-  [pad(now.getHours()),pad(now.getMinutes()),pad(now.getSeconds())].join("-");
-  let fileUlid = "noid";
-  try {
-    fileUlid = await (await fetch("/ulid?n=1&format=text")).text();
-  } catch {
-    console.warn("Impossible de récupérer un ULID pour le filename.");
+  const isText = ["csv","tsv","joined","text"].includes(format);
+  const data   = isText ? await res.text() : await res.json();
+  if (!isText && data.error) {
+    showToast("❌ " + data.error);
+    $("gen-output").textContent = JSON.stringify(data, null, 2);
+    btn.disabled = false;
+    btn.classList.remove("pending");
+    return;
   }
-  const filename = `${datePart}_${fileUlid}.${format}`;
 
-  const blob = new Blob([result], { type: "text/plain" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  $("gen-output").textContent = isText
+    ? data
+    : JSON.stringify(data, null, 2);
+
+  $("gen-output").scrollTop = 0;
+
+  btn.disabled = false;
+  btn.classList.remove("pending");
 };
+
 
 // === 🔎 Vérification ULID ===
 // -----------------------------------------------
 // Lit le champ, appelle /ulid?check=… et affiche
 // la réponse formattée ou une erreur en console.
 window.checkULID = async () => {
-  const ulid       = $("check-input").value.trim();
-  const output     = $("check-output");
-  const reqDisplay = $("req-check");
-
-  if (!ulid) {
-    output.textContent = "// 🟡 Aucun ULID fourni";
-    return;
-  }
-
-  const url = `/ulid?check=${encodeURIComponent(ulid)}`;
-  reqDisplay.textContent = `GET ${url}`;
+  const btn = $("check-btn");
+  btn.disabled = true;
+  btn.classList.add("pending");
 
   try {
-    const res  = await fetch(url);
-    const data = await res.json();
-    output.textContent = JSON.stringify({
-      ...(data.error   && { error: data.error }),
-      ulid: data.ulid || ulid,
-      conform: data.conform ?? false,
-      ...(data.conform && { t: data.t, ts: data.ts })
-    }, null, 2);
-  } catch (err) {
-    console.debug("Erreur ULID :", err.message);
-    output.textContent = JSON.stringify({
-      ulid,
-      conform: false,
-      error: "Erreur de requête ou réponse non conforme"
-    }, null, 2);
-  }
+    const input = $("check-input").value.trim();
+    if (!input) {
+      showToast("⚠️ Entrez un ULID à vérifier.");
+      return;
+    }
 
-  output.scrollTop = 0;
+    const url = `/ulid?check=${encodeURIComponent(input)}`;
+    $("req-check").textContent = `GET ${url}`;
+    const res = await fetch(url);
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      showToast("❌ Impossible de lire la réponse serveur !");
+      $("check-output").textContent = "// ⚠️ Erreur de parsing JSON";
+      $("check-ts-preview").textContent = "📆 Date : —";
+      return;
+    }
+
+    $("check-output").textContent = JSON.stringify(data, null, 2);
+    $("check-output").scrollTop = 0;
+
+    if (data.error) {
+      showToast("❌ " + data.error);
+      $("check-ts-preview").textContent = "📆 Date : —";
+    } else if (typeof data.t === "number") {
+      $("check-ts-preview").textContent = "📆 Date : " + humanize(data.t);
+    } else {
+      $("check-ts-preview").textContent = "📆 Date : —";
+    }
+  }
+  finally {
+    btn.disabled = false;
+    btn.classList.remove("pending");
+  }
 };
+
+
+
+/**
+ * Disable / enable a “bin” checkbox depending on the current
+ * value of an adjacent <select> that offers “crockford” | “hex”.
+ * @param {HTMLSelectElement} select  e.g. #gen-base
+ * @param {HTMLInputElement}  chk     e.g. #gen-bin
+ */
+function syncBinCheckbox(select, chk) {
+  const isHex = select.value === 'hex';
+  chk.disabled = isHex;
+  if (isHex) chk.checked = false;        // uncheck when locked
+}
+
+
 
 // === 🚀 Init DOMContentLoaded — liaison des handlers ===
 document.addEventListener("DOMContentLoaded", () => {
+
+  /* Mise à jour dynamique des flèches après chaque mouvement */
+  function updateMoveButtons(containerId) {
+    const container = document.getElementById(containerId);
+    const items = container.querySelectorAll('.list-item');
+  
+    items.forEach((item, index) => {
+      const upBtn = item.querySelector('.up-btn');
+      const downBtn = item.querySelector('.down-btn');
+  
+      if (upBtn) upBtn.disabled = (index === 0);
+      if (downBtn) downBtn.disabled = (index === items.length - 1);
+    });
+  }
+  /* Fin de Mise à jour dynamique des flèches après chaque mouvement */
+
+  /* Animation fluide des boutons */
+   const containers = ['gen-keys', 'autofill-keys'];
+
+  containers.forEach(id => {
+    const wrapper = document.getElementById(id);
+    if (!wrapper) return;
+
+    const container = wrapper.querySelector('.sortable-list');
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      const item = btn.closest('.list-item');
+      if (!item || !container.contains(item)) return;
+
+      const list = Array.from(container.querySelectorAll('.list-item'));
+      const firstRects = new Map();
+      list.forEach(el => firstRects.set(el, el.getBoundingClientRect()));
+
+      if (btn.classList.contains('up-btn') && item.previousElementSibling?.classList.contains('list-item')) {
+        container.insertBefore(item, item.previousElementSibling);
+        updateMoveButtons('gen-keys');
+        updateMoveButtons('autofill-keys');
+      }
+      if (btn.classList.contains('down-btn') && item.nextElementSibling?.classList.contains('list-item')) {
+        container.insertBefore(item.nextElementSibling, item);
+        updateMoveButtons('gen-keys');
+        updateMoveButtons('autofill-keys');
+      }
+
+      animateListItems(container, firstRects);
+    });
+  });
+
+  function animateListItems(container, firstRects) {
+    container.querySelectorAll('.list-item').forEach(el => {
+      const lastRect = el.getBoundingClientRect();
+      const firstRect = firstRects.get(el);
+      const deltaY = firstRect.top - lastRect.top;
+      if (deltaY !== 0) {
+        el.animate([
+          { transform: `translateY(${deltaY}px)` },
+          { transform: 'translateY(0)' }
+        ], {
+          duration: 300,
+          easing: 'cubic-bezier(0.4, 0, 0.2, 1)'
+        });
+      }
+    });
+  }
+  /* Fin de l'Animation fluide des boutons */
+
 
   /* ⏲️ Initialise les deux widgets Timestamp */
   window.getGenTsParam      = initTimestampUI("gen");
   window.getAutofillTsParam = initTimestampUI("autofill");
 
   // Nouveau : boutons Beautify / Minify
-  $("beautify-btn")?.addEventListener("click", beautifyJSON);
-  $("minify-btn")?.addEventListener("click",  minifyJSON);
+  $("beautify-gen-output-btn")?.addEventListener("click", beautifyGenOutput);
+  $("minify-gen-output-btn")?.addEventListener("click",  minifyGenOutput);
+  $("beautify-autofill-input-btn")?.addEventListener("click", beautifyAutofillInput);
+  $("minify-autofill-input-btn")?.addEventListener("click",  minifyAutofillInput);
+  $("beautify-autofill-output-btn")?.addEventListener("click", beautifyAutofillOutput);
+  $("minify-autofill-output-btn")?.addEventListener("click",  minifyAutofillOutput);
 
   // Validation JSON à chaque frappe
   $("json-input")?.addEventListener("input", updateJsonValidity);
@@ -530,53 +701,58 @@ document.addEventListener("DOMContentLoaded", () => {
     $(id)?.addEventListener("click", () => pasteTo(tgt, callback));
   });
 
-  // Boutons clear
-  [
-    {id:"clear-json-btn",      tgt:"json-input",       callback:updateJsonValidity},
-    {id:"clear-ulid-btn",      tgt:"check-input"},
-    {id:"clear-gen-output-btn",tgt:"gen-output"},
-    {id:"clear-check-output-btn",tgt:"check-output"},
-    {id:"clear-json-output-btn",tgt:"json-output"},
-    {id:"clear-req-gen-btn",   tgt:"req-gen"},
-    {id:"clear-req-check-btn", tgt:"req-check"},
-    {id:"clear-req-autofill-btn",tgt:"req-autofill-full"},
-  ].forEach(({id,tgt,callback}) => {
-    $(id)?.addEventListener("click", () => {
-      const el = $(tgt); 
-      if (!el) return;
-      if ('value' in el) el.value=""; else el.textContent="// En attente";
-      if (callback) callback();
-    });
-  });
-
   // Actions principales
   [
-    {id:"generate-btn",       fn:generateULID},
-    {id:"check-btn",          fn:checkULID},
-    {id:"autofill-btn",       fn:autofillJSON},
-    {id:"download-gen-btn",   fn:downloadConverted},
-    {id:"download-autofill-btn",fn:downloadAutofill},
-  ].forEach(({id,fn}) => {
-    $(id)?.addEventListener("click", fn);
+    {id:"generate-btn",         fn:generateULID},
+    {id:"check-btn",            fn:checkULID},
+    {id:"autofill-btn",         fn:autofillJSON},
+  ].forEach(({id, fn}) => {
+    document.getElementById(id)?.addEventListener("click", fn);
   });
+
+  // === 🎛️ Gestion unifiée des boutons copy / clear / download ===
+  document.body.addEventListener("click", e => {
+    const btn = e.target.closest("[data-action]");
+    if (!btn) return;
+
+    const { action, target, formatId } = btn.dataset;
+    if (!target) return;
+
+    // Clear le champ cible
+    if (action === "clear") {
+      const el = $(target);
+      if (!el) return;
+      if ("value" in el) el.value = "";
+      else el.textContent = "// En attente";
+
+      // Appel optionnel de updateJsonValidity
+      if (target === "json-input") updateJsonValidity();
+
+       // 🎯 Ajout spécial pour effacer aussi la date du Vérificateur
+      if (target === "check-output") {
+        const tsEl = document.getElementById("check-ts-preview");
+        if (tsEl) tsEl.textContent = "📆 Date : —";
+      }
+    }
+
+    // Copier le champ cible
+    if (action === "copy") {
+      copyText(target, e);
+    }
+
+    // Télécharger le champ cible avec le format précisé
+    if (action === "download") {
+      downloadResult(target, formatId);
+    }
+  });
+
+  // Désactive les flèches haut et bas inutiles
+  updateMoveButtons('gen-keys');
+  updateMoveButtons('autofill-keys');
+
 });
 
 /* ---------- Outils horodatage ---------- */
-const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-function encodeTime(ms, len = 10) {
-  let str = "";
-  while (len-- > 0) {
-    str = alphabet[ms % 32] + str;
-    ms = Math.floor(ms / 32);
-  }
-  return str;
-}
-function humanize(ms){
-  return new Date(ms).toLocaleString("fr-FR", {
-    weekday:"long", day:"2-digit", month:"long", year:"numeric",
-    hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false, timeZone:"UTC"
-  })+" UTC";
-}
 
 /** Genère toutes les fonctions / listeners du mini-UI Timestamp
  *  @param {string} prefix  "gen"  ou "autofill"
