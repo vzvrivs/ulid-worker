@@ -25,6 +25,7 @@
   --navbar-height: 56px;
   --navbar-blur: blur(10px);
   --navbar-radius: 999px;
+  --navbar-link-size: 1rem;
 }
 
 [data-theme="dark"] {

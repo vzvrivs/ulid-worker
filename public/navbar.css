@@ -128,7 +128,7 @@
 .navbar-mobile a {
   color: var(--navbar-text);
   text-decoration: none;
-  font-size: 1.1rem;
+  font-size: var(--navbar-link-size);
   padding-block: 0.4rem;
   border-radius: 0.4rem;
 }
@@ -148,7 +148,7 @@
    Styles unifiés pour tous les éléments interactifs de navigation
 ───────────────────────────────────────────────────────────────────── */
 .nav-item {
-  font-size: 1rem;
+  font-size: var(--navbar-link-size);
   border-radius: 0.5rem;
   transition: color 0.3s ease, text-shadow 0.3s ease;
 }
