@@ -1,38 +1,15 @@
 /* ─────────────────────────────────────────────────────────────────────
-   NAVBAR.CSS — version refactorisée avec .nav-item unifié
+   NAVBAR.CS S — version refactorisée avec .nav-item unifié
 ───────────────────────────────────────────────────────────────────── */
-
-/* ─── Navbar flottante façon Spline revisité ─── */
-.header-nav-container {
-  position: sticky;
-  top: 1rem;          /* sous le haut de la page */
-  left: 0;            /* plein écran bord à bord */
-  right: 0;           /* idem */
-  display: flex;
-  justify-content: center; 
-  pointer-events: none;
-  z-index: 1000;
-}
-
-.header-nav-container.js-ready {
-  visibility: visible;
-}
 
 .navbar {
   position: relative;
-  width: 100%;                 /* prend 100% du header */
+  width: 100%;
   display: flex;
   align-items: center;
-
-  /* UNIFORMISER le gutter interne : */
-  padding-inline: 1rem;        /* espace interne gauche + droite */
-  
-  /* ===== SUPPRIMER CES LIGNES ===== */
-  /* padding-left: .8rem; */
-  /* padding-right: .55rem; */
-  /* margin-inline: 1rem; */
-  /* =============================== */
-
+  padding-left: .8rem;
+  padding-right: .55rem;
+  margin-inline: 1rem;
   min-height: var(--navbar-height);
   background: var(--navbar-bg);
   -webkit-backdrop-filter: var(--navbar-blur);
@@ -41,17 +18,6 @@
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   pointer-events: auto;
-}
-
-.navbar-wrapper {
-  width: 100%;
-  max-width: var(--navbar-max-width);
-  margin-inline: auto;       /* centre le contenu quand l’écran est large */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  flex: 1;
 }
 
 .navbar-logo img {
@@ -71,7 +37,16 @@
   to   { transform: rotate(+360deg); }
 }
 
-
+.navbar-wrapper {
+  width: 100%;
+  max-width: var(--navbar-max-width);
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  justify-content: space-between;
+  flex: 1;
+}
 
 .navbar-links {
   list-style: none;
@@ -131,7 +106,7 @@
   padding: 1.25rem 1.5rem;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.75rem;
   opacity: 0;
   pointer-events: none;
   transition: transform 0.35s ease, opacity 0.35s ease;
@@ -167,10 +142,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 /* ────────────────────────────────────────────────────────────────────
@@ -196,10 +167,8 @@
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;         /* ← CENTRER verticalement */
     gap: 0.25rem;           /* espace entre icône et label */
     padding: 0;             /* tu peux ajuster si besoin */
-    height: var(--navbar-height);     /* ← occupe toute la hauteur */
   }
 
   /* 2) On augmente un peu la taille de l'icône si tu veux */
@@ -214,3 +183,8 @@
     line-height: 1.2;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────── */
+
+.header-nav-container { visibility: hidden; }
+.header-nav-container.js-ready { visibility: visible; }

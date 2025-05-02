@@ -5,142 +5,101 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🧬 ULID Matrix</title>
 
+  <script>
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+  </script>
 
-
-
-
-  
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: black;
-      font-family: monospace;
-      color: #00ffcc;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    .overlay {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 1;
-      background: rgba(0, 0, 0, 0.7);
-      padding: 1rem;
-      border: 1px dashed #00ffcc;
-      max-width: 300px;
-    }
-
-    .overlay h1 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      color: #00ffcc;
-    }
-
-    .overlay p {
-      font-size: 0.85rem;
-      color: #66ff66;
-    }
-
-    .overlay .secret-hint {
-      color: black; /* Steganographie terminale 😏 */
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .overlay a {
-      color: #66ffff;
-      text-decoration: none;
-    }
-
-    .overlay a:hover {
-      text-decoration: underline;
-    }
-
-    .secret {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #ff66cc;
-      font-size: 1rem;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 0.5rem 1rem;
-      border: 1px dashed #ff66cc;
-      display: none;
-    }
-  </style>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <div class="overlay">
-    <h1>🧬 ULID Matrix</h1>
-    <p>Chaque goutte contient un fragment d'identifiant.</p>
-    <p class="secret-hint">
-      • Appuie sur M</p>
-    <p><a href="/">⏎ Revenir</a></p>
-  </div>
 
-  <canvas id="matrix"></canvas>
-  <div class="secret" id="secret">
-    ULID secret → <span id="ulid-reveal"></span><br />
-    ⏱️ <span id="ts-unix"></span><br />
-    📅 <span id="ts-iso"></span>
-  </div>
+<body>
+
+  <header id="nav-container" class="header-nav-container"></header>
+
+  <main class="page-wrapper">
+
+    <canvas id="matrix"></canvas>
+
+  </main>
+
+  <footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
 
   <script type="module">
-    import { ulid, decodeTime } from "/module/ulid";
+  import { ulid, decodeTime } from "/module/ulid";
 
-    const canvas = document.getElementById("matrix");
-    const ctx = canvas.getContext("2d");
+  const canvas = document.getElementById("matrix");
+  const ctx = canvas.getContext("2d");
 
+  function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+  }
+  window.addEventListener("resize", resize);
+  resize();
 
-    const chars = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-    const fontSize = 16;
-    const columns = Math.floor(canvas.width / fontSize);
-    const drops = Array(columns).fill(1);
+  const chars = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+  const fontSize = 16;
+  let columns = Math.floor(window.innerWidth / fontSize);
+  let drops = Array(columns).fill(1);
 
-    function draw() {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#33ff33";
-      ctx.font = fontSize + "px monospace";
+  function getThemeColor() {
+    const styles = getComputedStyle(document.documentElement);
+    let color = styles.getPropertyValue('--text').trim();
+    if (!color) color = "#33ff33"; // Sécurité → couleur par défaut
+    return color;
+  }
 
-      for (let i = 0; i < drops.length; i++) {
-        const char = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-          drops[i] = 0;
-        }
-        drops[i]++;
+  function draw() {
+    ctx.fillStyle = getComputedStyle(document.documentElement)
+                      .getPropertyValue("--matrix-overlay")
+                      .trim();
+
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = getThemeColor();
+    ctx.font = fontSize + "px monospace";
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
       }
+      drops[i]++;
     }
+  }
 
-    setInterval(draw, 40);
+  setInterval(draw, 40);
 
-    // 🎁 Action M pour révéler un ULID + timestamps
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "m" || e.key === "M") {
-        const id = ulid();
-        const unix = decodeTime(id);
-        const iso = new Date(unix).toISOString();
+  // ULID secret → touche M
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "m" || e.key === "M") {
+      const id = ulid();
+      const unix = decodeTime(id);
+      const iso = new Date(unix).toISOString();
 
-        document.getElementById("ulid-reveal").textContent = id;
-        document.getElementById("ts-unix").textContent = unix + " ms";
-        document.getElementById("ts-iso").textContent = iso;
+      document.getElementById("ulid-reveal").textContent = id;
+      document.getElementById("ts-unix").textContent = unix + " ms";
+      document.getElementById("ts-iso").textContent = iso;
 
-        document.getElementById("secret").style.display = "block";
-      }
+      document.getElementById("secret").style.display = "block";
+    }
+    if (e.key === "/") {
+      window.location.href = "/";
+    }
+  });
 
-      if (e.key === "/") {
-        window.location.href = "/";
-      }
-    });
+  // Mise à jour des colonnes si resize
+  window.addEventListener("resize", () => {
+    columns = Math.floor(window.innerWidth / fontSize);
+    drops = Array(columns).fill(1);
+  });
+
   </script>
+
+  <script type="module" src="./site.js"></script>
+
 </body>
 </html>

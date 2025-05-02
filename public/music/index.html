@@ -2,8 +2,20 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>🎶 ULID Music Terminal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🎶 ULID Music Terminal</title>
+
+    <!-- Thème avant chargement du CSS -->
+<script>
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+</script>
+  
+<!-- ton CSS -->
+<link rel="stylesheet" href="/style.css"/>
+
+</head>
+
   <style>
     body {
       background-color: #0d0d0d;
@@ -52,6 +64,11 @@
   </style>
 </head>
 <body>
+
+  <header id="nav-container" class="header-nav-container"></header>
+
+  <main class="page-wrapper">
+    
   <h1>🎶 ULID Music Terminal</h1>
 
   <label for="style">🎛️ Sélectionne un style :</label>
@@ -61,7 +78,7 @@
     <option value="jazz">ULID Jazz</option>
     <option value="minimal">Minimal mystérieux</option>
     <option value="ulidcore">ULIDcore tribal glitch</option>
- 
+
 
   </select>
 
@@ -75,6 +92,10 @@
 
   <label>🧠 Console :</label>
   <div id="log">Chargement de l'orchestre...</div>
+
+</main>
+
+<footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
   <script>
@@ -241,5 +262,8 @@
     // Init
     generate();
   </script>
+
+<script type="module" src="./site.js"></script>
+
 </body>
 </html>

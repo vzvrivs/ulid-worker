@@ -26,6 +26,7 @@
   --navbar-blur: blur(10px);
   --navbar-radius: 999px;
   --navbar-link-size: 1rem;
+
 }
 
 [data-theme="dark"] {
@@ -52,7 +53,7 @@
   --navbar-toggle-bg: rgba(0,0,0,0.6);
   --nav-glow-1: rgba(0, 191, 0, 0.7);
   --nav-glow-2: rgba(0, 255, 0, 0.7);
-
+  --matrix-overlay: rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="light"] {
@@ -79,7 +80,7 @@
   --navbar-toggle-bg: rgba(255,255,255,0.6);
   --nav-glow-1: rgba(0, 191, 191, 0.7);
   --nav-glow-2: rgba(0, 255, 255, 0.7);
-
+  --matrix-overlay: rgba(255, 255, 255, 0.05);
 }
 
 /* 2. Base et layout */
@@ -543,6 +544,8 @@ input[type="checkbox"] {
 .ts-valid.bad  { color: #ff4444; }
 
 .page-wrapper {
+  flex: 1;               /* prend tout l’espace restant */
+  position: relative;    /* au cas où tu veux positionner d’autres choses */
   box-sizing: border-box;        /* déjà global, mais pour rappel */
   width: 100%;                   /* toujours prendre toute la largeur dispo */
   max-inline-size: var(--max-width); /* plafonner à ta largeur "desktop" */
@@ -671,6 +674,9 @@ button.pending {
 
 /* Pour la navbar */
 html, body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
   overflow-x: visible;
@@ -690,3 +696,62 @@ html, body {
   z-index: 1000;
   pointer-events: none;
 }
+
+.secret {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff66cc;
+  font-size: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0.5rem 1rem;
+  border: 1px dashed #ff66cc;
+  display: none;
+}
+
+  .overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 1rem;
+    border: 1px dashed #00ffcc;
+    max-width: 300px;
+  }
+
+  .overlay h1 {
+    margin-top: 0;
+    font-size: 1.2rem;
+    color: #00ffcc;
+  }
+
+  .overlay p {
+    font-size: 0.85rem;
+    color: #66ff66;
+  }
+
+  .overlay .secret-hint {
+    color: black; /* Steganographie terminale 😏 */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .overlay a {
+    color: #66ffff;
+    text-decoration: none;
+  }
+
+  .overlay a:hover {
+    text-decoration: underline;
+  }
+
+  #matrix {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+  }
