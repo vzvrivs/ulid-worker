@@ -1,9 +1,31 @@
 # Changelog
 
-Toutes les modifications notables du projet seront documentées ici.
+Toutes les modifications notables du projet sont documentées ici.
 
-Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
-et ce projet suit le versionnage [Semantic Versioning](https://semver.org/lang/fr/).
+Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
+et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
+
+---
+
+## [0.4.0] – 2025-05-02
+
+### Ajouté
+- **Thème**
+  - Rétablissement du toggle clair/sombre.
+  - Suppression du stockage local du thème → détection dynamique du thème de l’environnement.
+  - Prise en charge des changements de thème en temps réel.
+
+- **Logs**
+  - Rétablissement des logs.
+  - `/logs` : page HTML minimaliste ou JSON brut selon l’en-tête `Accept`.
+  - `/debug/logs` : dashboard HTML interactif avec tri inverse par défaut et tri par colonne.
+
+- **Navbar**
+  - Rétablissement de la navbar avec effet de transparence, sticky, logo animé discrètement.
+  - Adaptation mobile avec burger menu et affichage vertical des éléments.
+
+### Modifié
+- Amélioration globale de l’interface et de l’expérience utilisateur.
 
 ---
 

@@ -6,7 +6,8 @@
 /* 1. Variables : Thème clair/sombre */
 :root {
   --font-mono: monospace;
-  --max-width: 1000px;
+  --max-width: 1160px;
+  --navbar-max-width: 1160px;
   --font-size-base: 1rem;
   --font-size-sm: 0.9rem;
 
@@ -21,6 +22,9 @@
   --transition-fast: 0.2s;
   --transition-slow: 0.4s;
 
+  --navbar-height: 56px;
+  --navbar-blur: blur(10px);
+  --navbar-radius: 999px;
 }
 
 [data-theme="dark"] {
@@ -41,6 +45,13 @@
   --field-even-background: color-mix(in srgb, var(--text) 10%, var(--bg));
   --field-odd-border: var(--field-even-background);
   --footer-color: #888;
+  --navbar-bg: rgba(30, 30, 30, 0.6);
+  --navbar-text: #eee;
+  --navbar-link-hover: #33ff33;
+  --navbar-toggle-bg: rgba(0,0,0,0.6);
+  --nav-glow-1: rgba(0, 191, 0, 0.7);
+  --nav-glow-2: rgba(0, 255, 0, 0.7);
+
 }
 
 [data-theme="light"] {
@@ -61,6 +72,13 @@
   --field-even-background: color-mix(in srgb, var(--text) 10%, var(--bg));
   --field-odd-border: var(--field-even-background);
   --footer-color: #999;
+  --navbar-bg: rgba(255, 255, 255, 0.6);
+  --navbar-text: #333;
+  --navbar-link-hover: #555;
+  --navbar-toggle-bg: rgba(255,255,255,0.6);
+  --nav-glow-1: rgba(0, 191, 191, 0.7);
+  --nav-glow-2: rgba(0, 255, 255, 0.7);
+
 }
 
 /* 2. Base et layout */
@@ -68,9 +86,17 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-mono);
-  padding: var(--space-xl);
+  padding: 0;
   margin: 0 auto;
-  max-width: var(--max-width);
+  max-width: none;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* réserve la hauteur de la navbar fixe pour que le contenu ne passe pas dessous */
+body::before {
+  content: "";
+  display: block;
+  height: 1rem; /* hauteur + les deux marges verticales */
 }
 
 h1, h2, h3 {
@@ -161,7 +187,7 @@ footer {
   text-align: center;
 }
 
-/* ===== Layout « row » & pleine largeur ===== */
+/* ===== Layout « row » & pleine largeur ===== */
 .row{
   display:grid;
   grid-template-columns:repeat(2,1fr);
@@ -284,7 +310,7 @@ pre.code-block {
 }
 
 pre.code-block-out-gen {
-  /* Assure-toi d’avoir un line-height connu (ici 1.4) */
+  /* Assure-toi d'avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
   /* max‑height = line-height × 17 */
   max-height: calc(1.4em * 22);
@@ -294,7 +320,7 @@ pre.code-block-out-gen {
 }
 
 pre.code-block-out-autofill {
-  /* Assure-toi d’avoir un line-height connu (ici 1.4) */
+  /* Assure-toi d'avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
   /* max‑height = line-height × 17 */
   max-height: calc(1.4em * 37);
@@ -304,7 +330,7 @@ pre.code-block-out-autofill {
 }
 
 pre.code-block-req {
-  /* Assure-toi d’avoir un line-height connu (ici 1.4) */
+  /* Assure-toi d'avoir un line-height connu (ici 1.4) */
   line-height: 1.4;
   /* max‑height = line-height × 17 */
   max-height: calc(1.4em * 8);
@@ -350,7 +376,7 @@ button {
 .btn-icon { font-size: 1.2em; line-height: 1; }
 .btn-label { font-size: 0.85em; margin-top: var(--space-xs); }
 
-/* Boutons d’action principaux (Générer, Vérifier, Remplir) */
+/* Boutons d'action principaux (Générer, Vérifier, Remplir) */
 .btn-action {
   font-size: 1.2rem;
   padding-inline: 1.5rem;
@@ -364,7 +390,7 @@ button {
 }
 
 
-/* nouveau bloc “Valeur à insérer” en full-width */
+/* nouveau bloc "Valeur à insérer" en full-width */
 .insert-block {
   display: flex;
   flex-direction: column;
@@ -387,7 +413,7 @@ button {
 
 /* ─── Pile verticale pour checkbox + texte ─── */
 .checkbox-stack {
-  display: flex;        /* s’aligne comme un mot */
+  display: flex;        /* s'aligne comme un mot */
   flex-direction: column;      /* input au‑dessus, texte en dessous */
   align-items: center;         /* centrage horizontal */
   /*gap: 0.25rem;                 /* petite marge entre les deux */
@@ -399,15 +425,8 @@ button {
   margin: 0;
   padding-inline: var(--space-sm);
 }
-/*
-.checkbox-stack > pre {
-  align-self: stretch;
-  margin: 0;
-  padding-inline: var(--space-sm);
-}*/
 
-
-/* L’input lui‑même : enlève l’héritage "width:100%" */
+/* L'input lui‑même : enlève l'héritage "width:100%" */
 input[type="checkbox"] {
   width: auto;
   /* margin: 0;                   /* retire le margin implicite */
@@ -424,7 +443,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;        /* centrage horizontal */
   cursor: pointer;            /* main sur tout le bloc */
-  width: auto;                /* ne s’étire pas à 100 % */
+  width: auto;                /* ne s'étire pas à 100 % */
   gap: var(--space-xl);     /* pour espacer les checkboxes */
   /* border: red solid; */
 }
@@ -441,6 +460,7 @@ input[type="checkbox"] {
   text-align: center;
   padding: 0.3rem 0.6rem;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
   background: #222;
   color: #ccc;
@@ -453,8 +473,8 @@ input[type="checkbox"] {
   background-color: #333;
 }
 .ts-select .option.selected {
-  background-color: var(--heading);
-  color: #000;
+  background-color: var(--button-bg);
+  color: var(--text);
 }
 
 
@@ -478,7 +498,7 @@ input[type="checkbox"] {
 
 .ts-valid{
   font-size:0.8rem;
-  height:1rem;               /* réserve l’espace */
+  height:1rem;               /* réserve l'espace */
 }
 .ts-valid.ok   { color:#33ff33 }
 .ts-valid.bad  { color:#ff4444 }
@@ -518,22 +538,21 @@ input[type="checkbox"] {
   font-size: 0.85rem;
   white-space: nowrap;
 }
-
 .ts-valid.ok   { color: #33ff33; }
 .ts-valid.bad  { color: #ff4444; }
 
-
-/* === Container & Grid Setup === */
-.main-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--space-lg);
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding: var(--space-xl);
+.page-wrapper {
+  box-sizing: border-box;        /* déjà global, mais pour rappel */
+  width: 100%;                   /* toujours prendre toute la largeur dispo */
+  max-inline-size: var(--max-width); /* plafonner à ta largeur "desktop" */
+  margin-inline: auto;           /* centre horizontalement quand > max-width */
+  
+  /* garde l'espacement interne vertical et horizontal */
+  padding-block: var(--space-xl);
+  padding-inline: var(--space-xl);
 }
 
-/* Each “row” of form + output spans one grid row; we’ll wrap pairs in .grid-row */
+/* Each "row" of form + output spans one grid row; we'll wrap pairs in .grid-row */
 .grid-row {
   display: contents; /* allows children to participate in the parent grid */
 }
@@ -553,7 +572,7 @@ input[type="checkbox"] {
   border-radius: var(--radius-sm);
 }
 
-/* Ensure code blocks don’t overflow */
+/* Ensure code blocks don't overflow */
 .panel pre {
   max-height: calc(1.4em * 20);
   overflow-y: auto;
@@ -628,7 +647,7 @@ button.pending {
   gap: var(--space-xs);
 }
 
-.move-controls {}
+/*.move-controls {}*/
 
 .up-btn, .down-btn {
   padding-block: 0;
@@ -647,3 +666,26 @@ button.pending {
 /* Ajout pour les éléments décochés */
 .unchecked {
   opacity: 0.5;
+}
+
+/* Pour la navbar */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: visible;
+  overflow-y: visible;
+}
+
+/* ─── Navbar flottante façon Spline ─── */
+.header-nav-container {
+  position: sticky;
+  inset-block-start: 1rem;    /* = top */
+  inset-inline: 1rem;         /* = left et right */
+  max-inline-size: var(--navbar-max-width);
+  margin-inline: auto;
+
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
+}

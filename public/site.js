@@ -5,31 +5,6 @@ import {
 } from '/helpers.js';
 
 // ╭──────────────────────────────────────────────────────────────╮
-// │  🌗  THEME PERSISTENCE & TOGGLE                             │
-// ╰──────────────────────────────────────────────────────────────╯
-(() => {
-  const stored = localStorage.getItem('ulid-theme');
-  if (stored === 'dark' || stored === 'light') {
-    document.documentElement.setAttribute('data-theme', stored);
-  }
-})();
-
-function toggleDarkMode () {
-  const html = document.documentElement;
-  const isDark = html.getAttribute('data-theme') === 'dark';
-  const newTheme = isDark ? 'light' : 'dark';
-  html.setAttribute('data-theme', newTheme);
-  localStorage.setItem('ulid-theme', newTheme);
-}
-
-// ╭──────────────────────────────────────────────────────────────╮
-// │  🍔  MOBILE BURGER                                          │
-// ╰──────────────────────────────────────────────────────────────╯
-document.querySelector('.burger-btn')?.addEventListener('click', () => {
-  document.querySelector('.ulid-nav')?.classList.toggle('show');
-});
-
-// ╭──────────────────────────────────────────────────────────────╮
 // │  🔔  TOAST STYLES                                           │
 // ╰──────────────────────────────────────────────────────────────╯
 const toastStyle = document.createElement('style');
@@ -54,7 +29,7 @@ const $ = (id) => document.getElementById(id);
   function getSelectedKeys(containerId) {
     const container = document.getElementById(containerId)?.querySelector('.sortable-list');
     if (!container) return [];
-  
+
     const keys = [];
     container.querySelectorAll('.list-item').forEach(item => {
       const input = item.querySelector('input[type="checkbox"]');
@@ -67,7 +42,7 @@ const $ = (id) => document.getElementById(id);
         else console.warn('clé inconnue', text);
       }
     });
-  
+
     return keys;
   }
   /* Fin de Détection des clés sélectionnées et de leur ordre */
@@ -139,24 +114,6 @@ function minifyAutofillOutput() {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // === 📋 Copier texte (2 spans btn-icon / btn-label) ===
 // -----------------------------------------------
 // Copie le contenu de l'élément (#id) et met à jour
@@ -177,9 +134,9 @@ window.copyText = (id, event) => {
     .then(() => {
       if (iconSpan && labelSpan) {
         iconSpan.textContent  = '✔️';
-        labelSpan.textContent = 'Copié !';
+        labelSpan.textContent = 'Copié !';
       } else {
-        btn.innerText = '✔️ Copié !';
+        btn.innerText = '✔️ Copié !';
       }
     })
     .catch(() => {
@@ -187,7 +144,7 @@ window.copyText = (id, event) => {
         iconSpan.textContent  = '❌';
         labelSpan.textContent = 'Échec';
       } else {
-        btn.innerText = '❌ Échec';
+        btn.innerText = '❌ Échec';
       }
     })
     .finally(() => {
@@ -235,9 +192,9 @@ const updateJsonValidity = debounce(() => {
 /* ---------------------------------------------------------------
    🧪 Autofill JSON — nouvelle version
    ---------------------------------------------------------------
-   - Lit les trois check-boxes d’insertion (Unix / ISO / ULID)
+   - Lit les trois check-boxes d'insertion (Unix / ISO / ULID)
    - Construit un paramètre  fields=t,ts,ulid  passé au Worker
-   - Vérifie qu’au moins une case est cochée
+   - Vérifie qu'au moins une case est cochée
    - Affiche la requête, appelle /autofill, affiche le résultat
    - Met à jour le compteur de remplacements
 ---------------------------------------------------------------- */
@@ -258,7 +215,7 @@ window.autofillJSON = async () => {
   }
 
   /* 1️⃣  Paramètres « clé / valeur » à remplacer -------------- */
-  //   ce sont les SUFFIXE et VALEUR d’origine que l’on va remplacer
+  //   ce sont les SUFFIXE et VALEUR d'origine que l'on va remplacer
   const keySuffixParam  = encodeURIComponent($("autofill-key").value.trim()   || "_uid");
   const valueMatchParam = encodeURIComponent($("autofill-value").value.trim() || "null");
 
@@ -282,7 +239,7 @@ window.autofillJSON = async () => {
 
   const jsonInputOriginal = JSON.parse(JSON.stringify(jsonInput)); // copie profonde
 
-  /* 4️⃣  Construction de l’URL finale ------------------------- */
+  /* 4️⃣  Construction de l'URL finale ------------------------- */
   const url = `/autofill`
   + `?key=${keySuffixParam}&value=${valueMatchParam}`
   // + `&prefix=${prefix}&suffix=${suffix}
@@ -313,11 +270,11 @@ window.autofillJSON = async () => {
     showToast("❌ " + data.error);
     $("json-output").textContent = JSON.stringify(data, null, 2);
     return;
-  }  
+  }
   $("json-output").textContent = JSON.stringify(data, null, 2);
 
   /* 7️⃣  Comptage des remplacements --------------------------- */
-  //   On compte chaque fois qu’une clé se termine par keySuffix
+  //   On compte chaque fois qu'une clé se termine par keySuffix
   //   et que sa valeur AVANT correspondait à valueMatch.
   // Lecture des paramètres choisis
   const keySuffixClean  = $("autofill-key").value.trim()   || "_uid";
@@ -437,7 +394,7 @@ async function downloadResult(outputId, formatId) {
     else if (format === "json") {
       result = raw; // 🎯 Réplique directe du contenu affiché
     }
-    
+
 
   } catch {
     // si JSON.parse échoue => on garde raw
@@ -465,7 +422,7 @@ window.downloadAutofill  = () =>
 
 // === 🎲 Génération ULID ===
 // -----------------------------------------------
-// Construit l’URL /ulid avec tes options (n, prefix…)
+// Construit l'URL /ulid avec tes options (n, prefix…)
 // + flags timestamp et monotonic, affiche la requête,
 // puis met à jour gen-output.
 window.generateULID = async () => {
@@ -583,8 +540,8 @@ window.checkULID = async () => {
 
 
 /**
- * Disable / enable a “bin” checkbox depending on the current
- * value of an adjacent <select> that offers “crockford” | “hex”.
+ * Disable / enable a "bin" checkbox depending on the current
+ * value of an adjacent <select> that offers "crockford" | "hex".
  * @param {HTMLSelectElement} select  e.g. #gen-base
  * @param {HTMLInputElement}  chk     e.g. #gen-bin
  */
@@ -594,20 +551,61 @@ function syncBinCheckbox(select, chk) {
   if (isHex) chk.checked = false;        // uncheck when locked
 }
 
+// ------------------------------------------------------------------
+//  NAVBAR loader  (CSS  ➜  HTML  ➜  JS module)
+// ------------------------------------------------------------------
+async function loadNavbar() {
+  const container = document.getElementById("nav-container");
+  if (!container) return;
 
+  try {
+    /* 1) charge le CSS avant d'injecter le HTML */
+    await loadCSS("./navbar.css");
+
+    /* 2) injecte le HTML */
+    const html = await fetch("./navbar.html").then(r => r.text());
+    container.innerHTML = html;
+
+    /* 3) importe le module et initialise */
+    const { initNavbar } = await import("./navbar.js");
+    initNavbar();
+    container.classList.add("js-ready");
+  }
+  catch (e) {
+    console.error("navbar:", e);
+    container.innerHTML = "<p style='color:red'>⚠️ Navbar KO</p>";
+  }
+}
+
+// Utilitaire pour injecter un CSS
+function loadCSS(href) {
+  return new Promise((resolve, reject) => {
+    const l = document.createElement("link");
+    l.rel = "stylesheet";
+    l.href = href;
+    l.onload  = () => resolve();
+    l.onerror = () => reject();
+    document.head.append(l);
+  });
+}
 
 // === 🚀 Init DOMContentLoaded — liaison des handlers ===
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* Chargement dynamique de la navbar */
+  loadNavbar();
+
   /* Mise à jour dynamique des flèches après chaque mouvement */
   function updateMoveButtons(containerId) {
     const container = document.getElementById(containerId);
+    // si on n'a pas ce bloc sur la page, on ne fait rien
+    if (!container) return;
     const items = container.querySelectorAll('.list-item');
-  
+
     items.forEach((item, index) => {
       const upBtn = item.querySelector('.up-btn');
       const downBtn = item.querySelector('.down-btn');
-  
+
       if (upBtn) upBtn.disabled = (index === 0);
       if (downBtn) downBtn.disabled = (index === items.length - 1);
     });
@@ -692,7 +690,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key==="Enter") { e.preventDefault(); checkULID(); }
   });
 
-  
+
   // Boutons paste
   [
     { id:"paste-json-btn",  tgt:"json-input", callback:updateJsonValidity },
@@ -761,9 +759,13 @@ document.addEventListener("DOMContentLoaded", () => {
 function initTimestampUI(prefix) {
   // IDs dynamiques
   const selBox = $(`${prefix}-ts-common-selectbox`);
+  // ↪ si on n'a pas ce widget sur la page, on sort en renvoyant une no-op
+  if (!selBox) {
+    return () => "";
+  }
   const isoRad = $(`${prefix}-ts-type-iso`);
   const unixRad= $(`${prefix}-ts-type-unix`);
-  const crockRad=$( `${prefix}-ts-type-crock`);
+  const crockRad=$(`${prefix}-ts-type-crock`);
   const isoIn  = $(`${prefix}-ts-input-iso`);
   const unixIn = $(`${prefix}-ts-input-unix`);
   const crockIn= $(`${prefix}-ts-input-crock`);
@@ -862,3 +864,63 @@ function initTimestampUI(prefix) {
     return (!ms||isNaN(ms)) ? "" : `&timestamp=${ms}`;
   };
 }
+
+
+
+// --- début du bloc PJAX ---
+/**
+ * Charge en AJAX la nouvelle page, extrait son contenu principal,
+ * met à jour l'historique sans recharger la navbar.
+ */
+/*async function pjaxNavigate(url, addToHistory = true) {
+  try {
+    const res = await fetch(url, { headers: { 'X-PJAX': 'true' } });
+    if (!res.ok) throw new Error(res.statusText);
+    const text = await res.text();
+    const tmp = document.createElement('div');
+    tmp.innerHTML = text;
+
+    // 1. Remplace le contenu de <main class="page-wrapper">
+    const newMain = tmp.querySelector('main.page-wrapper');
+    if (newMain) {
+      document.querySelector('main.page-wrapper').replaceWith(newMain);
+    }
+
+    // 2. Met à jour le <title>
+    const newTitle = tmp.querySelector('title')?.innerText;
+    if (newTitle) document.title = newTitle;
+
+    // 3. Ré-initialise les scripts spécifiques à la page
+    //    (timestamp UI, move buttons, etc.)
+    initTimestampUI && (window.getGenTsParam = initTimestampUI("gen"));
+    initTimestampUI && (window.getAutofillTsParam = initTimestampUI("autofill"));
+    updateMoveButtons && updateMoveButtons("gen-keys");
+    updateMoveButtons && updateMoveButtons("autofill-keys");
+    // ... et toutes tes autres initXxx() …
+
+    // 4. Met à jour l'historique
+    if (addToHistory) {
+      history.pushState(null, newTitle || '', url);
+    }
+  } catch (err) {
+    console.error("PJAX navigation failed:", err);
+    window.location.href = url; // fallback : rechargement normal
+  }
+}
+
+// Intercepte les clicks sur les liens internes
+document.addEventListener('click', e => {
+  const a = e.target.closest('a');
+  if (!a || a.target === "_blank" || a.hasAttribute('download')) return;
+  const origin = window.location.origin;
+  if (a.href.startsWith(origin)) {
+    e.preventDefault();
+    pjaxNavigate(a.href);
+  }
+});
+
+// Gère le back/forward
+window.addEventListener('popstate', () => {
+  pjaxNavigate(window.location.href, false);
+});*/
+// --- fin du bloc PJAX ---

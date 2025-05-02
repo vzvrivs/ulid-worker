@@ -3,56 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      /* Applique le thème enregistré **avant** que le CSS ne se charge */
-      const saved = localStorage.getItem("ulid-theme");
-      document.documentElement.setAttribute(
-        "data-theme",
-        saved === "light" ? "light" : "dark"       // dark par défaut
-      );
-    </script>
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="stylesheet" href="/style.css" />
-    <title>ULID Worker Terminal – Home</title>
+    <title>ULID Worker Terminal - Home</title>
+
+  <!-- Thème avant chargement du CSS -->
+  <script>
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+  </script>
+    
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
+
   </head>
-
+  
   <body>
-    <header class="ulid-navbar">
-      <div class="ulid-navbar-container">    
-        <button class="burger-btn" aria-label="Menu">&#9776;</button>    
-        <nav class="ulid-nav">
-          <a href="/">🧪 ULID</a>
-          <a href="/music">🎶 Music</a>
-          <a href="/docs">📚 Docs</a>
-          <a href="/help">🆘 Aide</a>
-          <a href="/matrix">🧬 Matrix</a>
-          <a href="/playground">🕹️ Playground</a>
-          <a href="#" onclick="toggleDarkMode(); return false;" id="themeToggle">🌓 Thème</a>
-        </nav>
-      </div>
-    </header>
 
-    <div class="content">
-      <main class="container main-section">
-        <section class="component mb-md">
-          <h2 class="component-title">🧪 ulid-worker Terminal</h2>
-          <div class="comment"># Générer des ULID 👇</div>
-          <div class="cmd">$ <a href="./ulid?n=5&pretty=true">/ulid?n=5&pretty=true</a></div>    
-          <div class="comment"># Valider un ULID 👇</div>
-          <div class="cmd">$ <a href="./ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP">/ulid?validate=ULID</a></div>    
-          <div class="comment"># Remplir un JSON avec *_uid:null 👇</div>
-          <div class="cmd">$ <a href="./test">/test</a> <span class="blink">_</span></div>
-          <div class="mt-md comment"># Aide rapide et documentation :</div>
-          <div class="cmd">$ <a href="./help">/help</a></div>
-          <div class="cmd">$ <a href="./docs">/docs</a></div>
-        </section>
-      </main>
+    <header id="nav-container" class="header-nav-container"></header>
 
-      <footer>
-        ULID Worker v1 • Codé avec 💚 par Raphaël<br />
-      </footer>
-    </div>
-    <script src="/site.js"></script>
+    <main class="page-wrapper">
+
+      <section class="component mb-md">
+        <h2 class="component-title">🧪 ulid-worker Terminal</h2>
+        <div class="comment"># Générer des ULID 👇</div>
+        <div class="cmd">$ <a href="./ulid?n=5&pretty=true">/ulid?n=5&pretty=true</a></div>    
+        <div class="comment"># Valider un ULID 👇</div>
+        <div class="cmd">$ <a href="./ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP">/ulid?validate=ULID</a></div>    
+        <div class="comment"># Remplir un JSON avec *_uid:null 👇</div>
+        <div class="cmd">$ <a href="./test">/test</a> <span class="blink">_</span></div>
+        <div class="mt-md comment"># Aide rapide et documentation :</div>
+        <div class="cmd">$ <a href="./help">/help</a></div>
+        <div class="cmd">$ <a href="./docs">/docs</a></div>
+      </section>
+
+    </main>
+
+    <footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+
+    <!-- enfin ton script principal -->
+    <script type="module" src="./site.js"></script> 
+    
   </body>
 </html>
