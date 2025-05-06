@@ -5,13 +5,20 @@
 /* ─── Navbar flottante façon Spline revisité ─── */
 .header-nav-container {
   position: sticky;
-  top: 1rem;          /* sous le haut de la page */
-  left: 0;            /* plein écran bord à bord */
-  right: 0;           /* idem */
+  inset-block-start: 1rem;
+  inset-inline: 1rem;
+  max-inline-size: var(--navbar-max-width);
+  margin-inline: auto;
   display: flex;
-  justify-content: center; 
-  pointer-events: none;
+  justify-content: center;
   z-index: 1000;
+  pointer-events: none;
+}
+
+/* La barre doit s’étirer dans .header-nav-container */
+.header-nav-container > .navbar {
+  flex: 1 1 auto;   /* ou simplement flex:1; */
+  margin-inline: 1rem;  /* remet l’espace latéral confortable */
 }
 
 .header-nav-container.js-ready {
@@ -20,19 +27,13 @@
 
 .navbar {
   position: relative;
-  width: 100%;                 /* prend 100% du header */
+  width: 100%;
   display: flex;
   align-items: center;
-
-  /* UNIFORMISER le gutter interne : */
-  padding-inline: 1rem;        /* espace interne gauche + droite */
-  
-  /* ===== SUPPRIMER CES LIGNES ===== */
-  /* padding-left: .8rem; */
-  /* padding-right: .55rem; */
-  /* margin-inline: 1rem; */
-  /* =============================== */
-
+  padding-left: .8rem;
+  padding-right: .55rem;
+  margin-inline: 1rem;
+  max-inline-size: var(--navbar-max-width);
   min-height: var(--navbar-height);
   background: var(--navbar-bg);
   -webkit-backdrop-filter: var(--navbar-blur);
@@ -45,8 +46,8 @@
 
 .navbar-wrapper {
   width: 100%;
-  max-width: var(--navbar-max-width);
-  margin-inline: auto;       /* centre le contenu quand l’écran est large */
+  max-inline-size: var(--navbar-max-width);
+  margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -70,8 +71,6 @@
   from { transform: rotate(0deg); }
   to   { transform: rotate(+360deg); }
 }
-
-
 
 .navbar-links {
   list-style: none;

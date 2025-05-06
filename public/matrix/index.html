@@ -2,104 +2,438 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🧬 ULID Matrix</title>
-
+  
+  <!-- Thème avant chargement du CSS -->
   <script>
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
   </script>
 
-  <link rel="stylesheet" href="/style.css">
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
+
+  <style>
+
+    html, body { margin:0; padding:0; }
+
+
+
+    canvas#matrix {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      background-color: var(--matrix-background);
+      visibility: hidden;
+      display:block;
+      z-index: 0;
+    }
+
+    /* -------- Controls -------- */
+    .controls {
+      position: fixed;
+      top:    calc(var(--navbar-height) + 1rem);
+      /* cale à droite de la zone de la navbar (centrée, max-width) */
+      right:  calc((100% - var(--navbar-max-width)) / 2 + var(--space-xl));
+      display: flex;
+      gap: var(--space-md);
+      z-index: 50;
+    }
+
+    .controls button {
+      background: transparent;
+      border: none;
+      padding: 4px;
+      font-size: 18px;
+      opacity: 0.1;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+    .controls button:hover { opacity: 0.6; }
+
+    /* -------- Help box -------- */
+    .help {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%); /* décale l’élément de 50% de sa largeur vers la gauche, pour le centrer exactement sous son point de référence */
+      color: var(--help-color);
+      font-size: 1rem;
+      background: var(--help-bg, rgba(0, 0, 0, 0.6));
+      padding: 0.5rem 1rem;
+      border: 1px dashed var(--help-color);
+      display: none;
+      z-index: 50;
+    }
+
+  </style>
+
 </head>
 
 <body>
 
   <header id="nav-container" class="header-nav-container"></header>
 
-  <main class="page-wrapper">
+    <main> 
 
+    <!-- Canvas principal -->
     <canvas id="matrix"></canvas>
+
+    <!-- Boutons de contrôle -->
+    <div class="controls">
+      <button type="button" id="fullscreen-btn" aria-label="Plein écran avec navbar masquée">🔳</button>
+      <button type="button" id="pause-btn" aria-label="Pause de l'animation">⏸️</button>
+      <button type="button" id="funky-btn" aria-label="Changement de mode">🪩</button>
+      <button type="button" id="fps-btn" aria-label="Vitesse maximale">⚡</button>
+      <button type="button" id="help-btn" aria-label="Affichage de l'aide">🛟</button>
+      </div>
+      <!-- Aide sur les raccourcis clavier -->
+      <div class="help" id="help-box">
+        <ul style="margin:0; padding:0; list-style:none;">
+          <li><kbd>F</kbd> : Plein écran</li>
+          <li><kbd>Space</kbd> : Pause pluie</li>
+          <li><kbd>M</kbd> : Mode couleur</li>
+          <li><kbd>S</kbd> : Vitesse max</li>
+          <li><kbd>H</kbd> : Afficher/Masquer l’aide</li>
+          <li><kbd>ControlLeft</kbd> : Maximise l'affichage des boutons le temps de l'appui</li>
+          <li style="margin-top:0.5rem;">Chaque goutte affiche un ULID généré au moment de sa naissance.</li>
+        </ul>
+      </div>
+
+    <script type="module">
+      import { ulid } from "/module/ulid";
+
+      const canvas = document.getElementById("matrix");
+      const ctx = canvas.getContext("2d");
+
+      // Densité pixel (Device Pixel Ratio) – lue une seule fois
+      const DPR = window.devicePixelRatio || 1;
+
+      // ── 1. Capping FPS (par défaut activé, ⚡ le désactive) ──────────
+      const MAX_FPS        = 30;
+      const FRAME_DELAY    = 1000 / MAX_FPS;
+      let   lastTime       = 0;
+      let   fpsCapEnabled  = true;
+      document.getElementById("fps-btn").onclick = () => {
+        fpsCapEnabled = !fpsCapEnabled;
+        // tu peux ici changer le style de ⚡ pour indiquer l'état
+      };
+
+      canvas.width  = window.innerWidth  * DPR;
+      canvas.height = window.innerHeight * DPR;
+      ctx.scale(DPR, DPR);            // échelle initiale
+
+      const fontSize = 16;
+      const chars = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+      // ── 2. Précalcul police & thèmes ────────────────────────────────
+      ctx.font = `${fontSize}px monospace`;  // ← maintenant après scale
+      let bgColor, textColor, invBgColor;
+
+      /** Inverse une couleur (hex ou rgb) en rgb(255−r,255−g,255−b) */
+      function invertColor(col) {
+        const d = document.createElement('div');
+        d.style.color = col;
+        document.body.appendChild(d);
+        const cs = getComputedStyle(d).color;       // "rgb(r, g, b)"
+        document.body.removeChild(d);
+        const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        if (m) {
+          const r = 255 - parseInt(m[1], 10),
+                g = 255 - parseInt(m[2], 10),
+                b = 255 - parseInt(m[3], 10);
+          return `rgb(${r}, ${g}, ${b})`;
+        }
+        return '#fff';  // fallback blanc
+      }
+
+      // Nombre de colonnes : largeur physique ÷ DPR ÷ taille de police
+      let columns    = Math.floor(canvas.width / DPR / fontSize);
+      let drops = Array(columns).fill(1);
+      let dropColors = Array(columns).fill(0).map(_ => Math.random() * 360 | 0);
+
+      let paused = false;
+      let funkyMode = 0;
+
+      function resize() {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        canvas.width  = window.innerWidth  * DPR;
+        canvas.height = window.innerHeight * DPR;
+        canvas.style.width  = window.innerWidth  + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.scale(DPR, DPR);
+        columns = Math.floor(canvas.width / DPR / fontSize);
+        drops   = Array(columns).fill(1);
+        dropColors = Array(columns).fill(0).map(() => Math.random() * 360 | 0);
+        // ré-initialise aussi les buffers si resize
+        buffers.length = 0;
+        for (let i = 0; i < columns; i++) {
+          buffers.push(Array(TAIL).fill(' '));
+        }
+        // ré-initialise buffers sat/lum et ULID streams
+        satBuffers.length = lumBuffers.length = idStreams.length = idIndices.length = 0;
+        for (let i = 0; i < columns; i++) {
+          satBuffers.push(Array(TAIL).fill(80));
+          lumBuffers.push(Array(TAIL).fill(65));
+          idStreams.push(ulid());
+          // idem au resize : index aléatoire pour chaque nouvelle colonne
+          idIndices.push(Math.floor(Math.random() * idStreams[idStreams.length - 1].length));
+        }
+      }
+      window.addEventListener("resize", resize);
+
+      /* ------------------------------------------------------------------ *
+        * Rendu “full redraw” (aucun résidu)                                 *
+        * ------------------------------------------------------------------ */
+
+      /** 1. Efface tout avec la vraie couleur de fond du thème courant */
+      function clearBackground() {
+        // utilise la couleur déjà pré-lue
+        // const bg = bgColor;
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+      }
+
+      /** 2. Longueur de la traîne (en caractères) — ajuste à ton goût */
+      const TAIL = 52;
+
+      /* Décrément linéaire d’opacité : 1, 1-1/TAIL, … 0 */
+      const ALPHA = new Float32Array(TAIL);
+      for (let i = 0; i < TAIL; i++) ALPHA[i] = 1 - i / TAIL;
+
+      // ── Intensité des variations sat/lum en Funky 2 (en pourcentage)
+      const FUNKY2_VARIATION_INTENSITY = 15; // ±15% à modifier à loisir
+      
+      // ── 3. Buffers pour la traîne + saturation/luminosité + ULID streams ─
+      const buffers    = Array.from({ length: columns }, () => Array(TAIL).fill(' '));
+      const satBuffers = Array.from({ length: columns }, () => Array(TAIL).fill(80));
+      const lumBuffers = Array.from({ length: columns }, () => Array(TAIL).fill(65));
+      // Pour chaque colonne, on génère un ULID initial...
+      const idStreams = Array.from({ length: columns }, () => ulid());
+      // ...et on positionne l’index de départ de façon aléatoire dans ce ULID
+      const idIndices = idStreams.map(s => Math.floor(Math.random() * s.length));
+
+      /** 3. Rendu complet d’une frame */
+       function draw() {
+
+        clearBackground();                            //✔️ plus de halo
+
+        ctx.font = fontSize + "px monospace";
+
+        for (let i = 0; i < columns; i++) {
+
+          // ── extrait le caractère suivant du ULID de cette colonne
+          const stream   = idStreams[i];
+          const idx      = idIndices[i] % stream.length;
+          const headChar = stream[idx];
+          idIndices[i]++;   // incrémente pour la prochaine frame
+          buffers[i].unshift(headChar);
+          if (buffers[i].length > TAIL) buffers[i].pop();
+
+          // ── génère 1 sat et 1 lum aléatoires pour la Funky 2
+          const headSat = 80 + Math.random() * 20;   // 80–100 %
+          const headLum = 50 + Math.random() * 30;   // 50–80 %
+          satBuffers[i].unshift(headSat);
+          lumBuffers[i].unshift(headLum);
+          if (satBuffers[i].length > TAIL) satBuffers[i].pop();
+          if (lumBuffers[i].length > TAIL) lumBuffers[i].pop();
+
+          const headHue = dropColors[i];
+          // on réutilise la couleur de texte déjà lue dans updateThemeColors()
+          const baseColor = textColor;
+
+          /* —––––  traîne  ––––— */
+          for (let t = 0; t < TAIL; t++) {
+            const row = drops[i] - t;
+            if (row < 0) break;
+
+            const y = row * fontSize;
+            const x = i   * fontSize;
+
+            /* Opacité décroissante : 1 → 0 */
+            ctx.globalAlpha = ALPHA[t];
+
+            // ── Détermine la couleur à afficher ─────────────────────
+            let color;
+            if (t === 0) {
+              // tête brillante : couleur inverse du fond
+              color = invBgColor;
+            } else {
+              if (funkyMode === 1) {
+                // Funky 1 : couleur entièrement aléatoire
+                color = `hsl(${Math.random()*360|0},100%,60%)`;
+                } else if (funkyMode === 2) {
+                  // Funky 2 : base sat/lum + variation aléatoire à chaque frame
+                  const baseSat  = satBuffers[i][t];
+                  const baseLum  = lumBuffers[i][t];
+                  const delta    = (Math.random() * 2 - 1) * FUNKY2_VARIATION_INTENSITY;
+                  const sat      = Math.min(100, Math.max(0, baseSat + delta));
+                  const lum      = Math.min(100, Math.max(0, baseLum + delta));
+                  color = `hsl(${headHue}, ${sat}%, ${lum}%)`;
+              } else {
+                color = baseColor;
+              }
+            }
+            ctx.fillStyle = color;
+
+            const ch = buffers[i][t];  // on réaffiche depuis le buffer
+            ctx.fillText(ch, x, y);
+          }
+
+          ctx.globalAlpha = 1;                         // réinitialise
+
+          /* Re‑cycle la colonne quand elle sort de l’écran */
+          if ((drops[i] - TAIL) * fontSize > canvas.height && Math.random() > 0.975) {
+            // → nouvelle goutte : reset position, couleur, buffers et ULID
+            drops[i]       = 0;
+            dropColors[i]  = Math.random()*360|0;
+            satBuffers[i].fill(80);
+            lumBuffers[i].fill(65);
+            idStreams[i]  = ulid();   // nouvel ULID pour la colonne
+            // position de départ aléatoire pour briser les patterns
+            idIndices[i]  = Math.floor(Math.random() * idStreams[i].length);
+          }
+          drops[i]++;
+        }
+      }
+
+      // ── Remplace le loop() par un tick() pour gérer le capping FPS ───
+      function tick(now) {
+        if (!paused) {
+          if (fpsCapEnabled) {
+            // version limitée à MAX_FPS
+            if (now - lastTime >= FRAME_DELAY) {
+              lastTime = now;
+              draw();
+            }
+          } else {
+            // version “loop” sans limite : on dessine à chaque frame
+            draw();
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      document.getElementById("pause-btn").onclick = () => paused = !paused;
+      document.getElementById("funky-btn").onclick = () => funkyMode = (funkyMode + 1) % 3;
+
+      // Gestion du plein-écran + masquage de la navbar
+      const fsBtn = document.getElementById("fullscreen-btn");
+      fsBtn.onclick = () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      };
+      document.addEventListener("fullscreenchange", () => {
+        const nav = document.getElementById("nav-container");
+        nav.style.display = document.fullscreenElement ? "none" : "";
+      });
+      
+      /** Parse une couleur CSS (hex, rgb, hsl…) pour obtenir [r,g,b] */
+      function parseRGB(col) {
+        const d = document.createElement('div');
+        d.style.color = col;
+        document.body.appendChild(d);
+        const cs = getComputedStyle(d).color;   // "rgb(r, g, b)"
+        document.body.removeChild(d);
+        const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+        return m ? [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)] : [0,0,0];
+      }
+
+      // Mise à jour de l’icône fullscreen selon le thème
+      function updateThemeColors() {
+        const s = getComputedStyle(document.documentElement);
+        bgColor    = s.getPropertyValue('--matrix-background').trim();
+        textColor  = s.getPropertyValue('--text').trim();
+        // 1) met à jour le fond du canevas en inline style…
+        canvas.style.backgroundColor = bgColor;
+        // …puis le rend visible
+        canvas.style.visibility = 'visible';
+        // 2) calcule la couleur inverse pour la tête brillante
+        invBgColor = invertColor(bgColor);
+        // → Calcule un fond transparent basé sur bgColor
+        const [r, g, b] = parseRGB(bgColor);
+        const helpBg     = `rgba(${r}, ${g}, ${b}, 0.6)`;
+        // Applique en CSS variable…
+        document.documentElement.style.setProperty('--help-bg', helpBg);
+        // …et en inline pour forcer la mise à jour si nécessaire
+        document.getElementById('help-box').style.backgroundColor = helpBg;
+        // 🔳 ou 🔲 selon dark/light
+        const theme = document.documentElement.getAttribute("data-theme");
+        fsBtn.textContent = theme === "dark" ? "🔳" : "🔲";
+        // synchronise la couleur de la boîte d’aide
+        document.documentElement.style.setProperty('--help-color', invBgColor);
+      }
+
+      // 3) réagir aux changements de thème (data-theme sur <html>)
+      new MutationObserver(muts => {
+        for (const m of muts) {
+          if (m.attributeName === 'data-theme') {
+            updateThemeColors();
+          }
+        }
+      }).observe(document.documentElement, { attributes: true });
+
+      updateThemeColors();
+      requestAnimationFrame(tick);
+      
+      // ── Opacité à 1 pendant appui Ctrl gauche ─────────────────────
+      document.addEventListener("keydown", e => {
+        if (e.code === "ControlLeft") {
+          document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "1");
+        }
+      });
+      document.addEventListener("keyup", e => {
+        if (e.code === "ControlLeft") {
+          document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "");
+        }
+      });
+
+      // ── Bouton Aide ───────────────────────────────────────────────
+      const helpBtn = document.getElementById('help-btn');
+      const helpBox = document.getElementById('help-box');
+      helpBtn.onclick = () => {
+        helpBox.style.display = helpBox.style.display === 'block' ? 'none' : 'block';
+      };
+
+      // ── Raccourcis clavier ─────────────────────────────────────────
+      document.addEventListener('keydown', e => {
+        // ignorer si on saisit dans un champ
+        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+        switch (e.key) {
+          case 'f': case 'F':
+            fsBtn.click();
+            break;
+          case ' ':
+            e.preventDefault();
+            document.getElementById('pause-btn').click();
+            break;
+          case 'm': case 'M':
+            document.getElementById('funky-btn').click();
+            break;
+          case 's': case 'S':
+            document.getElementById('fps-btn').click();
+            break;
+          case 'h': case 'H':
+            helpBtn.click();
+            break;
+        }
+      });
+
+    </script>
 
   </main>
 
   <footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
 
-  <script type="module">
-  import { ulid, decodeTime } from "/module/ulid";
-
-  const canvas = document.getElementById("matrix");
-  const ctx = canvas.getContext("2d");
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  const chars = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-  const fontSize = 16;
-  let columns = Math.floor(window.innerWidth / fontSize);
-  let drops = Array(columns).fill(1);
-
-  function getThemeColor() {
-    const styles = getComputedStyle(document.documentElement);
-    let color = styles.getPropertyValue('--text').trim();
-    if (!color) color = "#33ff33"; // Sécurité → couleur par défaut
-    return color;
-  }
-
-  function draw() {
-    ctx.fillStyle = getComputedStyle(document.documentElement)
-                      .getPropertyValue("--matrix-overlay")
-                      .trim();
-
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = getThemeColor();
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-      const char = chars[Math.floor(Math.random() * chars.length)];
-      ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-
-      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-        drops[i] = 0;
-      }
-      drops[i]++;
-    }
-  }
-
-  setInterval(draw, 40);
-
-  // ULID secret → touche M
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "m" || e.key === "M") {
-      const id = ulid();
-      const unix = decodeTime(id);
-      const iso = new Date(unix).toISOString();
-
-      document.getElementById("ulid-reveal").textContent = id;
-      document.getElementById("ts-unix").textContent = unix + " ms";
-      document.getElementById("ts-iso").textContent = iso;
-
-      document.getElementById("secret").style.display = "block";
-    }
-    if (e.key === "/") {
-      window.location.href = "/";
-    }
-  });
-
-  // Mise à jour des colonnes si resize
-  window.addEventListener("resize", () => {
-    columns = Math.floor(window.innerWidth / fontSize);
-    drops = Array(columns).fill(1);
-  });
-
-  </script>
-
-  <script type="module" src="./site.js"></script>
+  <!-- enfin ton script principal -->
+  <script type="module" src="./site.js"></script> 
 
 </body>
 </html>

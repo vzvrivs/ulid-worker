@@ -5,63 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>🎶 ULID Music Terminal</title>
 
-    <!-- Thème avant chargement du CSS -->
-<script>
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-</script>
+  <!-- Thème avant chargement du CSS -->
+  <script>
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+  </script>
   
-<!-- ton CSS -->
-<link rel="stylesheet" href="/style.css"/>
-
-</head>
-
-  <style>
-    body {
-      background-color: #0d0d0d;
-      color: #33ff33;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-      max-width: 960px;
-      margin: auto;
-    }
-    h1 {
-      color: #00ffcc;
-      border-bottom: 1px dashed #00ffcc;
-      margin-bottom: 1rem;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 1.5rem;
-      display: block;
-    }
-    select, button {
-      background-color: #111;
-      color: #66ff66;
-      border: 1px solid #00ffcc;
-      font-family: monospace;
-      font-size: 1rem;
-      padding: 0.5rem;
-      margin-right: 0.5rem;
-      margin-top: 0.5rem;
-      border-radius: 4px;
-    }
-    #ulid-display {
-      font-size: 1.3rem;
-      background-color: #111;
-      border-left: 4px solid #00ffcc;
-      padding: 1rem;
-      margin-top: 1rem;
-      word-break: break-word;
-    }
-    #log {
-      background-color: #111;
-      margin-top: 2rem;
-      padding: 1rem;
-      border-left: 4px solid #00ffcc;
-      white-space: pre-wrap;
-    }
-  </style>
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
 
@@ -69,29 +20,28 @@
 
   <main class="page-wrapper">
     
-  <h1>🎶 ULID Music Terminal</h1>
+    <h1>🎶 ULID Music Terminal</h1>
 
-  <label for="style">🎛️ Sélectionne un style :</label>
-  <select id="style">
-    <option value="ambient">Ambient futuriste</option>
-    <option value="chiptune">Chiptune rétro</option>
-    <option value="jazz">ULID Jazz</option>
-    <option value="minimal">Minimal mystérieux</option>
-    <option value="ulidcore">ULIDcore tribal glitch</option>
+    <label for="style">🎛️ Sélectionne un style :</label>
 
+    <select id="style">
+      <option value="ambient">Ambient futuriste</option>
+      <option value="chiptune">Chiptune rétro</option>
+      <option value="jazz">Jazz improvisé</option>
+      <option value="minimal">Minimal mystérieux</option>
+      <option value="ulidcore">ULIDcore tribal glitch</option>
+    </select>
 
-  </select>
+    <div>
+      <button onclick="generate()">🎲 Nouveau ULID</button>
+      <button onclick="play()">▶️ Rejouer</button>
+    </div>
 
-  <div style="margin-top:1rem;">
-    <button onclick="generate()">🎲 Nouveau ULID</button>
-    <button onclick="play()">▶️ Rejouer</button>
-  </div>
+    <label>🎯 ULID généré :</label>
+    <div id="ulid-display">...</div>
 
-  <label>🎯 ULID généré :</label>
-  <div id="ulid-display">...</div>
-
-  <label>🧠 Console :</label>
-  <div id="log">Chargement de l'orchestre...</div>
+    <label>🧠 Console :</label>
+    <div id="log">Chargement de l'orchestre...</div>
 
 </main>
 
