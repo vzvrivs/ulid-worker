@@ -106,25 +106,14 @@
       const canvas = document.getElementById("matrix");
       const ctx = canvas.getContext("2d");
 
-      // Densité pixel (Device Pixel Ratio) – lue une seule fois
-      const DPR = window.devicePixelRatio || 1;
-
-      // ── 1. Capping FPS (par défaut activé, ⚡ le désactive) ──────────
-      const MAX_FPS        = 30;
-      const FRAME_DELAY    = 1000 / MAX_FPS;
-      let   lastTime       = 0;
-      let   fpsCapEnabled  = true;
-      document.getElementById("fps-btn").onclick = () => {
-        fpsCapEnabled = !fpsCapEnabled;
-        // tu peux ici changer le style de ⚡ pour indiquer l'état
-      };
-
-      canvas.width  = window.innerWidth  * DPR;
-      canvas.height = window.innerHeight * DPR;
-      ctx.scale(DPR, DPR);            // échelle initiale
+      // Canvas en pixels CSS simples
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
 
       const fontSize = 16;
-      const chars = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+      const chars    = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+      
 
       // ── 2. Précalcul police & thèmes ────────────────────────────────
       ctx.font = `${fontSize}px monospace`;  // ← maintenant après scale
@@ -147,34 +136,42 @@
         return '#fff';  // fallback blanc
       }
 
-      // Nombre de colonnes : largeur physique ÷ DPR ÷ taille de police
-      let columns    = Math.floor(canvas.width / DPR / fontSize);
+      // Nombre de colonnes : largeur physique ÷ taille de police
+      let columns = Math.floor(canvas.width / fontSize);
       let drops = Array(columns).fill(1);
       let dropColors = Array(columns).fill(0).map(_ => Math.random() * 360 | 0);
 
       let paused = false;
       let funkyMode = 0;
+      const funkyBtn = document.getElementById('funky-btn');
+      funkyBtn.onclick = () => {
+        funkyMode = (funkyMode + 1) % 3;
+      };
+
+
+      /* ----------  Limiteur FPS (⚡)  ---------- */
+      const MAX_FPS      = 30;                    // images/sec quand limité
+      const FRAME_DELAY  = 1000 / MAX_FPS;
+      let   lastTime     = 0;
+      let   fpsCapEnabled = true;                 // cap actif par défaut
+      
+      const fpsBtn = document.getElementById('fps-btn');
+      fpsBtn.onclick = () => { fpsCapEnabled = !fpsCapEnabled; };
 
       function resize() {
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        canvas.width  = window.innerWidth  * DPR;
-        canvas.height = window.innerHeight * DPR;
-        canvas.style.width  = window.innerWidth  + 'px';
-        canvas.style.height = window.innerHeight + 'px';
-        ctx.scale(DPR, DPR);
-        columns = Math.floor(canvas.width / DPR / fontSize);
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+        columns = Math.floor(canvas.width / fontSize);
         drops   = Array(columns).fill(1);
         dropColors = Array(columns).fill(0).map(() => Math.random() * 360 | 0);
         // ré-initialise aussi les buffers si resize
         buffers.length = 0;
+        baseSat.length = baseLum.length = 0;
+        idStreams.length = idIndices.length = 0;
         for (let i = 0; i < columns; i++) {
           buffers.push(Array(TAIL).fill(' '));
-        }
-        // ré-initialise buffers sat/lum et ULID streams
-        satBuffers.length = lumBuffers.length = idStreams.length = idIndices.length = 0;
-        for (let i = 0; i < columns; i++) {
-          satBuffers.push(Array(TAIL).fill(80));
-          lumBuffers.push(Array(TAIL).fill(65));
+          baseSat.push(80 + Math.random()*20);
+          baseLum.push(50 + Math.random()*30);
           idStreams.push(ulid());
           // idem au resize : index aléatoire pour chaque nouvelle colonne
           idIndices.push(Math.floor(Math.random() * idStreams[idStreams.length - 1].length));
@@ -204,14 +201,11 @@
       /* Décrément linéaire d’opacité : 1, 1-1/TAIL, … 0 */
       const ALPHA = new Float32Array(TAIL);
       for (let i = 0; i < TAIL; i++) ALPHA[i] = 1 - i / TAIL;
-
-      // ── Intensité des variations sat/lum en Funky 2 (en pourcentage)
-      const FUNKY2_VARIATION_INTENSITY = 15; // ±15% à modifier à loisir
       
       // ── 3. Buffers pour la traîne + saturation/luminosité + ULID streams ─
       const buffers    = Array.from({ length: columns }, () => Array(TAIL).fill(' '));
-      const satBuffers = Array.from({ length: columns }, () => Array(TAIL).fill(80));
-      const lumBuffers = Array.from({ length: columns }, () => Array(TAIL).fill(65));
+      const baseSat = Array(columns).fill(0).map(() => 80 + Math.random()*20);
+      const baseLum = Array(columns).fill(0).map(() => 50 + Math.random()*30);
       // Pour chaque colonne, on génère un ULID initial...
       const idStreams = Array.from({ length: columns }, () => ulid());
       // ...et on positionne l’index de départ de façon aléatoire dans ce ULID
@@ -233,14 +227,6 @@
           idIndices[i]++;   // incrémente pour la prochaine frame
           buffers[i].unshift(headChar);
           if (buffers[i].length > TAIL) buffers[i].pop();
-
-          // ── génère 1 sat et 1 lum aléatoires pour la Funky 2
-          const headSat = 80 + Math.random() * 20;   // 80–100 %
-          const headLum = 50 + Math.random() * 30;   // 50–80 %
-          satBuffers[i].unshift(headSat);
-          lumBuffers[i].unshift(headLum);
-          if (satBuffers[i].length > TAIL) satBuffers[i].pop();
-          if (lumBuffers[i].length > TAIL) lumBuffers[i].pop();
 
           const headHue = dropColors[i];
           // on réutilise la couleur de texte déjà lue dans updateThemeColors()
@@ -267,12 +253,10 @@
                 // Funky 1 : couleur entièrement aléatoire
                 color = `hsl(${Math.random()*360|0},100%,60%)`;
                 } else if (funkyMode === 2) {
-                  // Funky 2 : base sat/lum + variation aléatoire à chaque frame
-                  const baseSat  = satBuffers[i][t];
-                  const baseLum  = lumBuffers[i][t];
-                  const delta    = (Math.random() * 2 - 1) * FUNKY2_VARIATION_INTENSITY;
-                  const sat      = Math.min(100, Math.max(0, baseSat + delta));
-                  const lum      = Math.min(100, Math.max(0, baseLum + delta));
+                  // variation par colonne : petit delta chaque frame
+                  const delta = (Math.random()*2 - 1) * 15;    // ±15 %
+                  const sat   = Math.min(100, Math.max(0, baseSat[i] + delta));
+                  const lum   = Math.min(100, Math.max(0, baseLum[i] + delta));
                   color = `hsl(${headHue}, ${sat}%, ${lum}%)`;
               } else {
                 color = baseColor;
@@ -281,6 +265,7 @@
             ctx.fillStyle = color;
 
             const ch = buffers[i][t];  // on réaffiche depuis le buffer
+            // on teinte directement chaque glyphe
             ctx.fillText(ch, x, y);
           }
 
@@ -291,8 +276,8 @@
             // → nouvelle goutte : reset position, couleur, buffers et ULID
             drops[i]       = 0;
             dropColors[i]  = Math.random()*360|0;
-            satBuffers[i].fill(80);
-            lumBuffers[i].fill(65);
+            baseSat[i] = 80 + Math.random()*20;
+            baseLum[i] = 50 + Math.random()*30;
             idStreams[i]  = ulid();   // nouvel ULID pour la colonne
             // position de départ aléatoire pour briser les patterns
             idIndices[i]  = Math.floor(Math.random() * idStreams[i].length);
