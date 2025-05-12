@@ -411,8 +411,6 @@ async function downloadResult(outputId, formatId) {
   URL.revokeObjectURL(url);
 }
 
-
-
 // === 💾 Raccourcis pour Playground ===
 window.downloadConverted = () =>
   downloadResult("gen-output", "gen-export-format");
@@ -488,7 +486,6 @@ window.generateULID = async () => {
   btn.classList.remove("pending");
 };
 
-
 // === 🔎 Vérification ULID ===
 // -----------------------------------------------
 // Lit le champ, appelle /ulid?check=… et affiche
@@ -536,8 +533,6 @@ window.checkULID = async () => {
     btn.classList.remove("pending");
   }
 };
-
-
 
 /**
  * Disable / enable a "bin" checkbox depending on the current
@@ -689,7 +684,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("check-input")?.addEventListener("keydown", e => {
     if (e.key==="Enter") { e.preventDefault(); checkULID(); }
   });
-
 
   // Boutons paste
   [

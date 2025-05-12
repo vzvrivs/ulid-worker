@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD024 -->
-
 # Changelog
 
 Toutes les modifications notables du projet sont documentées ici.
@@ -9,68 +7,76 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
 
-## [0.4.0] – 2025-05-02
+## [0.5.0] – 2025-05-12
 
 ### Ajouté
 
-- **Thème**
-  - Rétablissement du toggle clair/sombre.
-  - Suppression du stockage local du thème → détection dynamique du thème de l’environnement.
-  - Prise en charge des changements de thème en temps réel.
+#### Page Music
+- Refonte complète de la page.
+- Sélection d’un ULID pour la génération musicale :
+  - aléatoire, "maintenant" (par défaut), ou saisi manuellement.
+- Vérification automatique de la conformité de l’ULID.
+- Génération de rythmes et de notes pseudo-aléatoires à partir de l’ULID.
+- Affichage du processus de calcul rythmique.
+- Affichage du tableau de lecture des notes.
+- Génération de partitions musicales avec surlignage de la note en cours.
+- Section explicative décrivant toute la démarche de génération.
 
-- **Logs**
-  - Rétablissement des logs.
-  - `/logs` : page HTML minimaliste ou JSON brut selon l’en-tête `Accept`.
-  - `/debug/logs` : dashboard HTML interactif avec tri inverse par défaut et tri par colonne.
+#### Page Matrix
+- Intégration de la page Matrix dans le design global du site avec navbar.
+- Réécriture du moteur d’affichage :
+  - Élimination des résidus gris après les traînées.
+  - Réduction de la consommation CPU.
+- Ajout de contrôles interactifs (boutons discrets sous la navbar) :
+  - Plein écran (P), Pause (Espace), Mode (M), Vitesse max (S), Aide (H).
+- Intégration des raccourcis clavier pour tous les contrôles.
+- Optimisations finales du moteur Matrix : meilleure fluidité, corrections graphiques mineures.
 
-- **Navbar**
-  - Rétablissement de la navbar avec effet de transparence, sticky, logo animé discrètement.
-  - Adaptation mobile avec burger menu et affichage vertical des éléments.
+---
 
-### Modifié
+## [0.4.0] – 2025-05-02
 
-- Amélioration globale de l’interface et de l’expérience utilisateur.
+### Ajouté
+- Rétablissement du toggle clair/sombre avec détection dynamique du thème de l’environnement.
+- Prise en charge du changement de thème système en temps réel.
+- Rétablissement des logs :
+  - `/logs` : page HTML ou JSON brut selon l’en-tête `Accept`.
+  - `/debug/logs` : dashboard HTML interactif avec tri par colonne.
+- Refonte de la navbar :
+  - sticky, effet de transparence, logo animé, burger menu responsive.
 
 ---
 
 ## [0.3.0] – 2025-04-28
 
 ### Ajouté
-
-- Finalisation du Playground : toutes les fonctionnalités souhaitées sont intégrées.
-- Sélection du format de timestamp personnalisé (ISO 8601, UNIX, Crockford) avec aperçu humanisé.
-- Génération de données avec choix et ordre des types (`t`, `ts`, `ulid`, `bin`).
-- Génération d'objets ou de primitives selon les types sélectionnés.
-- Boutons pour minifier ou beautifier les sorties (Générateur et Autofill).
-- Téléchargement respectant l'état beautifié/minifié sélectionné.
-- Refonte de l'interface des boutons dans le Playground.
-- Helpers JavaScript centralisés dans `helpers.js`.
+- Finalisation du Playground avec toutes les fonctionnalités prévues.
+- Sélection du format de timestamp personnalisé avec aperçu humanisé.
+- Génération avec choix et ordre des types de valeurs.
+- Boutons minify/beautify pour Générateur et Autofill.
+- Téléchargement respectant l’état beautifié/minifié.
 
 ### Modifié
-
-- Correction du bug de génération d'ULID monotone (premier ULID désormais correctement monotone).
-- Téléchargement par type de valeur dans les formats autres que JSON.
-- Le Vérificateur ULID affiche désormais la date humanisée si valide.
+- Correction du bug du premier ULID monotone.
+- Téléchargement avec regroupement par type.
+- Vérificateur déplacé et amélioré (affiche la date humanisée).
 
 ### Supprimé
-
-- Suppression des champs "Préfixe" et "Suffixe" inutiles dans le Playground.
-- Suppression de la case "Beautify" au profit des boutons séparés.
-- Suppression de la sélection de type de fichier dans Autofill (JSON uniquement).
+- Champs "Préfixe" et "Suffixe".
+- Sélection du type de fichier dans Autofill (JSON uniquement).
 
 ---
 
 ## [0.2.0] – 2025-04-20
 
 ### Ajouté
-
-- Mise en place du premier Playground interactif : générateur de timestamp commun, ULID monotone, Autofill JSON.
+- Mise en place du Playground interactif.
+- Générateur de timestamp commun, ULID monotone, Autofill JSON.
 
 ---
 
 ## [0.1.0] – 2025-04-12
 
 ### Ajouté
-
-- Déploiement initial du Worker ULID simple avec génération d'ULID standards via API.
-- Première documentation basique en ligne.
+- Déploiement initial du Worker ULID simple avec génération via API.
+- Première documentation en ligne.

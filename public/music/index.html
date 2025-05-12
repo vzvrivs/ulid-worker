@@ -1,219 +1,810 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🎶 ULID Music Terminal</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>🎶 ULID Music</title>
 
   <!-- Thème avant chargement du CSS -->
   <script>
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
   </script>
-  
+
   <!-- ton CSS -->
   <link rel="stylesheet" href="/style.css"/>
+
+  <style>
+
+    .row { display:flex; align-items:center; gap:0.5rem; }
+
+    /* conteneur générique pour faire 2 colonnes puis 1 colonne */
+    .flex-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    /* chaque “groupe” fait 1/2 du conteneur, au minimum 250px */
+    .group {
+      flex: 1 1 45%;
+      min-width: 250px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Media query : < 600px on passe à 1 colonne */
+    @media (max-width: 600px) {
+      .group {
+        flex: 1 1 100%;
+      }
+    }
+
+    /* ── Taille fixe pour l’ULID (26 caractères Base32) ── */
+    #ulid-input {
+      flex: none;              /* pas d’expansion/shrink */
+      width: 28ch;             /* 26 “0” de large, soit pile la longueur d’un ULID */
+      box-sizing: border-box;  /* inclut padding/border dans ces 26ch */
+    }
+    
+    /* ── Prévisualisation date : ne pas réduire, afficher tout le texte ── */
+    #ulid-ts-preview {
+      flex: none;              /* taille auto selon contenu */
+      min-width: max-content;  /* largeur mini = largeur du texte */
+    }
+
+    /* Partition : applicables à #staff et staff0..staff3 */
+    [id^="staff"] {
+      background: var(--bg);
+    }
+
+    [id^="staff"] svg *:not(.note-play) {   /* ← ignore la note jouée */
+      stroke: var(--text);
+      fill:   var(--text);
+    }
+
+    /* couleur de la note jouée */
+    [id^="staff"] svg .note-play * {
+      stroke: var(--heading) !important;
+      fill:   var(--heading) !important;
+    }
+
+    /* ── Partition : note en cours ─────────────────────────── */
+    /* VexFlow baptise les groupes <g> .vf-stavenote → on les colore */
+    .note-play path,
+    .note-play ellipse {
+      fill:   var(--heading) !important;   /* tête de note */
+      stroke: var(--heading) !important;   /* hampe / ligature */
+    }
+
+    /* ── Tableau : pastille « Playing » ────────────────────── */
+    .playing-col{ text-align:center; vertical-align:middle; }
+    .playing-col.playing::before{   /* pastille visible uniquement */
+      content: "";
+      display: inline-block;
+      width:  .75em;
+      height: .75em;
+      border-radius: 50%;
+      background: var(--heading);
+      vertical-align:middle;
+    }
+
+    /* Mini‐tables : 4×8 notes */
+    .mini table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size:    .85rem;
+      margin-top:   .5rem;
+    }
+    .mini th,
+    .mini td {
+      text-align:      center;
+      vertical-align:  middle;
+      color:           var(--text);
+    }
+    /* ── Ligne en cours de lecture ───────────────────────── */
+    .mini tbody tr.playing-row td {
+      color: var(--heading) !important;
+    }
+
+    .flex-container + .flex-container {
+        margin-top: 0.5rem;
+      }
+
+  </style>
+
+  <script>
+  document.documentElement.setAttribute("data-theme",
+    window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+  </script>
+
 </head>
+
 <body>
 
   <header id="nav-container" class="header-nav-container"></header>
 
   <main class="page-wrapper">
-    
-    <h1>🎶 ULID Music Terminal</h1>
 
-    <label for="style">🎛️ Sélectionne un style :</label>
+    <h1>🎶 ULID Music</h1>
 
-    <select id="style">
-      <option value="ambient">Ambient futuriste</option>
-      <option value="chiptune">Chiptune rétro</option>
-      <option value="jazz">Jazz improvisé</option>
-      <option value="minimal">Minimal mystérieux</option>
-      <option value="ulidcore">ULIDcore tribal glitch</option>
-    </select>
-
-    <div>
-      <button onclick="generate()">🎲 Nouveau ULID</button>
-      <button onclick="play()">▶️ Rejouer</button>
+    <!-- ── LIGNE 1 : Style | Description | Arpège | Accords ── -->
+    <div id="setup-top" class="flex-container">
+      <div class="group">
+        <label>Style :
+          <select id="styleSel">
+            <option value="ambient">Ambient doux</option>
+            <option value="chiptune">Chiptune rétro</option>
+            <option value="jazz">Jazz cool</option>
+          </select>
+        </label>
+        <span id="style-desc" class="desc">Tempo 60 BPM – ambiance douce</span>
+      </div>
+      <div class="group">
+        <label>Arpège :
+          <select id="arp">
+            <option value="updown">Montant & descendant</option>
+            <option value="up">Montant</option>
+            <option value="down">Descendant</option>
+            <option value="random">Aléatoire</option>
+          </select>
+        </label>
+        <label>Accords :
+          <select id="chordsSel">
+            <option value="none">Aucun</option>
+            <option value="triad" selected>Triades</option>
+            <option value="seventh">Septièmes</option>
+            <option value="power">Quintes (power)</option>
+          </select>
+        </label>
+      </div>
     </div>
 
-    <label>🎯 ULID généré :</label>
-    <div id="ulid-display">...</div>
+    <!-- ── LIGNE 2 : Instruments + boutons d’écoute ── -->
+    <div id="setup-bottom" class="flex-container">
+      <div class="group">
+        <label>Instrument 1 :
+          <select id="prim">
+            <option value="default">Par défaut</option>
+            <option value="sine">Pad sine</option>
+            <option value="square">Lead square</option>
+            <option value="fmBell">FM bell</option>
+          </select>
+        </label>
+        <button type="button" id="preview1">🔈 Écouter instr. 1</button>
+      </div>
+      <div class="group">
+        <label>Instrument 2 :
+          <select id="sec">
+            <option value="none">Aucun</option>
+            <option value="bass">Basse</option>
+            <option value="pad">Pad doux</option>
+            <option value="bell">Cloche</option>
+          </select>
+        </label>
+        <button type="button" id="preview2">🔈 Écouter instr. 2</button>
+      </div>
+    </div>
 
-    <label>🧠 Console :</label>
-    <div id="log">Chargement de l'orchestre...</div>
+    <div class="action-container flex-container">
+      <div class="group">
+        <button type="button" id="ulid-random">🎲 Nouvel ULID</button>
+        <button type="button" id="ulid-now">⏲️ Maintenant</button>
+      </div>
+      <div class="group">
+        <button type="button" id="play">▶️ Jouer</button>
+        <button type="button" id="stop">⏹ Stop</button>
+      </div>
+    </div>
 
-</main>
+    <!-- ULID modifiable + bouton Valider -->
+    <div id="ulid-row" class="flex-container">
+      <div class="group">
+        <label for="ulid-input">ULID :</label>
+        <input id="ulid-input" placeholder="26 car. ULID (Crockford)" />
+        <div id="ulid-status" style="margin-top:.5rem;"></div>
+      </div>
+      <div class="group">
+        <pre id="ulid-ts-preview" class="code-block ts-preview"
+            style="white-space:nowrap; margin-left:0;">
+          📆 Date : —  
+        </pre>
+      </div>
+    </div>
 
-<footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+    <div>
+      <pre id="nibbles" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🧩 Nibbles : —</pre>
+      <pre id="nibbles-reversed" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🔁 Inversés : —</pre>
+      <pre id="nibbles-xor" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🧮 XOR : —</pre>
+      <pre id="nibbles-xor-bits" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">⚡ XOR adaptif : —</pre>
+      <pre id="summary" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:1rem;">—</pre>
+    </div>
+
+    <style>
+      .grid4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+      }
+
+      /* Responsive – 2 colonnes sous 1024px, 1 colonne sous 600px */
+      @media (max-width: 1024px) {
+        .grid4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .grid4 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .mini   { width:100%; }
+      .mini th,.mini td{font-size:.8rem}
+    </style>
+
+    <h2>🎼 Visualisation</h2>
+
+    <pre id="note-sequence" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🎵 Séquence : —</pre>
+
+    <div class="grid4" id="note-grids">
+      <!-- répété 4× -->
+      <div>
+        <table class="mini"><thead>
+          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
+        </thead><tbody id="tbl0"></tbody></table>
+        <div id="staff0"></div>
+      </div>
+      <div>
+        <table class="mini"><thead>
+          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
+        </thead><tbody id="tbl1"></tbody></table>
+        <div id="staff1"></div>
+      </div>
+      <div>
+        <table class="mini"><thead>
+          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
+        </thead><tbody id="tbl2"></tbody></table>
+        <div id="staff2"></div>
+      </div>
+      <div>
+        <table class="mini"><thead>
+          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
+        </thead><tbody id="tbl3"></tbody></table>
+        <div id="staff3"></div>
+      </div>
+    </div>
+
+    <section>
+      <h2>🧠 Démarche de génération</h2>
+      <ol style="line-height:1.6">
+        <li>
+          <strong>🔢 ULID → séquence de 32 nibbles</strong><br>
+          L’ULID (26 caractères Base32) est converti en 128 bits binaires.<br>
+          Ces 128 bits sont découpés en 32 groupes de 4 bits (nibbles), soit 32 valeurs entre 0 et 15.
+        </li>
+        <li>
+          <strong>🎵 Note = valeur du nibble</strong><br>
+          Chaque valeur est associée à une note dans une gamme musicale de 16 sons fixes, de C3 à G5.
+        </li>
+        <li>
+          <strong>🧮 Vitesse = XOR adaptatif</strong><br>
+          La durée de chaque note est déterminée par une opération logique :<br>
+          → On calcule un XOR entre chaque nibble et son opposé binaire (ULID inversé bit-à-bit)<br>
+          → Ensuite, on extrait un bit interne du résultat par une règle adaptative :
+          <ul>
+            <li>Si la position du nibble est <em>impair</em> → on fait <code>b0 ^ b2</code></li>
+            <li>Si la position est <em>pair</em> → on fait <code>b1 ^ b3</code></li>
+          </ul>
+          Ce bit donne le rythme :<br>
+          <code>0</code> → <strong>note normale</strong> (croche /8) • <code>1</code> → <strong>note rapide</strong> (double‑croche /16)
+        </li>
+        <li>
+          <strong>📊 Résumé rythmique</strong><br>
+          Juste sous la séquence adaptative, un encart affiche :
+          <ul>
+            <li>⏱️ la durée totale estimée</li>
+            <li>🎼 le nombre de battements en seizièmes</li>
+            <li>⚖️ la répartition rapide / lente</li>
+          </ul>
+          Tout est recalculé à chaque modification de l’ULID.
+        </li>
+        <li>
+          <strong>🎼 Visualisation immédiate</strong><br>
+          Dès qu’un ULID valide est saisi, les mini‑tableaux et portées sont affichés :
+          <ul>
+            <li>📋 Chaque tableau liste les notes, valeurs, accords, durées</li>
+            <li>🎶 Les 4 portées VexFlow montrent les notes, leurs hauteurs et durées réelles</li>
+          </ul>
+        </li>
+        <li>
+          <strong>▶️ Lecture interactive</strong><br>
+          Un clic sur <em>Jouer</em> déclenche la lecture avec synchronisation parfaite :
+          <ul>
+            <li>🔈 sons selon le style et les instruments sélectionnés</li>
+            <li>📚 surbrillance des notes en temps réel (tableaux + partition)</li>
+            <li>⏱️ durée respectée selon le tempo du style</li>
+          </ul>
+        </li>
+      </ol>
+    </section>
+
+  </main>
+
+  <footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.js"></script>
+
   <script>
-    const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-    let currentULID = "";
-    let currentStyle = "ambient";
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("style").addEventListener("change", (e) => {
-        currentStyle = e.target.value;
-      });
-
-      document.querySelector("button[onclick='generate()']").addEventListener("click", generate);
-      document.querySelector("button[onclick='play()']").addEventListener("click", play);
-
-      generate(); // Initial generation au chargement
-    });
-
-    function generateULID() {
-      const chars = crockford.split('');
-      let result = "";
-      for (let i = 0; i < 26; i++) {
-        result += chars[Math.floor(Math.random() * chars.length)];
-      }
-      return result;
-    }
-
-    async function generate() {
-      try {
-        const res = await fetch("/ulid?n=1");
-        const data = await res.json();
-        currentULID = data[0].ulid;
-        document.getElementById("ulid-display").textContent = currentULID;
-        play();
-      } catch (e) {
-        document.getElementById("ulid-display").textContent = "Erreur de génération";
-        console.error(e);
-      }
-    }
-
-    const soundStyles = {
-      ambient: {
-        label: "Ambient futuriste",
-        scale: ["C4", "D#4", "F4", "G4", "A#4", "C5", "D#5", "F5"],
-        synth: () => new Tone.PolySynth(Tone.Synth, {
-          oscillator: { type: "sine" },
-          envelope: { attack: 0.8, decay: 0.2, sustain: 0.5, release: 1.5 }
-        }),
-        effects: [() => new Tone.Reverb({ decay: 5, preDelay: 0.2, wet: 0.6 })],
-        tempo: 0.7,
-        duration: "2n",
-        length: 8
-      },
-
-      chiptune: {
-        label: "Chiptune rétro",
-        scale: ["C5", "D5", "E5", "G5", "A5", "C6", "D6", "E6"],
-        synth: () => new Tone.MonoSynth({
-          oscillator: { type: "square" },
-          envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.3 }
-        }),
-        effects: [],
-        tempo: 0.2,
-        duration: "8n",
-        length: 8
-      },
-
-      jazz: {
-        label: "Jazz improvisé",
-        scale: ["C3", "Eb3", "F3", "G3", "Bb3", "C4", "D4", "Eb4"],
-        synth: () => new Tone.FMSynth({
-          harmonicity: 3,
-          modulationIndex: 10,
-          envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 1 }
-        }),
-        effects: [() => new Tone.Tremolo(9, 0.75).start()],
-        tempo: 0.4,
-        duration: "4n",
-        length: 8,
-        noteModifier: (i, index, scale) => scale[(index * 3 + i) % scale.length]
-      },
-
-      minimal: {
-        label: "Minimal mystérieux",
-        scale: ["A2", "C3", "E3", "G3", "A3", "C4", "E4", "G4"],
-        synth: () => new Tone.MembraneSynth(),
-        effects: [() => new Tone.FeedbackDelay("8n", 0.5)],
-        tempo: 1.2,
-        duration: "1n",
-        length: 6
-      },
-
-      ulidcore: {
-        label: "ULIDcore tribal glitch",
-        scale: ["C2", "D2", "E2", "F2", "G5", "A5", "B5", "C6"],
-        synth: () => new Tone.MetalSynth({
-          frequency: 200,
-          envelope: { attack: 0.001, decay: 0.4, release: 0.2 },
-          harmonicity: 5.1,
-          modulationIndex: 32,
-          resonance: 4000,
-          octaves: 1.5
-        }),
-        effects: [() => new Tone.Distortion(0.4), () => new Tone.PingPongDelay("4n", 0.3)],
-        tempo: 0.12,
-        duration: "16n",
-        length: 12
-      }
+    /* ===== Constantes & tables ===== */
+    const crock="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    const table16=[ "C3","D3","E3","F3",    // 0‑3
+                    "C4","D4","E4","F4","G4","A4","B4", //4‑10
+                    "C5","D5","E5","F5","G5" ]; //11‑15
+    const styles={
+      ambient :{scale:table16,tempo:.5 ,dur:"4n",
+                desc:"Tempo 60 BPM • ambiance douce & éthérée"},
+      chiptune:{scale:table16,tempo:.25,dur:"8n",
+                desc:"Tempo 120 BPM • son rétro 8‑bit"},
+      jazz    :{scale:table16,tempo:.4 ,dur:"4n",
+                desc:"Tempo 90 BPM • feeling swing / cool jazz"}
     };
 
-    function generateNotesFromULID(ulid, scale, length, modifierFn) {
-      const chars = crockford.split('');
-      const notes = [];
-
-      for (let i = 0; i < length; i++) {
-        const index = chars.indexOf(ulid[i]);
-        const note = modifierFn ? modifierFn(i, index, scale) : scale[index % scale.length];
-        notes.push(note);
-      }
-
-      return notes;
+    /* Accord → intervalles (en pas dans table16) */
+    const chordDefs={
+      none   :[0],
+      triad  :[0,2,4],           // 1‑3‑5
+      seventh:[0,2,4,6],         // 1‑3‑5‑7
+      power  :[0,4]              // 1‑5
+    };
+    
+    function chordify(note,type){
+      const idx=table16.indexOf(note);
+      return chordDefs[type].map(d=>table16[(idx+d)%table16.length]);
     }
 
-    function play() {
-      currentStyle = document.getElementById("style").value;
-      const style = soundStyles[currentStyle];
-      const log = document.getElementById("log");
+    const primDefs={
+      sine:  ()=>new Tone.Synth({oscillator:{type:"sine"},envelope:{attack:.2,release:1.4}}),
+      square:()=>new Tone.MonoSynth({oscillator:{type:"square"}}),
+      fmBell:()=>new Tone.FMSynth({harmonicity:8,modulationIndex:12,envelope:{attack:.01,decay:1.2,release:2}})
+    };
+    const secDefs={
+      none:null,
+      bass:{oct:-1,vol:-8,synth:()=>new Tone.MonoSynth({oscillator:{type:"triangle"}})},
+      pad :{oct:0 ,vol:-12,synth:()=>new Tone.PolySynth(Tone.Synth,{oscillator:{type:"sawtooth"},envelope:{attack:1.4,release:2.6}})},
+      bell:{oct:0 ,vol:-6,synth:()=>new Tone.MetalSynth({frequency:280,decay:1.2,modulationIndex:20})}
+    };
 
-      log.textContent = "\\n\\u{1F3B5} Style sélectionné : " + style.label + "\\n";
-      log.textContent += "\\n⏳ Chargement de l'orchestre...";
-      log.textContent += "\\n🔊 Synthétiseur prêt !";
-      log.textContent += "\\n🎵 Lecture des notes...";
+    /* état global ------------------------------------------------------- */
+    let ULID="", seq=[], prim=null, sec=null, timers=[];
+    const $=id=>document.getElementById(id);
 
-      const scale = style.scale;
-      const notes = generateNotesFromULID(currentULID, scale, style.length, style.noteModifier);
+    /* ===== Helpers ===== */
+    function newUid(){
+      ULID = makeUlid(Date.now());
+      $("ulid-input").value = ULID;
+      validateUlid(ULID);
+    }
 
-      const synth = style.synth();
-      let finalOutput = synth;
+    function formatFullDate(isoString) {
+      const d = new Date(isoString);
+      return d.toLocaleString("fr-FR", {
+        weekday: "long",
+        year:    "numeric",
+        month:   "long",
+        day:     "numeric",
+        hour:    "2-digit",
+        minute:  "2-digit",
+        second:  "2-digit",
+        hour12:  false,
+        timeZone: "UTC",
+        timeZoneName: "short"
+      });
+    }
 
-      if (style.effects && style.effects.length > 0) {
-        style.effects.forEach(effectFn => {
-          const effect = effectFn();
-          finalOutput.connect(effect);
-          finalOutput = effect;
-        });
+    function xorBitPair(x) {
+      const b0 = (x >> 0) & 1;
+      const b2 = (x >> 2) & 1;
+      return b0 ^ b2;
+    }
+
+    function xorAdaptive(x, i) {
+      return (i % 2 === 0)
+        ? ((x >> 1) & 1) ^ ((x >> 3) & 1)   // pair : b1 ^ b3
+        : ((x >> 0) & 1) ^ ((x >> 2) & 1);  // impair : b0 ^ b2
+    }
+
+    const toBits=ulid=>ulid.split("").map(c=>crock.indexOf(c).toString(2).padStart(5,"0")).join("").slice(0,128);
+    const chunk4=bits=>Array.from({length:32},(_,i)=>bits.slice(i*4,i*4+4));
+
+    const arp=(arr,p)=>p==="down"?[...arr].reverse():p==="random"?arr.sort(()=>.5-Math.random()):p==="updown"?[...arr,...[...arr].reverse()]:arr;
+    const clearAll = () => {
+      Tone.Transport.stop();            /* ⇦ stoppe toute planification */
+      Tone.Transport.cancel();
+      timers.forEach(clearTimeout);
+      timers = [];
+      prim?.dispose();
+      sec?.dispose();
+      /* ── Retire TOUTES les surbrillances ──────────────────────── */
+      document.querySelectorAll('.note-play')
+              .forEach(el => el.classList.remove('note-play'));
+      document.querySelectorAll('tr.playing-row')
+              .forEach(el => el.classList.remove('playing-row'));
+    };
+    /* ─── Couleur heading résolue (hex) ──────────────────────── */
+    function headingColor(){
+      const c = getComputedStyle(document.documentElement)
+                .getPropertyValue('--heading').trim();
+      if(c.startsWith('rgb')){                // convertit rgb(...) → #rrggbb
+        const [r,g,b]=c.match(/\d+/g).map(Number);
+        return '#'+[r,g,b].map(n=>n.toString(16).padStart(2,'0')).join('');
+      }
+      return c || '#00ffff';
+    }
+
+    /* ─── Surbrillance temps‑réel (table + séquence + portée) ────── */
+    function highlightNote(i){
+
+      /* Tableau ---------------------------------------------------- */
+      document.querySelectorAll('tr.playing-row')
+              .forEach(r=>r.classList.remove('playing-row'));
+      const cell=document.getElementById('play-cell'+i);
+      if(cell){
+        const row=cell.closest('tr');
+        row.classList.add('playing-row');
+        cell.classList.add('playing');
+        const tid=setTimeout(()=>cell.classList.remove('playing'),200);
+        timers.push(tid);
       }
 
-      finalOutput.toDestination();
+      /* Portée ----------------------------------------------------- */
+      const bloc=Math.floor(i/8);
+      /* supprime tout highlight précédent sur l’ensemble des portées */
+      document.querySelectorAll('.note-play')
+              .forEach(el => el.classList.remove('note-play'));
+      drawMini(bloc,i%8,seq);
+    }
 
-      Tone.start();
-      const now = Tone.now();
-      notes.forEach((note, i) => {
-        synth.triggerAttackRelease(note, style.duration, now + i * style.tempo);
+    /* ─── Lecture via Tone.Transport (audio + UI) ───────────────── */
+    function schedulePlayback(seqArr, st, chordT, primSynth, secSynth, secDef){
+      Tone.Transport.cancel();
+      let pos=0;
+      seqArr.forEach((o,i)=>{
+        const dur=st.tempo*(o.fast?0.5:1);      /* secondes */
+        Tone.Transport.schedule(time=>{
+          chordify(o.note,chordT)
+            .forEach(x=>primSynth.triggerAttackRelease(x,dur,time));
+          if(secSynth){
+            const base=o.note.slice(0,-1),
+                  oct =parseInt(o.note.slice(-1))+(secDef?.oct||0);
+            chordify(base+oct,chordT)
+              .forEach(x=>secSynth.triggerAttackRelease(x,dur,time));
+          }
+          highlightNote(i);                     /* synchro UI */
+        }, pos);
+        pos += dur;
+      });
+      Tone.Transport.scheduleOnce(()=>clearAll(),pos+st.tempo);
+      Tone.Transport.start();
+    }
+
+    /* --------- Génération ULID conforme --------- */
+    // Génère un ULID à partir d'un timestamp (ms) passé ou aléatoire si omis
+    function makeUlid(ts = Math.floor(Math.random() * 281474976710655)) {
+      let v = ts, tsBase32 = "";
+      for(let i=0;i<10;i++){                       // 10 car. timestamp
+        tsBase32 = crock[v % 32] + tsBase32;
+        v = Math.floor(v / 32);
+      }
+
+      // timestamp doit commencer par 0‑7
+      if(tsBase32.charCodeAt(0) > 55){             // '7' = 55
+        tsBase32 = String.fromCharCode(tsBase32.charCodeAt(0) - 8) + tsBase32.slice(1);
+      }
+      let rand = "";
+      for(let i=0;i<16;i++) rand += crock[Math.floor(Math.random()*32)];
+      return tsBase32 + rand;
+    }
+
+    /* Helpers dédiés */
+    function makeUlidNow(){             // timestamp = maintenant
+      return makeUlid(Date.now());
+    }
+    function makeUlidRandom(){          // timestamp aléatoire
+      return makeUlid();                // sans param → aléa 48 bits
+    }
+
+    /* ===== 4 petites partitions ===== */
+    function draw(seq){
+      const VF=window.Vex?.Flow;if(!VF)return;
+      // Boucle sur 4 blocs
+      for(let block=0;block<4;block++){
+        const div="staff"+block;
+        $(div).innerHTML="";
+        const vf=new VF.Factory({renderer:{elementId:div,width:300,height:160}});
+        const score=vf.EasyScore(),sys=vf.System();
+        /* ── Mesure élastique : les impaires valent 1/16, les paires 1/8 ── */
+        const blockSeq   = seq.slice(block*8, block*8+8);
+        const parts = blockSeq.map(o =>
+          `${o.note.toLowerCase()}/${o.fast?"16":"8"}`);
+        const sliceString = parts.join(", ");
+        /* total en seizièmes : /8 = 2 , /16 = 1 */
+        const beats16  = blockSeq.reduce((s,o)=>s+(o.fast?1:2),0); // ex : 13
+  
+        const notesArr = score.notes(sliceString);   /* ← tableau de Tickables */
+        const voice    = score.voice(notesArr, {
+          time:   { num_beats: beats16, beat_value: 16 },
+          strict: false
+        });
+        // ── 2) Mode SOFT pour désactiver le check strict
+        voice.setMode(VF.Voice.Mode.SOFT);
+        // ── 3) Ajout de la stave avec time_signature: "8/8"
+        sys.addStave({
+          voices:          [voice],
+          time_signature:  `${beats16}/16`
+        }).addClef("treble");
+
+        vf.draw();
+        }
+        /* renvoie la liste des groupes <g.vf-stavenote> dans l’ordre */
+        return Array.from(document.querySelectorAll('.vf-stavenote'));
+    }
+
+    function drawMini(block, hi, seqArr){
+      const VF = window.Vex.Flow;
+      const div = "staff"+block;
+      $(div).innerHTML="";
+      /* 160 px de haut pour ne plus couper les notes graves / aiguës */
+      const vf  = new VF.Factory({ renderer:{ elementId:div, width:300, height:160 }});  const score = vf.EasyScore();
+      const sys   = vf.System();
+      const blockSeq  = seqArr.slice(block*8, block*8+8);
+      const miniParts = blockSeq.map(o =>
+          `${o.note.toLowerCase()}/${o.fast?"16":"8"}`);
+      const miniString = miniParts.join(", ");
+      const beats16    = blockSeq.reduce((s,o)=>s+(o.fast?1:2),0);
+
+      const miniNotes  = score.notes(miniString);    /* ← tableau de Tickables */
+      const voice      = score.voice(miniNotes, {
+        time:   { num_beats: beats16, beat_value: 16 },
+        strict: false
+      });
+      voice.setMode(VF.Voice.Mode.SOFT);
+      sys.addStave({
+        voices:          [voice],
+        time_signature:  `${beats16}/16`
+      }).addClef("treble");
+
+      vf.draw();
+      /* ── Surbrillance visuelle par classe ─────────────────── */
+      const gNotes = document.querySelectorAll('#' + div + ' .vf-stavenote');
+      gNotes.forEach(g => g.classList.remove('note-play'));
+      if (hi >= 0 && gNotes[hi]) gNotes[hi].classList.add('note-play');
+    }
+
+    // ——— logique de rendu tableaux + staff ———
+    function renderTablesAndStaff(seq) {
+      const chordT = $("chordsSel").value;
+      // 1. Vider les 4 tableaux
+      for (let t = 0; t < 4; t++) {
+        $("tbl" + t).innerHTML = "";
+        $("staff" + t).innerHTML = "";
+      }
+
+      // 2. Remplir ligne par ligne
+      seq.forEach((o, i) => {
+        const b    = table16.indexOf(o.note).toString(2).padStart(4, "0");
+        const tbl  = "tbl" + Math.floor(i / 8);
+        const dur  = o.fast ? "1/16" : "1/8";
+        const row  = `
+          <tr>
+            <td>${i + 1}</td>
+            <td>${b}</td>
+            <td>${table16.indexOf(o.note)}</td>
+            <td>${dur}</td>
+            <td>${chordify(o.note, chordT).join(" ")}</td>
+            <td class="playing-col" id="play-cell${i}"></td>
+          </tr>`;
+        $(tbl).insertAdjacentHTML("beforeend", row);
       });
 
-      log.textContent += "\\nULID : " + currentULID;
-      log.textContent += "\\nNotes jouées : " + notes.join(", ");
-      log.textContent += "\\n🎶 Terminé !";
-      log.textContent += "\\n🔁 Cliquez sur 'Nouveau ULID' ou 'Jouer' pour une nouvelle session.";
-      log.scrollTop = log.scrollHeight;
+      draw(seq);
+      for (let b = 0; b < 4; b++) drawMini(b, -1, seq);
     }
-      
 
-    // Init
-    generate();
+
+    // ————— Validation ULID + mise à jour date humanisée —————
+    async function validateUlid(v) {
+      v = v.trim().toUpperCase();
+      $("ulid-input").value = v;
+
+      // 1) Appel au Worker – mode "check" (→ try/catch réseau)
+      const statusEl = $("ulid-status");
+      let   res, data;
+      try{
+        res  = await fetch('/ulid?check=' + encodeURIComponent(v));
+        data = await res.json();
+      }catch(err){
+        statusEl.textContent = "⛔ Erreur réseau ("+err.message+")";
+        statusEl.style.color = "var(--error,#f00)";
+        $("ulid-ts-preview").textContent = "📆 Date : —";
+        return;
+      }
+
+      if (res.ok && data.conform) {
+        // ULID conforme
+        statusEl.textContent = "✅ ULID conforme";
+        statusEl.style.color = "var(--success,#00ff00)";
+        // affiche la date
+        $("ulid-ts-preview").textContent = "📆 Date : " + formatFullDate(data.ts);
+        /* -- rafraîchissement UI ---------------------------------------- */
+        clearAll();
+
+        $("note-grids").style.display = "grid";
+
+        ULID = v;
+
+        /* 1) Construction de la séquence (ordre brut, sans arpégiateur) */
+        const bits     = toBits(ULID);
+        const nibbles  = chunk4(bits);             /* 32 × “bbbb”          */
+        const vals = nibbles.map(b => parseInt(b, 2));
+        const revs = [...vals].reverse();
+        const xors = vals.map((v, i) => v ^ revs[i]);
+
+        seq = vals.map((val, i) => ({
+          note: table16[val],
+          fast: xorAdaptive(xors[i], i) === 1
+        }));
+
+        $("nibbles").textContent          = "🧩 Nibbles :    " + vals.map(v => v.toString(2).padStart(4, '0')).join(" ");
+        $("nibbles-reversed").textContent= "🔁 Inversés :   " + revs.map(v => v.toString(2).padStart(4, '0')).join(" ");
+        $("nibbles-xor").textContent     = "🧮 XOR :        " + xors.map(v => v.toString(2).padStart(4, '0')).join(" ");
+        $("nibbles-xor-bits").textContent = "⚡ XOR adaptif : " + xors.map((x, i) => xorAdaptive(x, i)).join(" ");
+
+        const fastCount = seq.filter(o => o.fast).length;
+        const slowCount = seq.length - fastCount;
+        const beatCount = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
+        const style = styles[$("styleSel").value];
+        const unit = style.tempo / 2;  // durée d'un 1/16
+        const duration = (beatCount * unit).toFixed(2);
+
+        $("summary").textContent =
+          `⏱️ Durée estimée : ${duration} sec\n` +
+          `🎼 Battements : ${beatCount} (sur ${seq.length * 2} max)\n` +
+          `⚖️ Rythme : ${fastCount} rapides / ${slowCount} lentes`;
+
+        ULID = v;
+        $("note-sequence").textContent = "🎵 " + seq.map(o => o.note).join(", ");
+
+        for (let b = 0; b < 4; b++) {
+          $("tbl" + b).innerHTML   = "";
+          $("staff" + b).innerHTML = "";
+        }
+
+        renderTablesAndStaff(seq);
+
+      } else {
+        // ULID invalide
+        statusEl.textContent = "❌ " + (data.error || "");
+        statusEl.style.color = "var(--error,#f00)";
+        $("ulid-ts-preview").textContent = "📆 Date : —";
+        $("note-sequence").textContent = "🎵 Séquence : —";
+        $("nibbles").textContent          = "🧩 Nibbles : —";
+        $("nibbles-reversed").textContent= "🔁 Inversés : —";
+        $("nibbles-xor").textContent     = "🧮 XOR : —";
+        $("nibbles-xor-bits").textContent = "⚡ XOR adaptif : —";
+        $("summary").textContent =
+          `⏱️ Durée estimée : — \n` +
+          `🎼 Battements : — \n` +
+          `⚖️ Rythme : —`;
+        $("note-grids").style.display = "none";
+      }
+    }
+    
+    // ————— Validation en live sur saisie —————
+    $("ulid-input").addEventListener("input", () =>
+      validateUlid($("ulid-input").value)
+    );
+
+    $("styleSel").addEventListener("change",()=>{
+      const d=styles[$("styleSel").value];
+      $("style-desc").textContent=d.desc;
+    });
+
+    /* ===== UI ===== */
+    // (ancien bouton #new supprimé)
+    $("stop").onclick=clearAll;
+
+    /* ─── Boutons ULID Random / Maintenant ─── */
+    $("ulid-random").onclick = () => {
+      const id = makeUlidRandom();
+      $("ulid-input").value = id;
+      validateUlid(id);
+    };
+
+    $("ulid-now").onclick = () => {
+      const id = makeUlidNow();
+      $("ulid-input").value = id;
+      validateUlid(id);
+    };
+
+    // ─── Bouton d’écoute pour Instrument 1 ─────────────────
+    $("preview1").onclick = async () => {
+      // choix du synthé prim
+      const primSel = $("prim").value;
+      await Tone.start();
+      let s;
+      if (primSel === "default") {
+        // même mapping que dans play()
+        const style = $("styleSel").value;
+        const defMap = {
+          ambient: new Tone.Synth({oscillator:{type:"sine"}}),
+          chiptune: new Tone.MonoSynth({oscillator:{type:"square"}}),
+          jazz: new Tone.FMSynth({harmonicity:2,modulationIndex:12})
+        };
+        s = defMap[style];
+      } else {
+        s = primDefs[primSel]();
+      }
+      s.toDestination();
+
+      const notes = chordify("C4",$("chordsSel").value);
+      notes.forEach(x => s.triggerAttackRelease(x,1));
+      setTimeout(()=>s.dispose(),1100);
+    };
+
+    // ─── Bouton d’écoute pour Instrument 2 ─────────────────
+    $("preview2").onclick=async()=>{
+      const d=secDefs[$("sec").value];
+      if(!d)return;await Tone.start();
+      const s=d.synth();
+      s.volume.value=d.vol;s.toDestination();
+      const n=chordify("C4",$("chordsSel").value);
+      n.forEach(x=>s.triggerAttackRelease(x,1));
+      setTimeout(()=>s.dispose(),1100);
+    };
+
+    /* ===== lecture ===== */
+    $("play").onclick=async()=>{
+      await Tone.start();
+      clearAll();
+      const st           = styles[$("styleSel").value],
+            pat          = $("arp").value,
+            chordT       = $("chordsSel").value,
+            chordsEnabled= chordT !== 'none',
+            primSel      = $("prim").value,
+            secDef       = secDefs[$("sec").value];
+      prim=primSel==="default"
+        ?({ambient:new Tone.Synth({oscillator:{type:"sine"}}),
+          chiptune:new Tone.MonoSynth({oscillator:{type:"square"}}),
+          jazz:new Tone.FMSynth({harmonicity:2,modulationIndex:12})})[$("styleSel").value]
+        :primDefs[primSel]();
+      if (chordsEnabled) prim = new Tone.PolySynth(Tone.Synth);
+      prim.toDestination();
+      if(secDef){sec=secDef.synth();sec.volume.value=secDef.vol;sec.toDestination();}
+
+      /* conversion + marquage “rapide” pour valeurs impaires ---------- */
+      const bits=toBits(ULID), nibbles=chunk4(bits);
+      const vals = arp(nibbles.map(b=>parseInt(b,2)),pat).slice(0,32);
+      const revs = [...vals].reverse();
+      const xors = vals.map((v, i) => v ^ revs[i]);
+      seq = vals.map((v, i) => ({
+        note: table16[v],
+        fast: xorAdaptive(xors[i], i) === 1
+      }));
+
+      renderTablesAndStaff(seq);
+
+      /* lecture synchrone (Transport) */
+      schedulePlayback(seq, st, chordT, prim, sec, secDef);
+    };
+    /* init */
+    newUid();
+
   </script>
 
-<script type="module" src="./site.js"></script>
+  <!-- enfin ton script principal -->
+  <script type="module" src="./site.js"></script> 
 
 </body>
 </html>

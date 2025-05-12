@@ -18,8 +18,6 @@
 
     html, body { margin:0; padding:0; }
 
-
-
     canvas#matrix {
       position:absolute; top:0; left:0;
       width:100%; height:100%;
@@ -90,11 +88,11 @@
       <!-- Aide sur les raccourcis clavier -->
       <div class="help" id="help-box">
         <ul style="margin:0; padding:0; list-style:none;">
-          <li><kbd>F</kbd> : Plein écran</li>
-          <li><kbd>Space</kbd> : Pause pluie</li>
-          <li><kbd>M</kbd> : Mode couleur</li>
-          <li><kbd>S</kbd> : Vitesse max</li>
-          <li><kbd>H</kbd> : Afficher/Masquer l’aide</li>
+          <li><kbd>F</kbd>           : Plein écran</li>
+          <li><kbd>Space</kbd>       : Pause pluie</li>
+          <li><kbd>M</kbd>           : Mode couleur</li>
+          <li><kbd>S</kbd>           : Vitesse max</li>
+          <li><kbd>H</kbd>           : Afficher/Masquer l’aide</li>
           <li><kbd>ControlLeft</kbd> : Maximise l'affichage des boutons le temps de l'appui</li>
           <li style="margin-top:0.5rem;">Chaque goutte affiche un ULID généré au moment de sa naissance.</li>
         </ul>
@@ -112,8 +110,6 @@
 
       const fontSize = 16;
       const chars    = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-
-      
 
       // ── 2. Précalcul police & thèmes ────────────────────────────────
       ctx.font = `${fontSize}px monospace`;  // ← maintenant après scale
@@ -147,7 +143,6 @@
       funkyBtn.onclick = () => {
         funkyMode = (funkyMode + 1) % 3;
       };
-
 
       /* ----------  Limiteur FPS (⚡)  ---------- */
       const MAX_FPS      = 30;                    // images/sec quand limité
@@ -367,7 +362,7 @@
 
       updateThemeColors();
       requestAnimationFrame(tick);
-      
+
       // ── Opacité à 1 pendant appui Ctrl gauche ─────────────────────
       document.addEventListener("keydown", e => {
         if (e.code === "ControlLeft") {
