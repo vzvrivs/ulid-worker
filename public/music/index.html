@@ -706,9 +706,23 @@
       validateUlid($("ulid-input").value)
     );
 
-    $("styleSel").addEventListener("change",()=>{
-      const d=styles[$("styleSel").value];
-      $("style-desc").textContent=d.desc;
+    $("styleSel").addEventListener("change", () => {
+      const style = styles[$("styleSel").value];
+      $("style-desc").textContent = style.desc;
+
+      // Si une séquence existe, on recalcule les infos
+      if (seq.length === 32) {
+        const fastCount = seq.filter(o => o.fast).length;
+        const slowCount = 32 - fastCount;
+        const beatCount = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
+        const unit = style.tempo / 2;
+        const duration = (beatCount * unit).toFixed(2);
+
+        $("summary").textContent =
+          `⏱️ Durée estimée : ${duration} sec\n` +
+          `🎼 Battements : ${beatCount} (sur ${seq.length * 2} max)\n` +
+          `⚖️ Rythme : ${fastCount} rapides / ${slowCount} lentes`;
+      }
     });
 
     /* ===== UI ===== */
