@@ -16,8 +16,6 @@
 
   <style>
 
-    .row { display:flex; align-items:center; gap:0.5rem; }
-
     /* conteneur générique pour faire 2 colonnes puis 1 colonne */
     .flex-container {
       display: flex;
@@ -58,13 +56,14 @@
       background: var(--bg);
     }
 
-    [id^="staff"] svg *:not(.note-play) {   /* ← ignore la note jouée */
+    /* Sélecteur simplifié : 1-seul « match » par élément */
+    [id^="staff"] svg {
       stroke: var(--text);
       fill:   var(--text);
+      max-width: 100%;
+      display: block;
     }
-
-    /* couleur de la note jouée */
-    [id^="staff"] svg .note-play * {
+    [id^="staff"] .note-play * {
       stroke: var(--heading) !important;
       fill:   var(--heading) !important;
     }
@@ -96,12 +95,22 @@
       font-size:    .85rem;
       margin-top:   .5rem;
     }
+
+
     .mini th,
     .mini td {
-      text-align:      center;
+      color: var(--text);
+      padding: 0.2em 0.3em;
+      text-align: center;
       vertical-align:  middle;
-      color:           var(--text);
+      line-height: 1.2;
+      white-space: normal;
     }
+
+    .mini th .th-wrap {
+      white-space: normal;
+    }
+
     /* ── Ligne en cours de lecture ───────────────────────── */
     .mini tbody tr.playing-row td {
       color: var(--heading) !important;
@@ -111,12 +120,113 @@
         margin-top: 0.5rem;
       }
 
-  </style>
+    .grid4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
 
-  <script>
-  document.documentElement.setAttribute("data-theme",
-    window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
-  </script>
+    /* On “déconteneurise” chaque bloc pour que <table> et <div id="staffX">
+       deviennent des items indépendants de la grille.                     */
+    .grid4.stacked > div {
+      display: contents;
+    }
+
+    /* Chaque portée doit occuper toute la ligne pour être bien lisible */
+    .grid4.stacked [id^="staff"] {
+      grid-column: 1 / -1;      /* pleine largeur */
+      margin-top: .5rem;
+      order: 1;                 /* les portées passent APRÈS les tableaux */
+    }
+
+    /* Les mini-tableaux restent en 1ʳᵉ ligne, côte à côte */
+    .grid4.stacked table.mini { order: 0; }
+
+    .grid4 > div {
+      min-width: 0;
+      max-width: 100%;
+      overflow: visible;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .grid4 svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Responsive – 2 colonnes sous 1024px, 1 colonne sous 600px */
+    @media (max-width: 1024px) {
+      .grid4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .grid4 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .bit-grids label {
+      font-weight: bold;
+      font-size: 0.9rem;
+      margin-top: 0.8rem;
+      display: block;
+    }
+
+    /* même hauteur pour toutes les grilles
+      (96 px = 12 px d’en‑tête + 4 × 16 px de pilule) */
+    .bit-grids svg {
+      width: 100%;
+      height: 96px;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    #note-grids > div {
+      min-width: 0;        /* permet aux enfants de shrinker */
+      max-width: 100%;     /* empêche le débordement */
+      overflow-x: auto;    /* ajoute un scroll horizontal si vraiment trop large */
+    }
+
+    #staff-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .th-wrap {
+      display: inline-block;
+      white-space: normal;
+      line-height: 1.1;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    #ulid-decode {
+      margin-top: 1rem;
+      text-align: center;
+      font-family: monospace;
+    }
+
+    .nibble-line {
+      display: flex;
+      justify-content: center;
+      gap: 0.25rem;
+      margin: 0.3rem 0;
+      flex-wrap: wrap;
+    }
+
+    .nibble-line span {
+      display: inline-block;
+      width: 4ch;
+      text-align: center;
+    }
+
+  </style>
 
 </head>
 
@@ -124,156 +234,165 @@
 
   <header id="nav-container" class="header-nav-container"></header>
 
-  <main class="page-wrapper">
+  <main class="page-wrapper" role="main">
 
     <h1>🎶 ULID Music</h1>
-
-    <!-- ── LIGNE 1 : Style | Description | Arpège | Accords ── -->
-    <div id="setup-top" class="flex-container">
-      <div class="group">
-        <label>Style :
-          <select id="styleSel">
-            <option value="ambient">Ambient doux</option>
-            <option value="chiptune">Chiptune rétro</option>
-            <option value="jazz">Jazz cool</option>
-          </select>
-        </label>
-        <span id="style-desc" class="desc">Tempo 60 BPM – ambiance douce</span>
+    <section id="ulid-controls">
+      <div class="action-container flex-container">
+        <div class="group">
+          <button type="button" id="ulid-now"
+                  aria-label="Générer un ULID à l’horodatage courant">
+            <span aria-hidden="true">⏲️</span> Maintenant
+          </button>
+          <button type="button" id="ulid-random"
+                  aria-label="Générer un ULID aléatoire">
+            <span aria-hidden="true">🎲</span> ULID aléatoire
+          </button>
+        </div>
       </div>
-      <div class="group">
-        <label>Arpège :
-          <select id="arp">
-            <option value="updown">Montant & descendant</option>
-            <option value="up">Montant</option>
-            <option value="down">Descendant</option>
-            <option value="random">Aléatoire</option>
-          </select>
-        </label>
-        <label>Accords :
-          <select id="chordsSel">
-            <option value="none">Aucun</option>
-            <option value="triad" selected>Triades</option>
-            <option value="seventh">Septièmes</option>
-            <option value="power">Quintes (power)</option>
-          </select>
-        </label>
+      <div id="ulid-row" class="flex-container">
+        <div class="group">
+          <label for="ulid-input">ULID :</label>
+          <input id="ulid-input" placeholder="26 car. ULID (Crockford)" />
+          <div id="ulid-status" style="margin-top:.5rem;"></div>
+        </div>
+        <div class="group">
+          <pre id="ulid-ts-preview" class="code-block ts-preview"
+              style="white-space:nowrap; margin-left:0;">
+            📆 Date : —  
+          </pre>
+        </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ── LIGNE 2 : Instruments + boutons d’écoute ── -->
-    <div id="setup-bottom" class="flex-container">
-      <div class="group">
-        <label>Instrument 1 :
-          <select id="prim">
-            <option value="default">Par défaut</option>
-            <option value="sine">Pad sine</option>
-            <option value="square">Lead square</option>
-            <option value="fmBell">FM bell</option>
-          </select>
-        </label>
-        <button type="button" id="preview1">🔈 Écouter instr. 1</button>
+    <h2>🎵 Notes & 🥁 Rythme</h2>
+    <label>🪜 Conversion ULID -> Binaire (nibbles) -> Valeur -> Note</label>
+    <section id="ulid-decode" class="aligned-decode hidden">
+      <div class="nibble-line" id="nibbles-binary"></div>
+      <div class="nibble-line" id="nibbles-values"></div>
+      <div class="nibble-line" id="nibbles-notes"></div>
+    </section>
+
+    <section>
+      <div class="bit-grids">
+        <label>🧩 Nibbles</label>
+        <svg id="nibbles-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <label>🔁 Inversés</label>
+        <svg id="reversed-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <label>🧮 XOR Nibbles^Inversés</label>
+        <svg id="xor-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <label>⚡ XOR adaptatif b0^b2 ou b1^b3</label>
+        <svg id="xor-adaptive" viewBox="0 0 320 16" preserveAspectRatio="none"></svg>
       </div>
-      <div class="group">
-        <label>Instrument 2 :
-          <select id="sec">
-            <option value="none">Aucun</option>
-            <option value="bass">Basse</option>
-            <option value="pad">Pad doux</option>
-            <option value="bell">Cloche</option>
-          </select>
-        </label>
-        <button type="button" id="preview2">🔈 Écouter instr. 2</button>
+      <div>
+        <pre id="summary" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:1rem;">—</pre>
       </div>
-    </div>
+    </section>
 
-    <div class="action-container flex-container">
-      <div class="group">
-        <button type="button" id="ulid-random">🎲 Nouvel ULID</button>
-        <button type="button" id="ulid-now">⏲️ Maintenant</button>
+    <section id="music-controls">
+      <h2>🎛️ Sonorités</h2>
+      <div class="flex-container">
+        <div class="group">
+          <label>Instrument :
+            <select id="instrumentSel">
+              <option value="piano" selected>Piano</option>
+              <option value="marimba">Marimba</option>
+              <option value="strings">Cordes</option>
+              <option value="synth">Synthé</option>
+              <option value="woodwind">Bois</option>
+            </select>
+          </label>
+          <label>Octave :
+            <select id="octaveShift">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </label>
+        </div>
+        <div class="group">
+          <label for="tempoBpm">BPM :
+            <input type="number" id="tempoBpm" min="20" max="300" step="1" value="75"/>
+          </label>
+          <label for="tempoDur">Durée d’une noire (s) :
+            <input type="number" id="tempoDur" step="0.01" min="0.2" max="3" value="0.8"/>
+          </label>
+        </div>
+        <div class="group">
+          <label>Accords :
+            <select id="chordsSel">
+              <option value="none" selected>Aucun</option>
+              <option value="power">Quintes (power chord)</option>
+              <option value="triad">Triades</option>
+              <option value="seventh">Septièmes</option>
+            </select>
+          </label>
+          <label>Arpège :
+            <select id="arp">
+              <option value="none" selected>Aucun</option>
+              <option value="up">Montant</option>
+              <option value="down">Descendant</option>
+              <option value="updown">Montant & descendant</option>
+              <option value="random">Aléatoire</option>
+            </select>
+          </label>
+        </div>
       </div>
-      <div class="group">
-        <button type="button" id="play">▶️ Jouer</button>
-        <button type="button" id="stop">⏹ Stop</button>
+    </section>
+
+    <section id="player-controls">
+      <h2>▶️ Lecture</h2>
+      <pre id="note-sequence" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🎵 Séquence :<br> —</pre>
+      <div class="action-container flex-container">
+        <div class="group">
+          <button type="button" id="play"  aria-label="Lire la séquence">
+            <span aria-hidden="true">▶</span> Jouer
+          </button>
+          <button type="button" id="pause" aria-label="Mettre la lecture en pause">
+            <span aria-hidden="true">⏸</span> Pause
+          </button>
+          <button type="button" id="stop"  aria-label="Arrêter la lecture">
+            <span aria-hidden="true">⏹</span> Stop
+          </button>
+        </div>
       </div>
-    </div>
-
-    <!-- ULID modifiable + bouton Valider -->
-    <div id="ulid-row" class="flex-container">
-      <div class="group">
-        <label for="ulid-input">ULID :</label>
-        <input id="ulid-input" placeholder="26 car. ULID (Crockford)" />
-        <div id="ulid-status" style="margin-top:.5rem;"></div>
-      </div>
-      <div class="group">
-        <pre id="ulid-ts-preview" class="code-block ts-preview"
-            style="white-space:nowrap; margin-left:0;">
-          📆 Date : —  
-        </pre>
-      </div>
-    </div>
-
-    <div>
-      <pre id="nibbles" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🧩 Nibbles : —</pre>
-      <pre id="nibbles-reversed" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🔁 Inversés : —</pre>
-      <pre id="nibbles-xor" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🧮 XOR : —</pre>
-      <pre id="nibbles-xor-bits" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">⚡ XOR adaptif : —</pre>
-      <pre id="summary" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:1rem;">—</pre>
-    </div>
-
-    <style>
-      .grid4 {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-      }
-
-      /* Responsive – 2 colonnes sous 1024px, 1 colonne sous 600px */
-      @media (max-width: 1024px) {
-        .grid4 {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-
-      @media (max-width: 600px) {
-        .grid4 {
-          grid-template-columns: 1fr;
-        }
-      }
-      .mini   { width:100%; }
-      .mini th,.mini td{font-size:.8rem}
-    </style>
+    </section>
 
     <h2>🎼 Visualisation</h2>
 
-    <pre id="note-sequence" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:0.5rem;">🎵 Séquence : —</pre>
+    <section>
+      <div class="grid4" id="note-grids">
+        <!-- répété 4× -->
+        <div>
+          <table class="mini"><thead>
+            <tr><th>#</th><th>Dur.</th><th><span class="th-wrap">Notes jouées</span></th><th>Playing</th></tr>
+          </thead><tbody id="tbl0"></tbody></table>
+          <div id="staff0"></div>
+        </div>
+        <div>
+          <table class="mini"><thead>
+            <tr><th>#</th><th>Dur.</th><th><span class="th-wrap">Notes jouées</span></th><th>Playing</th></tr>
+          </thead><tbody id="tbl1"></tbody></table>
+          <div id="staff1"></div>
+        </div>
+        <div>
+          <table class="mini"><thead>
+            <tr><th>#</th><th>Dur.</th><th><span class="th-wrap">Notes jouées</span></th><th>Playing</th></tr>
+          </thead><tbody id="tbl2"></tbody></table>
+          <div id="staff2"></div>
+        </div>
+        <div>
+          <table class="mini"><thead>
+            <tr><th>#</th><th>Dur.</th><th><span class="th-wrap">Notes jouées</span></th><th>Playing</th></tr>
+          </thead><tbody id="tbl3"></tbody></table>
+          <div id="staff3"></div>
+        </div>
+      </div>
+    </section>
 
-    <div class="grid4" id="note-grids">
-      <!-- répété 4× -->
-      <div>
-        <table class="mini"><thead>
-          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
-        </thead><tbody id="tbl0"></tbody></table>
-        <div id="staff0"></div>
-      </div>
-      <div>
-        <table class="mini"><thead>
-          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
-        </thead><tbody id="tbl1"></tbody></table>
-        <div id="staff1"></div>
-      </div>
-      <div>
-        <table class="mini"><thead>
-          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
-        </thead><tbody id="tbl2"></tbody></table>
-        <div id="staff2"></div>
-      </div>
-      <div>
-        <table class="mini"><thead>
-          <tr><th>#</th><th>4 bits</th><th>Val.</th><th>Dur.</th><th>Note / Acc.</th><th>Playing</th></tr>
-        </thead><tbody id="tbl3"></tbody></table>
-        <div id="staff3"></div>
-      </div>
-    </div>
+    <section id="staff-wrapper" class="staff-wrapper"></section>
 
     <section>
       <h2>🧠 Démarche de génération</h2>
@@ -338,159 +457,476 @@
 
   <script>
     /* ===== Constantes & tables ===== */
-    const crock="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-    const table16 = [
-      "C4", "D4", "E4", "F4",
-      "G4", "A4", "B4", "C5",
-      "D5", "E5", "F5", "G5",
-      "A5", "B5", "C6", "D6"
-    ];
-    const styles={
-      ambient :{scale:table16,tempo:.5 ,dur:"4n",
-                desc:"Tempo 60 BPM • ambiance douce & éthérée"},
-      chiptune:{scale:table16,tempo:.25,dur:"8n",
-                desc:"Tempo 120 BPM • son rétro 8‑bit"},
-      jazz    :{scale:table16,tempo:.4 ,dur:"4n",
-                desc:"Tempo 90 BPM • feeling swing / cool jazz"}
+    const $ = id => document.getElementById(id);
+
+    /*──────────────────────────┐
+    │  Helpers globaux          │
+    └──────────────────────────*/
+
+    /* anti-rebond (si Lodash dispo : _.debounce) */
+    const debounce = (fn, d = 300) => {
+      let t; return (...a)=>{ clearTimeout(t); t=setTimeout(fn, d, ...a); };
     };
+
+    const crock="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+    /* ── Table de 16 notes mémoïsée ------------------------------- */
+    const _tbl16Cache = Object.create(null);
+    function getTable16(baseOctave = 4){
+      if (_tbl16Cache[baseOctave]) return _tbl16Cache[baseOctave];
+      const base = ["C","D","E","F","G","A","B"];
+      const out  = [];
+      let   oct  = baseOctave;
+      for(let i=0;i<16;i++){
+        out.push(base[i%7] + oct);
+        if(base[i%7]==="B") oct++;
+      }
+      return (_tbl16Cache[baseOctave] = out);
+    }
 
     /* Accord → intervalles (en pas dans table16) */
     const chordDefs={
       none   :[0],
+      power  :[0,4],             // 1‑5
       triad  :[0,2,4],           // 1‑3‑5
-      seventh:[0,2,4,6],         // 1‑3‑5‑7
-      power  :[0,4]              // 1‑5
+      seventh:[0,2,4,6]          // 1‑3‑5‑7
     };
     
-    function chordify(note,type){
-      const idx=table16.indexOf(note);
-      return chordDefs[type].map(d=>table16[(idx+d)%table16.length]);
+    /* Génère l’accord (liste de notes) à partir de la fondamentale       */
+    function chordify(note, type, table){
+      const idx = table.indexOf(note);
+      if (idx === -1) return [note];              /* sécurité ultime      */
+      /* On remet le modulo pour boucler dans la table de 16 notes        */
+      return chordDefs[type].map(d => table[(idx + d) % table.length]);
     }
 
-    const primDefs={
-      sine:  ()=>new Tone.Synth({oscillator:{type:"sine"},envelope:{attack:.2,release:1.4}}),
-      square:()=>new Tone.MonoSynth({oscillator:{type:"square"}}),
-      fmBell:()=>new Tone.FMSynth({harmonicity:8,modulationIndex:12,envelope:{attack:.01,decay:1.2,release:2}})
-    };
-    const secDefs={
-      none:null,
-      bass:{oct:-1,vol:-8,synth:()=>new Tone.MonoSynth({oscillator:{type:"triangle"}})},
-      pad :{oct:0 ,vol:-12,synth:()=>new Tone.PolySynth(Tone.Synth,{oscillator:{type:"sawtooth"},envelope:{attack:1.4,release:2.6}})},
-      bell:{oct:0 ,vol:-6,synth:()=>new Tone.MetalSynth({frequency:280,decay:1.2,modulationIndex:20})}
+    let currentSampler = null;
+    /* dernière tête de note surlignée (pour O(1) de-highlight) */
+    let lastHighlight = null;    
+    let currentSamplerReady = Promise.resolve(); // valeur par défaut
+
+    async function loadSampler(type) {
+      /* on garde l’éventuel sampler courant de côté
+         (il continuera à jouer / libérer ses notes jusqu’au chargement complet
+         du nouveau, puis sera détruit proprement). */
+      const prevSampler = currentSampler;
+      const def = instrumentFiles[type];
+      // → Ne charger que les samples « root » pour les octaves réellement utilisées
+      const baseOct = parseInt($("octaveShift").value, 10);
+      // construit la séquence de 16 notes pour déterminer les octaves (ex. [4,5,6])
+      const table16 = getTable16(baseOct);
+      const neededOctaves = [...new Set(
+        table16.map(n => parseInt(n.match(/\d+$/)[0], 10))
+      )];
+      // on ne garde que les fichiers dont l'octave correspond
+      const files = {};
+      Object.entries(def.files).forEach(([note, file]) => {
+        const oct = parseInt(note.match(/\d+$/)[0], 10);
+        if (neededOctaves.includes(oct)) {
+          files[note] = file;
+        }
+      });
+      // Reconstruction du sampler avec le mapping restreint :
+      /* —— Prépare une promesse “ready” ——————————————— */
+      let resolveReady;
+      const samplerReady = new Promise(r => (resolveReady = r));
+
+      const sampler = new Tone.Sampler({
+        urls:    files,
+        baseUrl: def.base,
+        onload: () => {
+          console.log(`🎹 Instrument ${type} chargé.`);
+          /* Quand le nouveau est prêt ➜ on libère l’ancien sampler */
+          if (prevSampler) prevSampler.dispose();
+          resolveReady();          /* ▶︎ la promesse est résolue */
+        }
+      });
+      /* === Chaîne audio : Sampler ▸ Volume ▸ Reverb ▸ Limiter ▸ Destination === */
+      const volume  = new Tone.Volume(-8);          // ↓ –8 dB pour éviter la somme > 0 dB
+      const reverb  = new Tone.Reverb({ decay: 2, wet: 0.3 });
+      const limiter = new Tone.Limiter(-1);         // ↑ plafond à –1 dBFS
+
+      /* Chaîne simplifiée : une seule connexion → pas de gain x2 */
+      sampler.chain(volume, reverb, limiter, Tone.Destination);
+
+      currentSampler      = sampler;
+      currentSamplerReady = samplerReady;   /* ← promesse correcte */
+
+      /* pour permettre await loadSampler(...) */
+      return currentSamplerReady;
+    }
+
+    const instrumentFiles = {
+      marimba: {
+        base: "./samples/Samples_Marimba/",
+        files: {
+          "A2": "A2.80966957.mp3",
+          "A3": "A3.cc7d0a4b.mp3",
+          "A4": "A4.f93d2aa3.mp3",
+          "A5": "A5.c4c561f2.mp3",
+          "A6": "A6.7b7ed4b2.mp3",
+          "C2": "C2.2c273809.mp3",
+          "C3": "C3.bf6e7680.mp3",
+          "C4": "C4.b5cfeca7.mp3",
+          "C5": "C5.53bc9580.mp3",
+          "C6": "C6.0da1964c.mp3",
+        }
+      },
+      piano: {
+        base: "./samples/Samples_Piano/",
+        files: {
+
+          "A2": "A2v8.mp3",
+          "A3": "A3v8.mp3",
+          "A4": "A4v8.mp3",
+          "A5": "A5v8.mp3",
+          "A6": "A6v8.mp3",
+          "A7": "A7v8.mp3",
+          "C1": "C1v8.mp3",
+          "C2": "C2v8.mp3",
+          "C3": "C3v8.mp3",
+          "C4": "C4v8.mp3",
+          "C5": "C5v8.mp3",
+          "C6": "C6v8.mp3",
+          "C7": "C7v8.mp3",
+          "C8": "C8v8.mp3",
+        }
+      },
+      strings: {
+        base: "./samples/Samples_Strings/",
+        files: {
+          "A2": "A2.32eab706.mp3",
+          "A3": "A3.ead476da.mp3",
+          "A4": "A4.79029edf.mp3",
+          "A5": "A5.bda0be10.mp3",
+          "A6": "A6.e1417bdc.mp3",
+          "C2": "C2.4df4b0a2.mp3",
+          "C3": "C3.9a2d50aa.mp3",
+          "C4": "C4.31bc4670.mp3",
+          "C5": "C5.4f7ad86c.mp3",
+          "C6": "C6.655fa406.mp3",
+        }
+      },
+      synth: {
+        base: "./samples/Samples_Synth/",
+        files: {
+          "A2": "A2.d39e6a1e.mp3",
+          "A3": "A3.2583ee7f.mp3",
+          "A4": "A4.02c12517.mp3",
+          "A5": "A5.20b412cf.mp3",
+          "A6": "A6.46657279.mp3",
+          "C2": "C2.9e3b6556.mp3",
+          "C3": "C3.54c3718a.mp3",
+          "C4": "C4.3eba7397.mp3",
+          "C5": "C5.731ab831.mp3",
+          "C6": "C6.5b196566.mp3",
+        }
+      },
+      woodwind: {
+        base: "./samples/Samples_Woodwind/",
+        files: {
+          "A2": "A2.c94f91ab.mp3",
+          "A3": "A3.44853c04.mp3",
+          "A4": "A4.4849e599.mp3",
+          "A5": "A5.1b9b02ba.mp3",
+          "A6": "A6.8f960bfa.mp3",
+          "C2": "C2.e247094b.mp3",
+          "C3": "C3.254276f0.mp3",
+          "C4": "C4.858d5d62.mp3",
+          "C5": "C5.c7a85606.mp3",
+          "C6": "C6.a1140119.mp3",
+        }
+      },
     };
 
+    const instrumentBehavior = {
+      piano:    "full",
+      marimba:  "full",
+      strings:  "full",
+      synth:    "cut",
+      woodwind: "cut"
+    };
+
+    /* ────────────────────────────────────────────────────────────────
+       Instruments & octave : on diffère toute modification visuelle /
+       rechargement de samples si la lecture est en cours.            */
+
+    /* --- Lecture en cours ?  --------------------------------------- */
+    let isPlaying          = false;   /* ← nouveau drapeau global    */
+
+    /* Octave courante « gelée » pour la lecture en cours
+       (null quand aucune lecture n’est active)                       */
+    let playbackBaseOctave = null;
+
+    /* Tant qu’une lecture est active, on renvoie L’OCTAVE FIGÉE ; aucun
+      test sur Transport.state (il peut passer par "scheduled"/"pending"). */
+    const getBaseOctave = () =>
+          (playbackBaseOctave !== null)
+            ? playbackBaseOctave
+            : parseInt($("octaveShift").value, 10);
+
+    let pendingInstrument = null;
+    let pendingVisualUpdate = false;      /* ← flag “octave modifiée” */
+    
+    /* ——— Fonction utilitaire : rafraîchit TOUTE la partie visuelle ——— */
+    function refreshDisplayAfterOctaveChange() {
+      /* ↺ Ne rien faire pendant la lecture : on attend la fin. */
+      if (isPlaying) return;
+
+      if (ULID && seq.length > 0) {
+      const baseOctave = playbackBaseOctave ?? getBaseOctave();
+      const table16    = getTable16(baseOctave);
+        $("note-sequence").textContent =
+          "🎵 Séquence :\n" + seq.map(o => table16[o.val]).join(", ");
+        renderTablesAndStaff(seq, table16);
+      }
+    }
+
+    /* ── Un seul listener mutualisé pour accord / arpège / octave ── */
+    ['chordsSel','arp','octaveShift']
+      .forEach(id =>
+        $(id).addEventListener('input', refreshDisplayAfterOctaveChange)
+      );
+
     /* état global ------------------------------------------------------- */
-    let ULID="", seq=[], prim=null, sec=null, timers=[];
-    const $=id=>document.getElementById(id);
+    let ULID = "", seq = [], timers = [];
 
     /* ===== Helpers ===== */
     function newUid(){
-      ULID = makeUlid(Date.now());
-      $("ulid-input").value = ULID;
-      validateUlid(ULID);
+      const id = makeUlidNow();
+      $("ulid-input").value = id;
+      validateUlid(id);
     }
 
     function formatFullDate(isoString) {
       const d = new Date(isoString);
-      return d.toLocaleString("fr-FR", {
-        weekday: "long",
-        year:    "numeric",
-        month:   "long",
-        day:     "numeric",
-        hour:    "2-digit",
-        minute:  "2-digit",
-        second:  "2-digit",
-        hour12:  false,
-        timeZone: "UTC",
-        timeZoneName: "short"
-      });
+
+      const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const months = ["janvier", "février", "mars", "avril", "mai", "juin",
+                      "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+      const dayName = days[d.getUTCDay()];
+      const day     = d.getUTCDate().toString().padStart(2, "0");
+      const month   = months[d.getUTCMonth()];
+      const year    = d.getUTCFullYear();
+
+      const hour    = d.getUTCHours().toString().padStart(2, "0");
+      const minute  = d.getUTCMinutes().toString().padStart(2, "0");
+      const second  = d.getUTCSeconds().toString().padStart(2, "0");
+      const ms      = d.getUTCMilliseconds().toString().padStart(3, "0");
+
+      return `${dayName} ${day} ${month} ${year} à ${hour}:${minute}:${second}.${ms} UTC`;
     }
 
-    function xorBitPair(x) {
+    function xorAdaptiveFrom(val, rev, i) {
+      const x = val ^ rev;
       const b0 = (x >> 0) & 1;
+      const b1 = (x >> 1) & 1;
       const b2 = (x >> 2) & 1;
-      return b0 ^ b2;
+      const b3 = (x >> 3) & 1;
+      return (i % 2 === 0) ? (b1 ^ b3) : (b0 ^ b2);
     }
 
-    function xorAdaptive(x, i) {
-      return (i % 2 === 0)
-        ? ((x >> 1) & 1) ^ ((x >> 3) & 1)   // pair : b1 ^ b3
-        : ((x >> 0) & 1) ^ ((x >> 2) & 1);  // impair : b0 ^ b2
+    // Utilitaire pour statistiques rythmiques
+    function calcRhythmStats(seq) {
+      const fast  = seq.filter(o => o.fast).length;
+      const slow  = seq.length - fast;
+      const beats = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
+      return { fast, slow, beats };
     }
 
-    const toBits=ulid=>ulid.split("").map(c=>crock.indexOf(c).toString(2).padStart(5,"0")).join("").slice(0,128);
-    const chunk4=bits=>Array.from({length:32},(_,i)=>bits.slice(i*4,i*4+4));
+    const toBits = ulid =>
+      ulid
+        .split("")
+        .map(c => crock.indexOf(c).toString(2).padStart(5, "0"))
+        .join("")
+        .slice(0, 128);
 
-    const arp=(arr,p)=>p==="down"?[...arr].reverse():p==="random"?arr.sort(()=>.5-Math.random()):p==="updown"?[...arr,...[...arr].reverse()]:arr;
-    const clearAll = () => {
-      Tone.Transport.stop();            /* ⇦ stoppe toute planification */
-      Tone.Transport.cancel();
-      timers.forEach(clearTimeout);
-      timers = [];
-      prim?.dispose();
-      sec?.dispose();
-      /* ── Retire TOUTES les surbrillances ──────────────────────── */
-      document.querySelectorAll('.note-play')
-              .forEach(el => el.classList.remove('note-play'));
-      document.querySelectorAll('tr.playing-row')
-              .forEach(el => el.classList.remove('playing-row'));
-    };
-    /* ─── Couleur heading résolue (hex) ──────────────────────── */
-    function headingColor(){
-      const c = getComputedStyle(document.documentElement)
-                .getPropertyValue('--heading').trim();
-      if(c.startsWith('rgb')){                // convertit rgb(...) → #rrggbb
-        const [r,g,b]=c.match(/\d+/g).map(Number);
-        return '#'+[r,g,b].map(n=>n.toString(16).padStart(2,'0')).join('');
+    const chunk4 = bits =>
+      Array.from({ length: 32 }, (_, i) => bits.slice(i*4, i*4 + 4));
+
+    // ─── Arpégiateur : renvoie l'ordre des notes selon le motif ───
+    function arp(arr, pattern) {
+      switch (pattern) {
+        case "up":
+          return arr;
+        case "down":
+          return [...arr].reverse();
+        case "updown":
+          // montée puis descente
+          return [...arr, ...[...arr].reverse()];
+        case "random":
+          // copie avant shuffle
+          return [...arr].sort(() => Math.random() - 0.5);
+        default:
+          return arr;
       }
-      return c || '#00ffff';
+    }
+
+    function renderBitGrid(intArray, svgId, adaptiveFn = null) {
+      const svg = $(svgId);
+      svg.innerHTML = "";
+
+      /* ——— Dimensions dynamiques ——— */
+      const n       = 32;
+      const headerH = 12;        /* bandeau numéros */
+      const lblW    = 22;        /* marge gauche b0‑b3 */
+      const gap     = 4;         /* px entre groupes de 8 */
+
+      /* largeur réelle du conteneur (100 % du parent) */
+      const cssW   = svg.clientWidth || 320;
+      const pillW  = Math.floor((cssW - lblW - 3 * gap) / n);
+      const pillH  = 16;         /* hauteur fixe lisible */
+
+      const totalW = lblW + n * pillW + 3 * gap;  /* == cssW */
+      const totalH = headerH + (adaptiveFn ? pillH : 4 * pillH);
+
+      svg.setAttribute("viewBox", `0 0 ${totalW} ${totalH}`);
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+      /* ——— Contenu ——— */
+      intArray.forEach((val, i) => {
+        const bits = val.toString(2).padStart(4, "0").split("").map(Number);
+        const g    = document.createElementNS("http://www.w3.org/2000/svg", "g");
+
+        const x = lblW + i * pillW + Math.floor(i / 8) * gap;
+        g.setAttribute("transform", `translate(${x},${headerH})`);
+
+        if (adaptiveFn) {
+          const v = adaptiveFn(val, i);
+          const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          r.setAttribute("x", 0);
+          r.setAttribute("y", 0);
+          r.setAttribute("width", pillW - 1);
+          r.setAttribute("height", pillH);
+          r.setAttribute("rx", "1");
+          r.setAttribute("ry", "1");
+          r.setAttribute("fill", v ? "var(--bit-xor-adapt)" : "var(--bit-off)");
+          g.appendChild(r);
+        } else {
+          bits.forEach((b, j) => {
+            const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            r.setAttribute("x", 0);
+            r.setAttribute("y", j * pillH + 0.5);
+            r.setAttribute("width", pillW - 1);
+            r.setAttribute("height", pillH - 1);
+            r.setAttribute("rx", "1");
+            r.setAttribute("ry", "1");
+            r.setAttribute("fill", b ? "var(--bit-on)" : "var(--bit-off)");
+
+            const needBorder =
+              (i % 2 === 0 && (j === 1 || j === 3)) ||
+              (i % 2 === 1 && (j === 0 || j === 2));
+            if (svgId === "xor-bits" && needBorder) {
+              r.setAttribute("stroke", "var(--bit-xor-adapt)");
+              r.setAttribute("stroke-width", "1");
+            }
+
+            g.appendChild(r);
+          });
+
+        }
+        svg.appendChild(g);
+      });
+
+      /* ——— Numérotation des colonnes 32 ➜ 1 ——— */
+      for (let i = 0; i < n; i++) {
+        const x = lblW + i * pillW + Math.floor(i / 8) * gap + pillW / 2;
+        const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", x);
+        t.setAttribute("y", headerH - 2);
+        t.setAttribute("text-anchor", "middle");
+        t.setAttribute("font-size", "10");
+        t.setAttribute("fill", "var(--text)");
+        t.textContent = n - i;            /* 32 à gauche → 1 à droite */
+        svg.appendChild(t);
+      }
+
+      /* ——— Labels de ligne (b0‥b3) ——— */
+      if (!adaptiveFn) {
+        ["b0", "b1", "b2", "b3"].forEach((lbl, j) => {
+          const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          t.setAttribute("x", lblW - 2);
+          t.setAttribute("y", headerH + j * pillH + pillH / 2 + 4);
+          t.setAttribute("text-anchor", "end");
+          t.setAttribute("font-size", "10");
+          t.setAttribute("fill", "var(--text)");
+          t.textContent = lbl;
+          svg.appendChild(t);
+        });
+      }
     }
 
     /* ─── Surbrillance temps‑réel (table + séquence + portée) ────── */
-    function highlightNote(i){
+    /* i = index de la note (0-31) ; subOffset = rang dans l’arpège */
+    function highlightNote(i, subOffset = 0){
 
-      /* Tableau ---------------------------------------------------- */
+      const arpStyle = $("arp").value;
+      const chordT = $("chordsSel").value;
+      const baseOctave = getBaseOctave();
+      const table16 = getTable16(baseOctave);
+      const isUpdown = arpStyle === "updown";
+      const realIdx = isUpdown && i >= seq.length ? 2 * seq.length - i - 1 : i;
+
+      // Réinitialise tous les styles de lignes et flèches
       document.querySelectorAll('tr.playing-row')
-              .forEach(r=>r.classList.remove('playing-row'));
-      const cell=document.getElementById('play-cell'+i);
-      if(cell){
-        const row=cell.closest('tr');
-        row.classList.add('playing-row');
-        cell.classList.add('playing');
-        const tid=setTimeout(()=>cell.classList.remove('playing'),200);
+              .forEach(r => r.classList.remove('playing-row'));
+
+      const cell = document.getElementById("play-cell" + realIdx);
+      if (cell) {
+        const row = cell.closest("tr");
+        row.classList.add("playing-row");
+        cell.classList.add("playing");
+
+        const notes = JSON.parse(row.dataset.notes);
+
+        const tid = setTimeout(() => cell.classList.remove("playing"), 200);
         timers.push(tid);
       }
 
       /* Portée ----------------------------------------------------- */
-      const bloc=Math.floor(i/8);
-      /* supprime tout highlight précédent sur l’ensemble des portées */
-      document.querySelectorAll('.note-play')
-              .forEach(el => el.classList.remove('note-play'));
-      drawMini(bloc,i%8,seq);
+      const bloc = Math.floor(realIdx / 8);   /* realIdx = 0-31 même en descente */
+      if (bloc > 3) return;                   /* on n’a que 4 portées */
+      /* O(1) : retire l’ancienne surbrillance */
+      if (lastHighlight) lastHighlight.classList.remove('note-play');
+
+      /* Redessine la portée miniature avec la note active */
+      drawMini(bloc, realIdx % 8, seq, subOffset, table16)
+
+      /* Mémorise la nouvelle tête mise en évidence */
+      const container = $('staff' + bloc);
+      lastHighlight   = container.querySelector('.note-play');
     }
 
-    /* ─── Lecture via Tone.Transport (audio + UI) ───────────────── */
-    function schedulePlayback(seqArr, st, chordT, primSynth, secSynth, secDef){
-      Tone.Transport.cancel();
-      let pos=0;
-      seqArr.forEach((o,i)=>{
-        const dur=st.tempo*(o.fast?0.5:1);      /* secondes */
-        Tone.Transport.schedule(time=>{
-          chordify(o.note,chordT)
-            .forEach(x=>primSynth.triggerAttackRelease(x,dur,time));
-          if(secSynth){
-            const base=o.note.slice(0,-1),
-                  oct =parseInt(o.note.slice(-1))+(secDef?.oct||0);
-            chordify(base+oct,chordT)
-              .forEach(x=>secSynth.triggerAttackRelease(x,dur,time));
-          }
-          highlightNote(i);                     /* synchro UI */
-        }, pos);
-        pos += dur;
+    function updateArrowDirection(isDescending) {
+      document.querySelectorAll("tr[data-i]").forEach(tr => {
+        const i = tr.dataset.i;
+        const notes = JSON.parse(tr.dataset.notes);
+        const td = document.getElementById("notes-" + i);
+        if (td && notes.length > 1) {
+          td.textContent = (isDescending ? [...notes].reverse() : notes).join(isDescending ? " ← " : " → ");
+        }
       });
-      Tone.Transport.scheduleOnce(()=>clearAll(),pos+st.tempo);
-      Tone.Transport.start();
     }
+
+    /* ===== Helper : nombre de têtes de notes dans un bloc (accords/arpège) ===== */
+    function countBlockNotes(blockSeq, table16){
+      const chordT   = $("chordsSel").value;
+      const arpStyle = $("arp").value;
+      let cnt = 0;
+      blockSeq.forEach(o => {
+        const root       = table16[o.val];
+        const chordNotes = chordify(root, chordT, table16);
+        if (chordT !== "none" && arpStyle === "none") {
+          cnt += 1;                       /* accord simultané = 1 tête */
+        } else if (arpStyle !== "none" && chordNotes.length > 1) {
+          cnt += chordNotes.length;       /* arpège = n têtes */
+        } else {
+          cnt += 1;
+        }
+      });
+      return cnt;
+    }    
 
     /* --------- Génération ULID conforme --------- */
     // Génère un ULID à partir d'un timestamp (ms) passé ou aléatoire si omis
@@ -518,108 +954,210 @@
       return makeUlid();                // sans param → aléa 48 bits
     }
 
-    /* ===== 4 petites partitions ===== */
-    function draw(seq){
-      const VF=window.Vex?.Flow;if(!VF)return;
-      // Boucle sur 4 blocs
-      for(let block=0;block<4;block++){
-        const div="staff"+block;
-        $(div).innerHTML="";
-        const vf=new VF.Factory({renderer:{elementId:div,width:300,height:160}});
-        const score=vf.EasyScore(),sys=vf.System();
-        /* ── Mesure élastique : les impaires valent 1/16, les paires 1/8 ── */
-        const blockSeq   = seq.slice(block*8, block*8+8);
-        const parts = blockSeq.map(o =>
-          `${o.note.toLowerCase()}/${o.fast?"16":"8"}`);
-        const sliceString = parts.join(", ");
-        /* total en seizièmes : /8 = 2 , /16 = 1 */
-        const beats16  = blockSeq.reduce((s,o)=>s+(o.fast?1:2),0); // ex : 13
-  
-        const notesArr = score.notes(sliceString);   /* ← tableau de Tickables */
-        const voice    = score.voice(notesArr, {
-          time:   { num_beats: beats16, beat_value: 16 },
-          strict: false
-        });
-        // ── 2) Mode SOFT pour désactiver le check strict
-        voice.setMode(VF.Voice.Mode.SOFT);
-        // ── 3) Ajout de la stave avec time_signature: "8/8"
-        sys.addStave({
-          voices:          [voice],
-          time_signature:  `${beats16}/16`
-        }).addClef("treble");
-
-        vf.draw();
-        }
-        /* renvoie la liste des groupes <g.vf-stavenote> dans l’ordre */
-        return Array.from(document.querySelectorAll('.vf-stavenote'));
-    }
-
-    function drawMini(block, hi, seqArr){
-      const VF = window.Vex.Flow;
-      const div = "staff"+block;
-      $(div).innerHTML="";
-      /* 160 px de haut pour ne plus couper les notes graves / aiguës */
-      const vf  = new VF.Factory({ renderer:{ elementId:div, width:300, height:160 }});  const score = vf.EasyScore();
+    /* ───── Portée factorisée ─────
+      forcedOctave (facultatif) : si ≠ null, c’est la valeur à utiliser
+      pour déterminer la clef ; sinon on interroge getBaseOctave().        */
+    function renderStaff(containerId, blockSeq, table16,
+                        highlightIdx = -1, forcedOctave = null){
+      const VF = window.Vex?.Flow;
+      if (!VF) return;
+      const container = $(containerId);
+      if (!container) return;
+      container.replaceChildren();
+    
+      const parentW = container.clientWidth;
+      const vf = new VF.Factory({ renderer: { elementId: containerId, width: parentW, height: 140 } });
+      const score = vf.EasyScore();
       const sys   = vf.System();
-      const blockSeq  = seqArr.slice(block*8, block*8+8);
-      const miniParts = blockSeq.map(o =>
-          `${o.note.toLowerCase()}/${o.fast?"16":"8"}`);
-      const miniString = miniParts.join(", ");
-      const beats16    = blockSeq.reduce((s,o)=>s+(o.fast?1:2),0);
+    
+      const baseOctave = forcedOctave !== null ? forcedOctave : getBaseOctave();
+      const clef = baseOctave <= 2 ? "bass" : baseOctave === 3 ? "alto" : "treble";
+    
+      /* ——— Génère les tokens VexFlow avec accords/arpèges complets ——— */
+      const chordT   = $("chordsSel").value;
+      const arpStyle = $("arp").value;
 
-      const miniNotes  = score.notes(miniString);    /* ← tableau de Tickables */
-      const voice      = score.voice(miniNotes, {
-        time:   { num_beats: beats16, beat_value: 16 },
+      const parts = [];
+      blockSeq.forEach(o => {
+        const root       = table16[o.val];
+        const dur        = o.fast ? "16" : "8";
+        const chordNotes = chordify(root, chordT, table16);
+
+        if (chordT !== "none" && arpStyle === "none") {
+          /* Accord simultané : notes empilées dans la même tête */
+          parts.push(`(${chordNotes.map(n => n.toLowerCase()).join(" ")})/${dur}`);
+        } else if (arpStyle !== "none" && chordNotes.length > 1) {
+          /* Arpège : notes successives selon le motif choisi
+             - “up”      → ordre naturel
+             - “down”    → inversé
+             - “updown”  → on affiche UNIQUEMENT la montée
+             - “random”  → ordre mélangé                                */
+          const ordered =
+            arpStyle === "down"   ? [...chordNotes].reverse() :
+            arpStyle === "random" ? arp([...chordNotes], "random") :
+            chordNotes;            /* up & updown → montée */
+          ordered.forEach(n => parts.push(`${n.toLowerCase()}/${dur}`));
+        } else {
+          /* Note simple */
+          parts.push(`${root.toLowerCase()}/${dur}`);
+        }
+      });
+
+      const sliceString = parts.join(", ");
+      /* recalcul du nombre total de seizièmes réels */
+      let beats16 = 0;
+      parts.forEach(tok => { beats16 += tok.endsWith("/16") ? 1 : 2; });
+    
+      const notesArr = score.notes(sliceString);
+      // 🪶 Génération automatique des faisceaux (beams) pour les croches et doubles-croches
+      const beams = VF.Beam.generateBeams(notesArr);
+      beams.forEach(beam => vf.Beam({ notes: beam.getNotes() }));
+
+      const voice = score.voice(notesArr, {
+        time: { num_beats: beats16, beat_value: 16 },
         strict: false
       });
       voice.setMode(VF.Voice.Mode.SOFT);
       sys.addStave({
-        voices:          [voice],
-        time_signature:  `${beats16}/16`
-      }).addClef("treble");
+        voices: [voice],
+        time_signature: `${beats16}/16`
+      }).addClef(clef);
 
       vf.draw();
-      /* ── Surbrillance visuelle par classe ─────────────────── */
-      const gNotes = document.querySelectorAll('#' + div + ' .vf-stavenote');
-      gNotes.forEach(g => g.classList.remove('note-play'));
-      if (hi >= 0 && gNotes[hi]) gNotes[hi].classList.add('note-play');
+
+      const gNotes = container.querySelectorAll('.vf-stavenote');
+      gNotes.forEach(g => g.classList.remove("note-play"));
+      if (highlightIdx >= 0 && gNotes[highlightIdx]) gNotes[highlightIdx].classList.add("note-play");
+
+      /* Renvoie le nombre de notes réellement dessinées */
+      return parts.length;
+    }
+
+    /* ── Dessin des 4 portées avec largeur correcte dès le départ ── */
+    function draw(seq){
+      const baseOct = (playbackBaseOctave ?? getBaseOctave());
+      const table16 = getTable16(baseOct);
+
+      /* 1️⃣  Décide d’abord si l’on empile ou non */
+      let maxNotes = 0;
+      for (let b = 0; b < 4; b++) {
+        const cnt = countBlockNotes(seq.slice(b * 8, b * 8 + 8), table16);
+        if (cnt > maxNotes) maxNotes = cnt;
+      }
+      const grids = $("note-grids");
+      (maxNotes > 8) ? grids.classList.add("stacked")
+                     : grids.classList.remove("stacked");
+
+      /* 2️⃣  Puis on (re)dessine chacune des portées */
+      for (let b = 0; b < 4; b++) {
+        const blockSeq = seq.slice(b * 8, b * 8 + 8);
+        const fo = (playbackBaseOctave !== null ? playbackBaseOctave : null);
+        renderStaff("staff" + b, blockSeq, table16, -1, fo);
+      }
+    }
+
+    /* ——— Surbrillance exacte même avec accords + arpèges ——— */
+    /* Surbrillance précise : on peut indiquer un “décalage” dans l’arpège */
+    function drawMini(block, seqIdxInBlock, seq, subOffset = 0, table16){
+      const blockSeq = seq.slice(block * 8, block * 8 + 8);
+      const chordT   = $("chordsSel").value;
+      const arpStyle = $("arp").value;
+
+      /* Calcule le décalage (en # de têtes) avant l’index à mettre en surbrillance */
+      let noteIdx = 0;
+      for (let k = 0; k < seqIdxInBlock; k++) {
+        const root       = table16[blockSeq[k].val];
+        const chordNotes = chordify(root, chordT, table16);
+        if (chordT !== "none" && arpStyle === "none") {
+          noteIdx += 1;                          /* accord simultané = 1 tête */
+        } else if (arpStyle !== "none" && chordNotes.length > 1) {
+          noteIdx += chordNotes.length;          /* arpège = n têtes */
+        } else {
+          noteIdx += 1;                          /* note simple */
+        }
+      }
+
+      noteIdx += subOffset;               /* 2ᵉ, 3ᵉ note de l’arpège, … */
+      const fo = (playbackBaseOctave !== null ? playbackBaseOctave : null);
+      renderStaff("staff" + block, blockSeq, table16, noteIdx, fo);
     }
 
     // ——— logique de rendu tableaux + staff ———
-    function renderTablesAndStaff(seq) {
+    function renderTablesAndStaff(seq, table16){
+
       const chordT = $("chordsSel").value;
-      // 1. Vider les 4 tableaux
-      for (let t = 0; t < 4; t++) {
-        $("tbl" + t).innerHTML = "";
-        $("staff" + t).innerHTML = "";
+      const isUpdown = $("arp").value === "updown";
+      const totalBlocks = 4;
+
+      // 1. Vider les tableaux
+      for (let t = 0; t < totalBlocks; t++) {
+        const tid = "tbl" + t;
+        if ($(tid)) $(tid).innerHTML = "";
       }
+      $("staff-wrapper").innerHTML = "";
 
       // 2. Remplir ligne par ligne
       seq.forEach((o, i) => {
-        const b    = table16.indexOf(o.note).toString(2).padStart(4, "0");
+        const b = o.val.toString(2).padStart(4, "0");
         const tbl  = "tbl" + Math.floor(i / 8);
         const dur  = o.fast ? "1/16" : "1/8";
+        const rowIdx = i + 1;
+  
+        const root = table16[o.val];
+        const chordNotes = chordify(root, chordT, table16);
+  
+        const arpStyle = $("arp").value;
+        let noteDisplay = "";
+  
+        if (chordNotes.length === 1 || arpStyle === "none") {
+          noteDisplay = chordNotes[0];
+        } else if (arpStyle === "updown") {
+          // on n'affiche que la phase montante
+          noteDisplay = chordNotes.join(" → ");
+        } else {
+          const ordered = arp(chordNotes, arpStyle);
+          noteDisplay = ordered.join(" → ");
+        }
+  
         const row  = `
-          <tr>
-            <td>${i + 1}</td>
-            <td>${b}</td>
-            <td>${table16.indexOf(o.note)}</td>
+          <tr data-i="${i}" data-notes='${JSON.stringify(chordNotes)}'>
+            <td>${rowIdx}</td>
             <td>${dur}</td>
-            <td>${chordify(o.note, chordT).join(" ")}</td>
+            <td id="notes-${i}">${noteDisplay}</td>
             <td class="playing-col" id="play-cell${i}"></td>
           </tr>`;
         $(tbl).insertAdjacentHTML("beforeend", row);
       });
 
+      /* Un seul rendu – évite les 4 portées supplémentaires */
       draw(seq);
-      for (let b = 0; b < 4; b++) drawMini(b, -1, seq);
     }
 
+    function clearAll(time) {
+      if (typeof time === "number") Tone.Transport.stop(time);
+      else                       Tone.Transport.stop();
+      Tone.Transport.cancel();
+      timers.forEach(clearTimeout);
+      timers = [];
+      if (lastHighlight) lastHighlight.classList.remove("note-play");
+      lastHighlight = null;
+      document.querySelectorAll("tr.playing-row")
+              .forEach(r => r.classList.remove("playing-row"));
+      $("pause").textContent = "⏸ Pause";
+      $("pause").disabled    = true;
+    }
 
     // ————— Validation ULID + mise à jour date humanisée —————
     async function validateUlid(v) {
       v = v.trim().toUpperCase();
       $("ulid-input").value = v;
+
+      const baseOctave    = getBaseOctave();
+      const table16       = getTable16(baseOctave);
+
+      const binLine       = $("nibbles-binary");
+      const valLine       = $("nibbles-values");
+      const noteLine      = $("nibbles-notes");
 
       // 1) Appel au Worker – mode "check" (→ try/catch réseau)
       const statusEl = $("ulid-status");
@@ -645,31 +1183,34 @@
 
         $("note-grids").style.display = "grid";
 
-        ULID = v;
-
         /* 1) Construction de la séquence (ordre brut, sans arpégiateur) */
-        const bits     = toBits(ULID);
+        const bits     = toBits(v);
         const nibbles  = chunk4(bits);             /* 32 × “bbbb”          */
-        const vals = nibbles.map(b => parseInt(b, 2));
+        const vals     = nibbles.map(b => parseInt(b, 2));
         const revs = [...vals].reverse();
         const xors = vals.map((v, i) => v ^ revs[i]);
 
         seq = vals.map((val, i) => ({
-          note: table16[val],
-          fast: xorAdaptive(xors[i], i) === 1
+          val,
+          fast: xorAdaptiveFrom(vals[i], revs[i], 31 - i) === 1
         }));
 
-        $("nibbles").textContent          = "🧩 Nibbles :    " + vals.map(v => v.toString(2).padStart(4, '0')).join(" ");
-        $("nibbles-reversed").textContent= "🔁 Inversés :   " + revs.map(v => v.toString(2).padStart(4, '0')).join(" ");
-        $("nibbles-xor").textContent     = "🧮 XOR :        " + xors.map(v => v.toString(2).padStart(4, '0')).join(" ");
-        $("nibbles-xor-bits").textContent = "⚡ XOR adaptif : " + xors.map((x, i) => xorAdaptive(x, i)).join(" ");
+        ["nibbles-bits", "reversed-bits", "xor-bits", "xor-adaptive"]
+          .forEach(id => $(id).innerHTML = "");
+        renderBitGrid(vals,     "nibbles-bits");
+        renderBitGrid(revs,     "reversed-bits");
+        renderBitGrid(xors,     "xor-bits");
+        renderBitGrid(
+          [...xors].reverse(),
+          "xor-adaptive",
+          (_, i) => xorAdaptiveFrom(vals[31 - i], revs[31 - i], 31 - i)
+        );
 
         const fastCount = seq.filter(o => o.fast).length;
         const slowCount = seq.length - fastCount;
         const beatCount = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
-        const style = styles[$("styleSel").value];
-        const unit = style.tempo / 2;  // durée d'un 1/16
-        const duration = (beatCount * unit).toFixed(2);
+        const tempo = parseFloat($("tempoDur").value);
+        const duration = (beatCount * tempo).toFixed(2);
 
         $("summary").textContent =
           `⏱️ Durée estimée : ${duration} sec\n` +
@@ -677,60 +1218,81 @@
           `⚖️ Rythme : ${fastCount} rapides / ${slowCount} lentes`;
 
         ULID = v;
-        $("note-sequence").textContent = "🎵 " + seq.map(o => o.note).join(", ");
+
+        binLine.innerHTML = "";
+        valLine.innerHTML = "";
+        noteLine.innerHTML = "";
+        vals.forEach(val => {
+          const bin = val.toString(2).padStart(4, "0");
+          binLine.innerHTML += `<span>${bin}</span>`;
+          valLine.innerHTML += `<span>${val}</span>`;
+          noteLine.innerHTML += `<span>${table16[val]}</span>`;
+        });
+        $("ulid-decode").classList.remove("hidden");
+
+        $("note-sequence").textContent = "🎵 Séquence :\n" + seq.map(o => table16[o.val]).join(", ");
 
         for (let b = 0; b < 4; b++) {
           $("tbl" + b).innerHTML   = "";
           $("staff" + b).innerHTML = "";
         }
 
-        renderTablesAndStaff(seq);
+        renderTablesAndStaff(seq, table16);
 
       } else {
         // ULID invalide
         statusEl.textContent = "❌ " + (data.error || "");
         statusEl.style.color = "var(--error,#f00)";
         $("ulid-ts-preview").textContent = "📆 Date : —";
-        $("note-sequence").textContent = "🎵 Séquence : —";
-        $("nibbles").textContent          = "🧩 Nibbles : —";
-        $("nibbles-reversed").textContent= "🔁 Inversés : —";
-        $("nibbles-xor").textContent     = "🧮 XOR : —";
-        $("nibbles-xor-bits").textContent = "⚡ XOR adaptif : —";
+        $("note-sequence").textContent = "🎵 Séquence :\n —";
+        ["nibbles-bits", "reversed-bits", "xor-bits", "xor-adaptive"]
+          .forEach(id => $(id).innerHTML = "");
         $("summary").textContent =
           `⏱️ Durée estimée : — \n` +
           `🎼 Battements : — \n` +
           `⚖️ Rythme : —`;
         $("note-grids").style.display = "none";
       }
+
     }
     
-    // ————— Validation en live sur saisie —————
-    $("ulid-input").addEventListener("input", () =>
-      validateUlid($("ulid-input").value)
+    /* Validation ULID avec anti-rebond */
+    $("ulid-input").addEventListener(
+      "input",
+      debounce(() => validateUlid($("ulid-input").value), 300)
     );
 
-    $("styleSel").addEventListener("change", () => {
-      const style = styles[$("styleSel").value];
-      $("style-desc").textContent = style.desc;
+    /*──────── Tempo ↔ Durée : listeners uniques ────────*/
+    function syncTempoFields(source) {
+      const bpmInput = $("tempoBpm");
+      const durInput = $("tempoDur");
 
-      // Si une séquence existe, on recalcule les infos
-      if (seq.length === 32) {
-        const fastCount = seq.filter(o => o.fast).length;
-        const slowCount = 32 - fastCount;
-        const beatCount = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
-        const unit = style.tempo / 2;
-        const duration = (beatCount * unit).toFixed(2);
-
-        $("summary").textContent =
-          `⏱️ Durée estimée : ${duration} sec\n` +
-          `🎼 Battements : ${beatCount} (sur ${seq.length * 2} max)\n` +
-          `⚖️ Rythme : ${fastCount} rapides / ${slowCount} lentes`;
+      if (source === "bpm") {
+        const bpm = parseFloat(bpmInput.value);
+        if (bpm > 0) durInput.value = (60 / bpm).toFixed(2);
+      } else {
+        const dur = parseFloat(durInput.value);
+        if (dur > 0) bpmInput.value = Math.round(60 / dur);
       }
-    });
+    }
+
+    $("tempoBpm").addEventListener("input", () => syncTempoFields("bpm"));
+    $("tempoDur").addEventListener("input", () => syncTempoFields("dur"));
 
     /* ===== UI ===== */
-    // (ancien bouton #new supprimé)
-    $("stop").onclick=clearAll;
+    $("stop").onclick = () => {
+      clearAll();
+
+      // ← NOUVEAU : stop manuel → même réactivation des contrôles
+      isPlaying = false;
+      playbackBaseOctave = null;
+      ["instrumentSel","octaveShift","chordsSel","arp",
+      "tempoBpm","tempoDur"].forEach(id => $(id).disabled = false);
+
+      isPaused = false;
+      $("pause").textContent = "⏸ Pause";
+      $("pause").disabled = true;
+    };
 
     /* ─── Boutons ULID Random / Maintenant ─── */
     $("ulid-random").onclick = () => {
@@ -745,78 +1307,153 @@
       validateUlid(id);
     };
 
-    // ─── Bouton d’écoute pour Instrument 1 ─────────────────
-    $("preview1").onclick = async () => {
-      // choix du synthé prim
-      const primSel = $("prim").value;
-      await Tone.start();
-      let s;
-      if (primSel === "default") {
-        // même mapping que dans play()
-        const style = $("styleSel").value;
-        const defMap = {
-          ambient: new Tone.Synth({oscillator:{type:"sine"}}),
-          chiptune: new Tone.MonoSynth({oscillator:{type:"square"}}),
-          jazz: new Tone.FMSynth({harmonicity:2,modulationIndex:12})
-        };
-        s = defMap[style];
-      } else {
-        s = primDefs[primSel]();
-      }
-      s.toDestination();
-
-      const notes = chordify("C4",$("chordsSel").value);
-      notes.forEach(x => s.triggerAttackRelease(x,1));
-      setTimeout(()=>s.dispose(),1100);
-    };
-
-    // ─── Bouton d’écoute pour Instrument 2 ─────────────────
-    $("preview2").onclick=async()=>{
-      const d=secDefs[$("sec").value];
-      if(!d)return;await Tone.start();
-      const s=d.synth();
-      s.volume.value=d.vol;s.toDestination();
-      const n=chordify("C4",$("chordsSel").value);
-      n.forEach(x=>s.triggerAttackRelease(x,1));
-      setTimeout(()=>s.dispose(),1100);
-    };
-
     /* ===== lecture ===== */
-    $("play").onclick=async()=>{
+    $("play").onclick = async () => {
+      isPlaying = true;             /* 🔒 verrou visu & octave */
+
+      /* 🔒 1) Désactive tous les sélecteurs/inputs sensibles pendant la lecture */
+      ["instrumentSel","octaveShift","chordsSel","arp",
+       "tempoBpm","tempoDur"].forEach(id => $(id).disabled = true);
+      /* 1️⃣  Fige immédiatement l’octave (et donc la clef) pour TOUTE la lecture */
+      playbackBaseOctave = parseInt($("octaveShift").value, 10);
+      const baseOctave   = playbackBaseOctave;
+      const table16      = getTable16(baseOctave);
+      const transposed = table16;
+
       await Tone.start();
-      clearAll();
-      const st           = styles[$("styleSel").value],
-            pat          = $("arp").value,
-            chordT       = $("chordsSel").value,
-            chordsEnabled= chordT !== 'none',
-            primSel      = $("prim").value,
-            secDef       = secDefs[$("sec").value];
-      prim=primSel==="default"
-        ?({ambient:new Tone.Synth({oscillator:{type:"sine"}}),
-          chiptune:new Tone.MonoSynth({oscillator:{type:"square"}}),
-          jazz:new Tone.FMSynth({harmonicity:2,modulationIndex:12})})[$("styleSel").value]
-        :primDefs[primSel]();
-      if (chordsEnabled) prim = new Tone.PolySynth(Tone.Synth);
-      prim.toDestination();
-      if(secDef){sec=secDef.synth();sec.volume.value=secDef.vol;sec.toDestination();}
+      // si un playback est en cours, on stoppe et on attend l'événement "stop"
+      if (isPlaying) {
+        await new Promise(resolve => {
+          Tone.Transport.once("stop", resolve);
+          clearAll();
+        });
+      } else {
+        clearAll();
+      }
+      /* ───────── Mise à jour éventuelle de l’instrument ───────── */
+      /* 1) Si un nouvel instrument est encore en attente, on le charge
+            (cela arrivera si l’utilisateur a cliqué “▶ Jouer” AVANT la fin
+            du morceau, donc avant que le listener `"stop"` ait eu le temps
+            de lancer loadSampler).                                     */
+      if (pendingInstrument) {
+        await loadSampler(pendingInstrument);   /* ← charge vraiment */
+        pendingInstrument = null;               /* ← puis on purge le flag */
+      }
 
-      /* conversion + marquage “rapide” pour valeurs impaires ---------- */
-      const bits=toBits(ULID), nibbles=chunk4(bits);
-      const vals = arp(nibbles.map(b=>parseInt(b,2)),pat).slice(0,32);
-      const revs = [...vals].reverse();
-      const xors = vals.map((v, i) => v ^ revs[i]);
-      seq = vals.map((v, i) => ({
-        note: table16[v],
-        fast: xorAdaptive(xors[i], i) === 1
-      }));
+      /* 2) On attend que le sampler actif soit totalement prêt
+            (buffers chargés) avant de planifier la nouvelle lecture.   */
+      await currentSamplerReady;
 
-      renderTablesAndStaff(seq);
+      isPaused = false;          // réinitialise l’état « pause »
 
-      /* lecture synchrone (Transport) */
-      schedulePlayback(seq, st, chordT, prim, sec, secDef);
+      // on remet à jour le bouton pause
+      $("pause").textContent = "⏸ Pause";
+      $("pause").disabled = false;
+
+      const chordT = $("chordsSel").value;
+      const pat = $("arp").value;
+
+      const seqArr = arp(seq, pat);
+      Tone.Transport.cancel();
+      updateArrowDirection(false);
+
+      let pos = 0;
+      const tempo = parseFloat($("tempoDur").value);
+      const isUpdown = pat === "updown";
+      const len = seqArr.length;
+
+      const instrument = $("instrumentSel").value;
+      const playMode = instrumentBehavior[instrument]; // "full" ou "cut"
+
+      seqArr.forEach((o, i) => {
+        const dur = tempo * (o.fast ? 0.5 : 1);
+
+        /* Marque le point de bascule (up → down) une seule fois */
+        Tone.Transport.schedule(t => {
+          if (isUpdown && i === Math.floor(len / 2)) {
+            updateArrowDirection(true);
+          }
+        }, pos);
+
+        const note        = transposed[o.val];
+        const chordNotes  = chordify(note, chordT, transposed);
+        const arpeggiate  = (pat !== "none" && chordT !== "none" && chordNotes.length > 1);
+
+        /* ───── Tableau des notes à jouer pour CETTE ULID (montée ou descente) ───── */
+        const isDescending = isUpdown && i >= len / 2;
+        const chordSeq = (arpeggiate && isDescending) ? [...chordNotes].reverse()
+                                                     : chordNotes;
+
+        chordSeq.forEach((n, j) => {
+          const offset   = arpeggiate ? j * (dur / chordSeq.length) : 0;
+          const when     = pos + offset;
+          const noteDur  = (playMode === "full") ? undefined : dur / chordSeq.length;
+
+          /* ── Son ── */
+          Tone.Transport.schedule(t => {
+            if (playMode === "full") {
+              currentSampler.triggerAttack(n, t);
+            } else {
+              currentSampler.triggerAttackRelease(n, noteDur, t);
+            }
+          }, when);
+
+          /* ── Surbrillance ──
+             - accords + arpège : une pastille / note
+             - accords simples  : une seule pastille                    */
+          const jAdj = arpeggiate
+                       ? (isDescending ? chordSeq.length - 1 - j : j)  /* ordre inversé en descente */
+                       : 0;
+          Tone.Transport.schedule(() => {
+            highlightNote(i, jAdj);
+          }, when);
+        });
+
+        pos += dur;                       /* incrémente à la fin de la note “mère” */
+      });
+
+      Tone.Transport.scheduleOnce((time) => {
+        Tone.Transport.stop(time);
+        updateArrowDirection(false); // réinitialise les flèches à droite
+        clearAll(time);
+
+        // ← NOUVEAU : fin de la lecture → déverrouillage complet
+        isPlaying = false;
+        playbackBaseOctave = null;
+        ["instrumentSel","octaveShift","chordsSel","arp",
+         "tempoBpm","tempoDur"].forEach(id => $(id).disabled = false);
+
+        isPaused = false;
+        $("pause").textContent = "⏸ Pause";
+        $("pause").disabled = true;
+      }, pos + tempo);
+
+      /* 🔸 Lance réellement la lecture après planification */
+      Tone.Transport.start("+0");
+    }
+
+    let isPaused = false;
+
+    $("pause").onclick = () => {
+      if (Tone.Transport.state === "started") {
+        // Met en pause la lecture en cours
+        Tone.Transport.pause();
+        isPaused = true;
+        $("pause").textContent = "▶ Reprendre";
+      } else if (Tone.Transport.state === "paused" && isPaused) {
+        // Reprend la lecture après pause
+        Tone.Transport.start();
+        isPaused = false;
+        $("pause").textContent = "⏸ Pause";
+      }
     };
+
     /* init */
-    newUid();
+    (async () => {
+      await loadSampler("piano");
+      newUid();
+      $("pause").disabled = true; // grisé au démarrage
+    })();
 
   </script>
 

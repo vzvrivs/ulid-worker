@@ -27,6 +27,7 @@
   --navbar-radius: 999px;
   --navbar-link-size: 1rem;
 
+  --bit-xor-adapt: #ff4444;
 }
 
 [data-theme="dark"] {
@@ -55,6 +56,9 @@
   --nav-glow-2: rgba(0, 255, 0, 0.7);
   --matrix-background: #000;
   --matrix-overlay: rgba(0, 0, 0, 0.05);
+  --bit-on: #00ffcc;
+  --bit-off: color-mix(in srgb, var(--footer-color) 50%, var(--bg));
+  --bit-test: color-mix(in srgb, var(--footer-color) 50%, var(--bg));
 }
 
 [data-theme="light"] {
@@ -83,6 +87,8 @@
   --nav-glow-2: rgba(0, 255, 255, 0.7);
   --matrix-background: #fff;
   --matrix-overlay: rgba(255, 255, 255, 0.05);
+  --bit-on: #0066cc;
+  --bit-off: color-mix(in srgb, var(--footer-color) 50%, var(--bg));
 }
 
 /* 2. Base et layout */

@@ -40,8 +40,6 @@ async function log(level, message, meta = {}) {
   }
 }
 
-
-
 // =============================================================================
 // index.js — ULID Worker (options timestamp & monotone, journaux intégrés)
 // =============================================================================
@@ -201,9 +199,7 @@ async function handleUlid(request) {
   const forcedTs  = url.searchParams.has('timestamp')
                     ? parseInt(url.searchParams.get('timestamp'),10)
                     : (monotonic ? Date.now() : null);
-  
 
-  
   // DEBUG sur les paramètres de génération
   await log("DEBUG", "Generating ULID batch", {
     n, pretty, base, bin, format,
@@ -274,7 +270,6 @@ if (monotonic) {
     }
   }
 }
-
 
   // E) Formats texte (csv, tsv, text, joined)
   if (['csv','tsv','text','joined'].includes(format)) {
@@ -408,7 +403,7 @@ async function handleAutofill(request) {
   });
 
 }
-  
+
 // ───────────────────────────────────────────────────────────
 // Handler GET /auto-doc
 // ───────────────────────────────────────────────────────────
@@ -598,7 +593,6 @@ ${JSON.stringify(log, null, 2)}
   });
 }
 
-
 // ───────────────────────────────────────────────────────────
 // Dashboard logs
 // ───────────────────────────────────────────────────────────
@@ -719,4 +713,3 @@ async function handleDebugLogs() {
     headers: { 'Content-Type': 'text/html; charset=utf-8' }
   });
 }
-
