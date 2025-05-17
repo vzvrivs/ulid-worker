@@ -7,11 +7,20 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
 
+## [Unreleased]
+
+### Modifié
+
+- Optimisation et finalisation de la page Music après la version 0.5.0 (détails à venir).
+
+---
+
 ## [0.5.0] – 2025-05-12
 
 ### Ajouté
 
 #### Page Music
+
 - Refonte complète de la page.
 - Sélection d’un ULID pour la génération musicale :
   - aléatoire, "maintenant" (par défaut), ou saisi manuellement.
@@ -23,6 +32,7 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 - Section explicative décrivant toute la démarche de génération.
 
 #### Page Matrix
+
 - Intégration de la page Matrix dans le design global du site avec navbar.
 - Réécriture du moteur d’affichage :
   - Élimination des résidus gris après les traînées.
@@ -37,6 +47,7 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 ## [0.4.0] – 2025-05-02
 
 ### Ajouté
+
 - Rétablissement du toggle clair/sombre avec détection dynamique du thème de l’environnement.
 - Prise en charge du changement de thème système en temps réel.
 - Rétablissement des logs :
@@ -50,6 +61,7 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 ## [0.3.0] – 2025-04-28
 
 ### Ajouté
+
 - Finalisation du Playground avec toutes les fonctionnalités prévues.
 - Sélection du format de timestamp personnalisé avec aperçu humanisé.
 - Génération avec choix et ordre des types de valeurs.
@@ -57,11 +69,13 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 - Téléchargement respectant l’état beautifié/minifié.
 
 ### Modifié
+
 - Correction du bug du premier ULID monotone.
 - Téléchargement avec regroupement par type.
 - Vérificateur déplacé et amélioré (affiche la date humanisée).
 
 ### Supprimé
+
 - Champs "Préfixe" et "Suffixe".
 - Sélection du type de fichier dans Autofill (JSON uniquement).
 
@@ -70,6 +84,7 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 ## [0.2.0] – 2025-04-20
 
 ### Ajouté
+
 - Mise en place du Playground interactif.
 - Générateur de timestamp commun, ULID monotone, Autofill JSON.
 
@@ -78,5 +93,6 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 ## [0.1.0] – 2025-04-12
 
 ### Ajouté
+
 - Déploiement initial du Worker ULID simple avec génération via API.
 - Première documentation en ligne.

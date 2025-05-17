@@ -276,13 +276,13 @@
     <section>
       <div class="bit-grids">
         <label>🧩 Nibbles</label>
-        <svg id="nibbles-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <svg id="nibbles-bits" viewBox="0 0 320 64" preserveAspectRatio="none" aria-label="Bits des nibbles ULID"></svg>
         <label>🔁 Inversés</label>
-        <svg id="reversed-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <svg id="reversed-bits" viewBox="0 0 320 64" preserveAspectRatio="none" aria-label="Bits des nibbles inversés"></svg>
         <label>🧮 XOR Nibbles^Inversés</label>
-        <svg id="xor-bits" viewBox="0 0 320 64" preserveAspectRatio="none"></svg>
+        <svg id="xor-bits" viewBox="0 0 320 64" preserveAspectRatio="none" aria-label="Bits XOR nibbles"></svg>
         <label>⚡ XOR adaptatif b0^b2 ou b1^b3</label>
-        <svg id="xor-adaptive" viewBox="0 0 320 16" preserveAspectRatio="none"></svg>
+        <svg id="xor-adaptive" viewBox="0 0 320 16" preserveAspectRatio="none" aria-label="XOR adaptatif"></svg>
       </div>
       <div>
         <pre id="summary" class="code-block" style="white-space:pre-wrap; font-size:.9rem; margin-bottom:1rem;">—</pre>
@@ -398,51 +398,55 @@
       <h2>🧠 Démarche de génération</h2>
       <ol style="line-height:1.6">
         <li>
-          <strong>🔢 ULID → séquence de 32 nibbles</strong><br>
-          L’ULID (26 caractères Base32) est converti en 128 bits binaires.<br>
-          Ces 128 bits sont découpés en 32 groupes de 4 bits (nibbles), soit 32 valeurs entre 0 et 15.
+          <strong>🔢 ULID → 128 bits → nibbles</strong><br />
+          L’ULID est une chaîne de 26 caractères encodés en base32 Crockford (5 bits par caractère).<br />
+          Seuls les <strong>128 premiers bits</strong> (sur les 130 possibles) sont conservés,
+          puis découpés en <strong>32 groupes de 4 bits</strong>, appelés <em>nibbles</em>.<br />
+          Chaque nibble représente une valeur entre 0 et 15.
         </li>
         <li>
-          <strong>🎵 Note = valeur du nibble</strong><br>
-          Chaque valeur est associée à une note dans une gamme musicale de 16 sons fixes, de C3 à G5.
+          <strong>🎵 Note = valeur du nibble</strong><br />
+          Chaque valeur est associée à une note musicale parmi une gamme de <strong>16 notes fixes</strong>,
+          ajustée selon l’octave sélectionnée.
         </li>
         <li>
-          <strong>🧮 Vitesse = XOR adaptatif</strong><br>
-          La durée de chaque note est déterminée par une opération logique :<br>
-          → On calcule un XOR entre chaque nibble et son opposé binaire (ULID inversé bit-à-bit)<br>
-          → Ensuite, on extrait un bit interne du résultat par une règle adaptative :
+          <strong>🧮 Rythme = XOR adaptatif</strong><br />
+          Pour chaque nibble en position <code>i</code>, on calcule :<br />
+          → un <strong>XOR</strong> entre sa valeur et celle du nibble symétrique en position
+          <code>31 - i</code><br />
+          → puis on extrait un seul bit de ce résultat selon <code>i</code> :
           <ul>
-            <li>Si la position du nibble est <em>impair</em> → on fait <code>b0 ^ b2</code></li>
-            <li>Si la position est <em>pair</em> → on fait <code>b1 ^ b3</code></li>
+            <li>Si <code>i</code> est pair → <code>b1 ^ b3</code></li>
+            <li>Si <code>i</code> est impair → <code>b0 ^ b2</code></li>
           </ul>
-          Ce bit donne le rythme :<br>
-          <code>0</code> → <strong>note normale</strong> (croche /8) • <code>1</code> → <strong>note rapide</strong> (double‑croche /16)
+          Ce bit détermine la durée :
+          <code>0</code> → <strong>croche</strong> (1/8) • <code>1</code> → <strong>double-croche</strong> (1/16)
         </li>
         <li>
-          <strong>📊 Résumé rythmique</strong><br>
-          Juste sous la séquence adaptative, un encart affiche :
+          <strong>📊 Statistiques rythmiques</strong><br />
+          Un encart récapitule :
           <ul>
             <li>⏱️ la durée totale estimée</li>
-            <li>🎼 le nombre de battements en seizièmes</li>
+            <li>🎼 le nombre total de battements</li>
             <li>⚖️ la répartition rapide / lente</li>
           </ul>
-          Tout est recalculé à chaque modification de l’ULID.
         </li>
         <li>
-          <strong>🎼 Visualisation immédiate</strong><br>
-          Dès qu’un ULID valide est saisi, les mini‑tableaux et portées sont affichés :
+          <strong>🎼 Visualisation</strong><br />
+          Chaque note est affichée :
           <ul>
-            <li>📋 Chaque tableau liste les notes, valeurs, accords, durées</li>
-            <li>🎶 Les 4 portées VexFlow montrent les notes, leurs hauteurs et durées réelles</li>
+            <li>📋 dans un tableau (avec valeur, durée, accord, arpège)</li>
+            <li>🎶 sur une portée (clef et durée réelle, via VexFlow)</li>
           </ul>
+          Les notes sont groupées par blocs de 8, et les portées s’adaptent automatiquement à leur densité.
         </li>
         <li>
-          <strong>▶️ Lecture interactive</strong><br>
-          Un clic sur <em>Jouer</em> déclenche la lecture avec synchronisation parfaite :
+          <strong>▶️ Lecture musicale</strong><br />
+          La lecture déclenche :
           <ul>
-            <li>🔈 sons selon le style et les instruments sélectionnés</li>
-            <li>📚 surbrillance des notes en temps réel (tableaux + partition)</li>
-            <li>⏱️ durée respectée selon le tempo du style</li>
+            <li>🔈 la lecture audio synchronisée</li>
+            <li>📚 la surbrillance temps réel des notes</li>
+            <li>🧭 le respect du tempo et des durées définies</li>
           </ul>
         </li>
       </ol>
@@ -455,107 +459,57 @@
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.js"></script>
 
-  <script>
+  <script type="module">
+
     /* ===== Constantes & tables ===== */
     const $ = id => document.getElementById(id);
 
+
     /*──────────────────────────┐
-    │  Helpers globaux          │
+    │  ÉTAT GLOBAL & CONFIG     │
     └──────────────────────────*/
-
-    /* anti-rebond (si Lodash dispo : _.debounce) */
-    const debounce = (fn, d = 300) => {
-      let t; return (...a)=>{ clearTimeout(t); t=setTimeout(fn, d, ...a); };
-    };
-
-    const crock="0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-
-    /* ── Table de 16 notes mémoïsée ------------------------------- */
+    
+    // États principaux (ULID courant, séquence courante, timers, etc.)
+    let ULID = "";
+    let seq = [];
+    let timers = [];
+    
+    // Indique si une lecture est en cours
+    let isPlaying = false;
+    
+    // Octave courante « gelée » pour la lecture en cours (null = pas de lecture)
+    let playbackBaseOctave = null;
+    
+    // Mémo pour l’instrument courant et la promesse de chargement
+    let currentSampler = null;
+    let currentSamplerReady = Promise.resolve();
+    
+    // Mémo pour surbrillance
+    let lastHighlight = null;
+    let lastRow = null;
+    
+    // Flags liés à l’UI (pending instrument, update visuel différé)
+    let pendingInstrument = null;
+    let pendingVisualUpdate = false;
+    
+    // Flag pause lecture
+    let isPaused = false;
+    
+    // Constantes de configuration
+    const crock = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    
+    // Table de cache pour les gammes 16 notes
     const _tbl16Cache = Object.create(null);
-    function getTable16(baseOctave = 4){
-      if (_tbl16Cache[baseOctave]) return _tbl16Cache[baseOctave];
-      const base = ["C","D","E","F","G","A","B"];
-      const out  = [];
-      let   oct  = baseOctave;
-      for(let i=0;i<16;i++){
-        out.push(base[i%7] + oct);
-        if(base[i%7]==="B") oct++;
-      }
-      return (_tbl16Cache[baseOctave] = out);
-    }
-
-    /* Accord → intervalles (en pas dans table16) */
-    const chordDefs={
-      none   :[0],
-      power  :[0,4],             // 1‑5
-      triad  :[0,2,4],           // 1‑3‑5
-      seventh:[0,2,4,6]          // 1‑3‑5‑7
+    
+    // Dictionnaire des définitions d’accords
+    const chordDefs = {
+      none   : [0],
+      power  : [0,4],        // 1‑5
+      triad  : [0,2,4],      // 1‑3‑5
+      seventh: [0,2,4,6]     // 1‑3‑5‑7
     };
     
-    /* Génère l’accord (liste de notes) à partir de la fondamentale       */
-    function chordify(note, type, table){
-      const idx = table.indexOf(note);
-      if (idx === -1) return [note];              /* sécurité ultime      */
-      /* On remet le modulo pour boucler dans la table de 16 notes        */
-      return chordDefs[type].map(d => table[(idx + d) % table.length]);
-    }
-
-    let currentSampler = null;
-    /* dernière tête de note surlignée (pour O(1) de-highlight) */
-    let lastHighlight = null;    
-    let currentSamplerReady = Promise.resolve(); // valeur par défaut
-
-    async function loadSampler(type) {
-      /* on garde l’éventuel sampler courant de côté
-         (il continuera à jouer / libérer ses notes jusqu’au chargement complet
-         du nouveau, puis sera détruit proprement). */
-      const prevSampler = currentSampler;
-      const def = instrumentFiles[type];
-      // → Ne charger que les samples « root » pour les octaves réellement utilisées
-      const baseOct = parseInt($("octaveShift").value, 10);
-      // construit la séquence de 16 notes pour déterminer les octaves (ex. [4,5,6])
-      const table16 = getTable16(baseOct);
-      const neededOctaves = [...new Set(
-        table16.map(n => parseInt(n.match(/\d+$/)[0], 10))
-      )];
-      // on ne garde que les fichiers dont l'octave correspond
-      const files = {};
-      Object.entries(def.files).forEach(([note, file]) => {
-        const oct = parseInt(note.match(/\d+$/)[0], 10);
-        if (neededOctaves.includes(oct)) {
-          files[note] = file;
-        }
-      });
-      // Reconstruction du sampler avec le mapping restreint :
-      /* —— Prépare une promesse “ready” ——————————————— */
-      let resolveReady;
-      const samplerReady = new Promise(r => (resolveReady = r));
-
-      const sampler = new Tone.Sampler({
-        urls:    files,
-        baseUrl: def.base,
-        onload: () => {
-          console.log(`🎹 Instrument ${type} chargé.`);
-          /* Quand le nouveau est prêt ➜ on libère l’ancien sampler */
-          if (prevSampler) prevSampler.dispose();
-          resolveReady();          /* ▶︎ la promesse est résolue */
-        }
-      });
-      /* === Chaîne audio : Sampler ▸ Volume ▸ Reverb ▸ Limiter ▸ Destination === */
-      const volume  = new Tone.Volume(-8);          // ↓ –8 dB pour éviter la somme > 0 dB
-      const reverb  = new Tone.Reverb({ decay: 2, wet: 0.3 });
-      const limiter = new Tone.Limiter(-1);         // ↑ plafond à –1 dBFS
-
-      /* Chaîne simplifiée : une seule connexion → pas de gain x2 */
-      sampler.chain(volume, reverb, limiter, Tone.Destination);
-
-      currentSampler      = sampler;
-      currentSamplerReady = samplerReady;   /* ← promesse correcte */
-
-      /* pour permettre await loadSampler(...) */
-      return currentSamplerReady;
-    }
-
+    // Liste et configuration des instruments
     const instrumentFiles = {
       marimba: {
         base: "./samples/Samples_Marimba/",
@@ -638,7 +592,7 @@
         }
       },
     };
-
+    
     const instrumentBehavior = {
       piano:    "full",
       marimba:  "full",
@@ -647,77 +601,89 @@
       woodwind: "cut"
     };
 
-    /* ────────────────────────────────────────────────────────────────
-       Instruments & octave : on diffère toute modification visuelle /
-       rechargement de samples si la lecture est en cours.            */
 
-    /* --- Lecture en cours ?  --------------------------------------- */
-    let isPlaying          = false;   /* ← nouveau drapeau global    */
-
-    /* Octave courante « gelée » pour la lecture en cours
-       (null quand aucune lecture n’est active)                       */
-    let playbackBaseOctave = null;
-
-    /* Tant qu’une lecture est active, on renvoie L’OCTAVE FIGÉE ; aucun
-      test sur Transport.state (il peut passer par "scheduled"/"pending"). */
-    const getBaseOctave = () =>
-          (playbackBaseOctave !== null)
-            ? playbackBaseOctave
-            : parseInt($("octaveShift").value, 10);
-
-    let pendingInstrument = null;
-    let pendingVisualUpdate = false;      /* ← flag “octave modifiée” */
+    /*──────────────────────────┐
+    │  HELPERS PURS             │
+    └──────────────────────────*/
     
-    /* ——— Fonction utilitaire : rafraîchit TOUTE la partie visuelle ——— */
-    function refreshDisplayAfterOctaveChange() {
-      /* ↺ Ne rien faire pendant la lecture : on attend la fin. */
-      if (isPlaying) return;
-
-      if (ULID && seq.length > 0) {
-      const baseOctave = playbackBaseOctave ?? getBaseOctave();
-      const table16    = getTable16(baseOctave);
-        $("note-sequence").textContent =
-          "🎵 Séquence :\n" + seq.map(o => table16[o.val]).join(", ");
-        renderTablesAndStaff(seq, table16);
+    // Conversion ULID en 128 bits binaires (string)
+    function toBits(ulid) {
+      return ulid
+        .split("")
+        .map(c => crock.indexOf(c).toString(2).padStart(5, "0"))
+        .join("")
+        .slice(0, 128);
+    }
+    
+    // Coupe en 32 nibbles (tableau de 32× "0000" à "1111")
+    function chunk4(bits) {
+      return Array.from({ length: 32 }, (_, i) => bits.slice(i*4, i*4 + 4));
+    }
+    
+    // Génération d’un ULID conforme (timestamp ou aléa)
+    function makeUlid(ts) {
+      const crock = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+      let ts48;
+      if (ts === 'random') {
+        ts48 = BigInt(0);
+        for (let i = 0; i < 6; i++) {
+          ts48 = (ts48 << 8n) | BigInt(Math.floor(Math.random() * 256));
+        }
+      } else {
+        let tsVal;
+        if (typeof ts === "number" && isFinite(ts)) {
+          tsVal = Math.floor(ts);
+        } else if (typeof ts === "string" && /^\d+$/.test(ts)) {
+          tsVal = Math.floor(Number(ts));
+        } else if (ts === undefined || ts === null) {
+          tsVal = Date.now();
+        } else {
+          tsVal = Date.now();
+        }
+        ts48 = BigInt(tsVal) & 0xFFFFFFFFFFFFn;
       }
+      let tsBase32 = "";
+      let v = ts48;
+      for (let i = 0; i < 10; i++) {
+        tsBase32 = crock[Number(v % 32n)] + tsBase32;
+        v = v / 32n;
+      }
+      let rand = BigInt(0);
+      for (let i = 0; i < 10; i++) {
+        rand = (rand << 8n) | BigInt(Math.floor(Math.random() * 256));
+      }
+      let randBase32 = "";
+      v = rand;
+      for (let i = 0; i < 16; i++) {
+        randBase32 = crock[Number(v % 32n)] + randBase32;
+        v = v / 32n;
+      }
+      return tsBase32 + randBase32;
     }
-
-    /* ── Un seul listener mutualisé pour accord / arpège / octave ── */
-    ['chordsSel','arp','octaveShift']
-      .forEach(id =>
-        $(id).addEventListener('input', refreshDisplayAfterOctaveChange)
-      );
-
-    /* état global ------------------------------------------------------- */
-    let ULID = "", seq = [], timers = [];
-
-    /* ===== Helpers ===== */
-    function newUid(){
-      const id = makeUlidNow();
-      $("ulid-input").value = id;
-      validateUlid(id);
+    function makeUlidNow()    { return makeUlid(Date.now()); }
+    function makeUlidRandom() { return makeUlid(); }
+    
+    // Table de 16 notes (gamme de base, mémoïsée par octave)
+    function getTable16(baseOctave = 4){
+      if (_tbl16Cache[baseOctave]) return _tbl16Cache[baseOctave];
+      const base = ["C","D","E","F","G","A","B"];
+      const out  = [];
+      let   oct  = baseOctave;
+      for(let i=0;i<16;i++){
+        out.push(base[i%7] + oct);
+        if(base[i%7]==="B") oct++;
+      }
+      return (_tbl16Cache[baseOctave] = out);
     }
-
-    function formatFullDate(isoString) {
-      const d = new Date(isoString);
-
-      const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const months = ["janvier", "février", "mars", "avril", "mai", "juin",
-                      "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-
-      const dayName = days[d.getUTCDay()];
-      const day     = d.getUTCDate().toString().padStart(2, "0");
-      const month   = months[d.getUTCMonth()];
-      const year    = d.getUTCFullYear();
-
-      const hour    = d.getUTCHours().toString().padStart(2, "0");
-      const minute  = d.getUTCMinutes().toString().padStart(2, "0");
-      const second  = d.getUTCSeconds().toString().padStart(2, "0");
-      const ms      = d.getUTCMilliseconds().toString().padStart(3, "0");
-
-      return `${dayName} ${day} ${month} ${year} à ${hour}:${minute}:${second}.${ms} UTC`;
+    
+    // Accords : retourne la liste des notes de l’accord, modulo 16
+    function chordify(note, type, table){
+      const idx = table.indexOf(note);
+      if (idx === -1) return [note];
+      return chordDefs[type].map(d => table[(idx + d) % table.length]);
     }
-
+    
+    // XOR adaptatif : logique de rythme rapide/lent
     function xorAdaptiveFrom(val, rev, i) {
       const x = val ^ rev;
       const b0 = (x >> 0) & 1;
@@ -726,43 +692,112 @@
       const b3 = (x >> 3) & 1;
       return (i % 2 === 0) ? (b1 ^ b3) : (b0 ^ b2);
     }
-
-    // Utilitaire pour statistiques rythmiques
+    
+    // Statistiques rythmiques (nombre de rapides/lentes/battements)
     function calcRhythmStats(seq) {
       const fast  = seq.filter(o => o.fast).length;
       const slow  = seq.length - fast;
       const beats = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
       return { fast, slow, beats };
     }
-
-    const toBits = ulid =>
-      ulid
-        .split("")
-        .map(c => crock.indexOf(c).toString(2).padStart(5, "0"))
-        .join("")
-        .slice(0, 128);
-
-    const chunk4 = bits =>
-      Array.from({ length: 32 }, (_, i) => bits.slice(i*4, i*4 + 4));
-
-    // ─── Arpégiateur : renvoie l'ordre des notes selon le motif ───
+    
+    // Arpégiateur (ordre de jeu des notes selon motif)
     function arp(arr, pattern) {
       switch (pattern) {
-        case "up":
-          return arr;
-        case "down":
-          return [...arr].reverse();
-        case "updown":
-          // montée puis descente
-          return [...arr, ...[...arr].reverse()];
-        case "random":
-          // copie avant shuffle
-          return [...arr].sort(() => Math.random() - 0.5);
-        default:
-          return arr;
+        case "up":      return arr;
+        case "down":    return [...arr].reverse();
+        case "updown":  return [...arr, ...[...arr].reverse()];
+        case "random":  return [...arr].sort(() => Math.random() - 0.5);
+        default:        return arr;
       }
     }
+    
+    // Format date humanisé (optionnel ici)
+    function formatFullDate(isoString) {
+      const d = new Date(isoString);
+      const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+      const months = ["janvier", "février", "mars", "avril", "mai", "juin",
+                      "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+      const dayName = days[d.getUTCDay()];
+      const day     = d.getUTCDate().toString().padStart(2, "0");
+      const month   = months[d.getUTCMonth()];
+      const year    = d.getUTCFullYear();
+      const hour    = d.getUTCHours().toString().padStart(2, "0");
+      const minute  = d.getUTCMinutes().toString().padStart(2, "0");
+      const second  = d.getUTCSeconds().toString().padStart(2, "0");
+      const ms      = d.getUTCMilliseconds().toString().padStart(3, "0");
+      return `${dayName} ${day} ${month} ${year} à ${hour}:${minute}:${second}.${ms} UTC`;
+    }
 
+    // Anti-rebond pour les inputs
+    const debounce = (fn, d = 300) => {
+      let t; return (...a)=>{ clearTimeout(t); t=setTimeout(fn, d, ...a); };
+    };
+    
+    // Conversion ULID → séquence complète (tableau d’objets {val, fast})
+    function ulidToSequence(v) {
+      const bits    = toBits(v);
+      const nibbles = chunk4(bits);
+      const vals    = nibbles.map(b => parseInt(b, 2));
+      const revs    = [...vals].reverse();
+      return vals.map((val, i) => ({
+        val,
+        fast: xorAdaptiveFrom(vals[i], revs[i], 31 - i) === 1
+      }));
+    }
+    
+    // Renvoie l’octave courante (figée pendant lecture, sinon du select)
+    const getBaseOctave = () =>
+          (playbackBaseOctave !== null)
+            ? playbackBaseOctave
+            : parseInt($("octaveShift").value, 10);
+
+
+    /*──────────────────────────┐
+    │  HELPERS MÉTIER (audio, sample)
+    └──────────────────────────*/
+    
+    // Chargement asynchrone de l’instrument/sampler
+    async function loadSampler(type) {
+      const prevSampler = currentSampler;
+      const def = instrumentFiles[type];
+      const baseOct = parseInt($("octaveShift").value, 10);
+      const table16 = getTable16(baseOct);
+      const neededOctaves = [...new Set(
+        table16.map(n => parseInt(n.match(/\d+$/)[0], 10))
+      )];
+      const files = {};
+      Object.entries(def.files).forEach(([note, file]) => {
+        const oct = parseInt(note.match(/\d+$/)[0], 10);
+        if (neededOctaves.includes(oct)) {
+          files[note] = file;
+        }
+      });
+      let resolveReady;
+      const samplerReady = new Promise(r => (resolveReady = r));
+      const sampler = new Tone.Sampler({
+        urls:    files,
+        baseUrl: def.base,
+        onload: () => {
+          if (prevSampler) prevSampler.dispose();
+          resolveReady();
+        }
+      });
+      const volume  = new Tone.Volume(-8);
+      const reverb  = new Tone.Reverb({ decay: 2, wet: 0.3 });
+      const limiter = new Tone.Limiter(-1);
+      sampler.chain(volume, reverb, limiter, Tone.Destination);
+      currentSampler      = sampler;
+      currentSamplerReady = samplerReady;
+      return currentSamplerReady;
+    }
+
+
+    /*────────────────────────────┐
+    │  RENDERING & UI             │
+    └────────────────────────────*/
+    
+    // Affiche la grille binaire (SVG) pour chaque niveau (nibbles, inversés, etc.)
     function renderBitGrid(intArray, svgId, adaptiveFn = null) {
       const svg = $(svgId);
       svg.innerHTML = "";
@@ -856,184 +891,72 @@
         });
       }
     }
-
-    /* ─── Surbrillance temps‑réel (table + séquence + portée) ────── */
-    /* i = index de la note (0-31) ; subOffset = rang dans l’arpège */
-    function highlightNote(i, subOffset = 0){
-
-      const arpStyle = $("arp").value;
-      const chordT = $("chordsSel").value;
-      const baseOctave = getBaseOctave();
-      const table16 = getTable16(baseOctave);
-      const isUpdown = arpStyle === "updown";
-      const realIdx = isUpdown && i >= seq.length ? 2 * seq.length - i - 1 : i;
-
-      // Réinitialise tous les styles de lignes et flèches
-      document.querySelectorAll('tr.playing-row')
-              .forEach(r => r.classList.remove('playing-row'));
-
-      const cell = document.getElementById("play-cell" + realIdx);
-      if (cell) {
-        const row = cell.closest("tr");
-        row.classList.add("playing-row");
-        cell.classList.add("playing");
-
-        const notes = JSON.parse(row.dataset.notes);
-
-        const tid = setTimeout(() => cell.classList.remove("playing"), 200);
-        timers.push(tid);
-      }
-
-      /* Portée ----------------------------------------------------- */
-      const bloc = Math.floor(realIdx / 8);   /* realIdx = 0-31 même en descente */
-      if (bloc > 3) return;                   /* on n’a que 4 portées */
-      /* O(1) : retire l’ancienne surbrillance */
-      if (lastHighlight) lastHighlight.classList.remove('note-play');
-
-      /* Redessine la portée miniature avec la note active */
-      drawMini(bloc, realIdx % 8, seq, subOffset, table16)
-
-      /* Mémorise la nouvelle tête mise en évidence */
-      const container = $('staff' + bloc);
-      lastHighlight   = container.querySelector('.note-play');
-    }
-
-    function updateArrowDirection(isDescending) {
-      document.querySelectorAll("tr[data-i]").forEach(tr => {
-        const i = tr.dataset.i;
-        const notes = JSON.parse(tr.dataset.notes);
-        const td = document.getElementById("notes-" + i);
-        if (td && notes.length > 1) {
-          td.textContent = (isDescending ? [...notes].reverse() : notes).join(isDescending ? " ← " : " → ");
-        }
-      });
-    }
-
-    /* ===== Helper : nombre de têtes de notes dans un bloc (accords/arpège) ===== */
-    function countBlockNotes(blockSeq, table16){
-      const chordT   = $("chordsSel").value;
-      const arpStyle = $("arp").value;
-      let cnt = 0;
-      blockSeq.forEach(o => {
-        const root       = table16[o.val];
-        const chordNotes = chordify(root, chordT, table16);
-        if (chordT !== "none" && arpStyle === "none") {
-          cnt += 1;                       /* accord simultané = 1 tête */
-        } else if (arpStyle !== "none" && chordNotes.length > 1) {
-          cnt += chordNotes.length;       /* arpège = n têtes */
-        } else {
-          cnt += 1;
-        }
-      });
-      return cnt;
-    }    
-
-    /* --------- Génération ULID conforme --------- */
-    // Génère un ULID à partir d'un timestamp (ms) passé ou aléatoire si omis
-    function makeUlid(ts = Math.floor(Math.random() * 281474976710655)) {
-      let v = ts, tsBase32 = "";
-      for(let i=0;i<10;i++){                       // 10 car. timestamp
-        tsBase32 = crock[v % 32] + tsBase32;
-        v = Math.floor(v / 32);
-      }
-
-      // timestamp doit commencer par 0‑7
-      if(tsBase32.charCodeAt(0) > 55){             // '7' = 55
-        tsBase32 = String.fromCharCode(tsBase32.charCodeAt(0) - 8) + tsBase32.slice(1);
-      }
-      let rand = "";
-      for(let i=0;i<16;i++) rand += crock[Math.floor(Math.random()*32)];
-      return tsBase32 + rand;
-    }
-
-    /* Helpers dédiés */
-    function makeUlidNow(){             // timestamp = maintenant
-      return makeUlid(Date.now());
-    }
-    function makeUlidRandom(){          // timestamp aléatoire
-      return makeUlid();                // sans param → aléa 48 bits
-    }
-
-    /* ───── Portée factorisée ─────
-      forcedOctave (facultatif) : si ≠ null, c’est la valeur à utiliser
-      pour déterminer la clef ; sinon on interroge getBaseOctave().        */
+    
+    // Affiche une portée VexFlow, avec surbrillance éventuelle
     function renderStaff(containerId, blockSeq, table16,
                         highlightIdx = -1, forcedOctave = null){
-      const VF = window.Vex?.Flow;
-      if (!VF) return;
-      const container = $(containerId);
-      if (!container) return;
-      container.replaceChildren();
-    
-      const parentW = container.clientWidth;
-      const vf = new VF.Factory({ renderer: { elementId: containerId, width: parentW, height: 140 } });
-      const score = vf.EasyScore();
-      const sys   = vf.System();
-    
-      const baseOctave = forcedOctave !== null ? forcedOctave : getBaseOctave();
-      const clef = baseOctave <= 2 ? "bass" : baseOctave === 3 ? "alto" : "treble";
-    
-      /* ——— Génère les tokens VexFlow avec accords/arpèges complets ——— */
-      const chordT   = $("chordsSel").value;
-      const arpStyle = $("arp").value;
-
-      const parts = [];
-      blockSeq.forEach(o => {
-        const root       = table16[o.val];
-        const dur        = o.fast ? "16" : "8";
-        const chordNotes = chordify(root, chordT, table16);
-
-        if (chordT !== "none" && arpStyle === "none") {
-          /* Accord simultané : notes empilées dans la même tête */
-          parts.push(`(${chordNotes.map(n => n.toLowerCase()).join(" ")})/${dur}`);
-        } else if (arpStyle !== "none" && chordNotes.length > 1) {
-          /* Arpège : notes successives selon le motif choisi
-             - “up”      → ordre naturel
-             - “down”    → inversé
-             - “updown”  → on affiche UNIQUEMENT la montée
-             - “random”  → ordre mélangé                                */
-          const ordered =
-            arpStyle === "down"   ? [...chordNotes].reverse() :
-            arpStyle === "random" ? arp([...chordNotes], "random") :
-            chordNotes;            /* up & updown → montée */
-          ordered.forEach(n => parts.push(`${n.toLowerCase()}/${dur}`));
-        } else {
-          /* Note simple */
-          parts.push(`${root.toLowerCase()}/${dur}`);
-        }
-      });
-
-      const sliceString = parts.join(", ");
-      /* recalcul du nombre total de seizièmes réels */
-      let beats16 = 0;
-      parts.forEach(tok => { beats16 += tok.endsWith("/16") ? 1 : 2; });
-    
-      const notesArr = score.notes(sliceString);
-      // 🪶 Génération automatique des faisceaux (beams) pour les croches et doubles-croches
-      const beams = VF.Beam.generateBeams(notesArr);
-      beams.forEach(beam => vf.Beam({ notes: beam.getNotes() }));
-
-      const voice = score.voice(notesArr, {
-        time: { num_beats: beats16, beat_value: 16 },
-        strict: false
-      });
-      voice.setMode(VF.Voice.Mode.SOFT);
-      sys.addStave({
-        voices: [voice],
-        time_signature: `${beats16}/16`
-      }).addClef(clef);
-
-      vf.draw();
-
-      const gNotes = container.querySelectorAll('.vf-stavenote');
-      gNotes.forEach(g => g.classList.remove("note-play"));
-      if (highlightIdx >= 0 && gNotes[highlightIdx]) gNotes[highlightIdx].classList.add("note-play");
-
-      /* Renvoie le nombre de notes réellement dessinées */
-      return parts.length;
+      try {
+        const VF = window.Vex?.Flow;
+        if (!VF) return;
+        const container = $(containerId);
+        if (!container) return;
+        container.replaceChildren();
+      
+        const parentW = container.clientWidth;
+        const vf = new VF.Factory({ renderer: { elementId: containerId, width: parentW, height: 140 } });
+        const score = vf.EasyScore();
+        const sys   = vf.System();
+      
+        const baseOctave = forcedOctave !== null ? forcedOctave : getBaseOctave();
+        const clef = baseOctave <= 2 ? "bass" : baseOctave === 3 ? "alto" : "treble";
+      
+        const chordT   = $("chordsSel").value;
+        const arpStyle = $("arp").value;
+        const parts = [];
+        blockSeq.forEach(o => {
+          const root       = table16[o.val];
+          const dur        = o.fast ? "16" : "8";
+          const chordNotes = chordify(root, chordT, table16);
+          if (chordT !== "none" && arpStyle === "none") {
+            parts.push(`(${chordNotes.map(n => n.toLowerCase()).join(" ")})/${dur}`);
+          } else if (arpStyle !== "none" && chordNotes.length > 1) {
+            const ordered =
+              arpStyle === "down"   ? [...chordNotes].reverse() :
+              arpStyle === "random" ? arp([...chordNotes], "random") :
+              chordNotes;
+            ordered.forEach(n => parts.push(`${n.toLowerCase()}/${dur}`));
+          } else {
+            parts.push(`${root.toLowerCase()}/${dur}`);
+          }
+        });
+        const sliceString = parts.join(", ");
+        let beats16 = 0;
+        parts.forEach(tok => { beats16 += tok.endsWith("/16") ? 1 : 2; });
+        const notesArr = score.notes(sliceString);
+        const beams = VF.Beam.generateBeams(notesArr);
+        beams.forEach(beam => vf.Beam({ notes: beam.getNotes() }));
+        const voice = score.voice(notesArr, {
+          time: { num_beats: beats16, beat_value: 16 },
+          strict: false
+        });
+        voice.setMode(VF.Voice.Mode.SOFT);
+        sys.addStave({
+          voices: [voice],
+          time_signature: `${beats16}/16`
+        }).addClef(clef);
+        vf.draw();
+        const gNotes = container.querySelectorAll('.vf-stavenote');
+        gNotes.forEach(g => g.classList.remove("note-play"));
+        if (highlightIdx >= 0 && gNotes[highlightIdx]) gNotes[highlightIdx].classList.add("note-play");
+        return parts.length;
+      } catch (err) {
+        // log mais ne bloque pas tout le rendu
+        if (window?.console) console.error("Erreur renderStaff:", err);
+        return 0;
+      }
     }
-
-    /* ── Dessin des 4 portées avec largeur correcte dès le départ ── */
+    
+    // Dessine les 4 portées et décide de l’empilement
     function draw(seq){
       const baseOct = (playbackBaseOctave ?? getBaseOctave());
       const table16 = getTable16(baseOct);
@@ -1055,9 +978,79 @@
         renderStaff("staff" + b, blockSeq, table16, -1, fo);
       }
     }
+    
+    // Surbrillance temps réel tableau + partition
+    function highlightNote(i, subOffset = 0){
 
-    /* ——— Surbrillance exacte même avec accords + arpèges ——— */
-    /* Surbrillance précise : on peut indiquer un “décalage” dans l’arpège */
+      const arpStyle = $("arp").value;
+      const chordT = $("chordsSel").value;
+      const baseOctave = getBaseOctave();
+      const table16 = getTable16(baseOctave);
+      const isUpdown = arpStyle === "updown";
+      const realIdx = isUpdown && i >= seq.length ? 2 * seq.length - i - 1 : i;
+
+      /* O(1) : on retire l’ancienne ligne au lieu d’un querySelectorAll */
+      if (lastRow) lastRow.classList.remove('playing-row');
+
+      const cell = document.getElementById("play-cell" + realIdx);
+      if (cell) {
+        const row = cell.closest("tr");
+        row.classList.add("playing-row");
+        lastRow = row;
+        cell.classList.add("playing");
+
+        const notes = JSON.parse(row.dataset.notes);
+
+        const tid = setTimeout(() => cell.classList.remove("playing"), 200);
+        timers.push(tid);
+      }
+
+      /* Portée ----------------------------------------------------- */
+      const bloc = Math.floor(realIdx / 8);   /* realIdx = 0-31 même en descente */
+      if (bloc > 3) return;                   /* on n’a que 4 portées */
+      /* O(1) : retire l’ancienne surbrillance */
+      if (lastHighlight) lastHighlight.classList.remove('note-play');
+
+      /* Redessine la portée miniature avec la note active */
+      drawMini(bloc, realIdx % 8, seq, subOffset, table16)
+
+      /* Mémorise la nouvelle tête mise en évidence */
+      const container = $('staff' + bloc);
+      lastHighlight   = container.querySelector('.note-play');
+    }
+    
+    // Met à jour la direction des flèches de notes dans les tables (up/down)
+    function updateArrowDirection(isDescending) {
+      document.querySelectorAll("tr[data-i]").forEach(tr => {
+        const i = tr.dataset.i;
+        const notes = JSON.parse(tr.dataset.notes);
+        const td = document.getElementById("notes-" + i);
+        if (td && notes.length > 1) {
+          td.textContent = (isDescending ? [...notes].reverse() : notes).join(isDescending ? " ← " : " → ");
+        }
+      });
+    }
+    
+    // Calcule le nombre de têtes de notes dans un bloc (pour layout grille/stack)
+    function countBlockNotes(blockSeq, table16){
+      const chordT   = $("chordsSel").value;
+      const arpStyle = $("arp").value;
+      let cnt = 0;
+      blockSeq.forEach(o => {
+        const root       = table16[o.val];
+        const chordNotes = chordify(root, chordT, table16);
+        if (chordT !== "none" && arpStyle === "none") {
+          cnt += 1;                       /* accord simultané = 1 tête */
+        } else if (arpStyle !== "none" && chordNotes.length > 1) {
+          cnt += chordNotes.length;       /* arpège = n têtes */
+        } else {
+          cnt += 1;
+        }
+      });
+      return cnt;
+    }
+    
+    // Affiche un mini rendu de portée sur staffX (pour highlight)
     function drawMini(block, seqIdxInBlock, seq, subOffset = 0, table16){
       const blockSeq = seq.slice(block * 8, block * 8 + 8);
       const chordT   = $("chordsSel").value;
@@ -1081,8 +1074,8 @@
       const fo = (playbackBaseOctave !== null ? playbackBaseOctave : null);
       renderStaff("staff" + block, blockSeq, table16, noteIdx, fo);
     }
-
-    // ——— logique de rendu tableaux + staff ———
+    
+    // Rendu complet des tableaux + staff
     function renderTablesAndStaff(seq, table16){
 
       const chordT = $("chordsSel").value;
@@ -1132,13 +1125,58 @@
       /* Un seul rendu – évite les 4 portées supplémentaires */
       draw(seq);
     }
+    
+    // Ligne de nibbles binaire, valeur, note (pour validateUlid)
+    function renderNibbleLine(target, contentArr) {
+      const frag = document.createDocumentFragment();
+      contentArr.forEach(txt => {
+        const span = document.createElement("span");
+        span.textContent = txt;
+        frag.appendChild(span);
+      });
+      target.innerHTML = "";
+      target.appendChild(frag);
+    }
+    
+    // Rafraîchit tout l’affichage (octave/accord/arpège modifiés)
+    function refreshDisplayAfterOctaveChange() {
+      if (isPlaying) return;
+      if (ULID && seq.length > 0) {
+        const baseOctave = playbackBaseOctave ?? getBaseOctave();
+        const table16    = getTable16(baseOctave);
+        $("note-sequence").textContent =
+          "🎵 Séquence :\n" + seq.map(o => table16[o.val]).join(", ");
+        renderTablesAndStaff(seq, table16);
+      }
+    }
+    
+    // Synchronise BPM <-> Durée d’une noire
+    function syncTempoFields(source) {
+      const bpmInput = $("tempoBpm");
+      const durInput = $("tempoDur");
+      if (source === "bpm") {
+        const bpm = parseFloat(bpmInput.value);
+        if (bpm > 0) durInput.value = (60 / bpm).toFixed(2);
+      } else {
+        const dur = parseFloat(durInput.value);
+        if (dur > 0) bpmInput.value = Math.round(60 / dur);
+      }
+    }
 
+    // Génère un nouvel ULID, le place dans le champ, valide l'entrée
+    function newUid(){
+      const id = makeUlidNow();
+      $("ulid-input").value = id;
+      validateUlid(id);
+    }
+    
+    // Réinitialisation complète de la lecture et de l’affichage
     function clearAll(time) {
       if (typeof time === "number") Tone.Transport.stop(time);
-      else                       Tone.Transport.stop();
+      else Tone.Transport.stop();
       Tone.Transport.cancel();
       timers.forEach(clearTimeout);
-      timers = [];
+      timers.length = 0;
       if (lastHighlight) lastHighlight.classList.remove("note-play");
       lastHighlight = null;
       document.querySelectorAll("tr.playing-row")
@@ -1146,20 +1184,16 @@
       $("pause").textContent = "⏸ Pause";
       $("pause").disabled    = true;
     }
-
-    // ————— Validation ULID + mise à jour date humanisée —————
+    
+    // Validation d’un ULID (appel au worker + maj UI)
     async function validateUlid(v) {
       v = v.trim().toUpperCase();
       $("ulid-input").value = v;
-
       const baseOctave    = getBaseOctave();
       const table16       = getTable16(baseOctave);
-
       const binLine       = $("nibbles-binary");
       const valLine       = $("nibbles-values");
       const noteLine      = $("nibbles-notes");
-
-      // 1) Appel au Worker – mode "check" (→ try/catch réseau)
       const statusEl = $("ulid-status");
       let   res, data;
       try{
@@ -1171,30 +1205,17 @@
         $("ulid-ts-preview").textContent = "📆 Date : —";
         return;
       }
-
       if (res.ok && data.conform) {
-        // ULID conforme
+        $("play").disabled = false;
         statusEl.textContent = "✅ ULID conforme";
         statusEl.style.color = "var(--success,#00ff00)";
-        // affiche la date
         $("ulid-ts-preview").textContent = "📆 Date : " + formatFullDate(data.ts);
-        /* -- rafraîchissement UI ---------------------------------------- */
         clearAll();
-
         $("note-grids").style.display = "grid";
-
-        /* 1) Construction de la séquence (ordre brut, sans arpégiateur) */
-        const bits     = toBits(v);
-        const nibbles  = chunk4(bits);             /* 32 × “bbbb”          */
-        const vals     = nibbles.map(b => parseInt(b, 2));
+        seq = ulidToSequence(v);
+        const vals = seq.map(o => o.val);
         const revs = [...vals].reverse();
         const xors = vals.map((v, i) => v ^ revs[i]);
-
-        seq = vals.map((val, i) => ({
-          val,
-          fast: xorAdaptiveFrom(vals[i], revs[i], 31 - i) === 1
-        }));
-
         ["nibbles-bits", "reversed-bits", "xor-bits", "xor-adaptive"]
           .forEach(id => $(id).innerHTML = "");
         renderBitGrid(vals,     "nibbles-bits");
@@ -1205,42 +1226,28 @@
           "xor-adaptive",
           (_, i) => xorAdaptiveFrom(vals[31 - i], revs[31 - i], 31 - i)
         );
-
         const fastCount = seq.filter(o => o.fast).length;
         const slowCount = seq.length - fastCount;
         const beatCount = seq.reduce((s, o) => s + (o.fast ? 1 : 2), 0);
         const tempo = parseFloat($("tempoDur").value);
         const duration = (beatCount * tempo).toFixed(2);
-
         $("summary").textContent =
           `⏱️ Durée estimée : ${duration} sec\n` +
           `🎼 Battements : ${beatCount} (sur ${seq.length * 2} max)\n` +
           `⚖️ Rythme : ${fastCount} rapides / ${slowCount} lentes`;
-
         ULID = v;
-
-        binLine.innerHTML = "";
-        valLine.innerHTML = "";
-        noteLine.innerHTML = "";
-        vals.forEach(val => {
-          const bin = val.toString(2).padStart(4, "0");
-          binLine.innerHTML += `<span>${bin}</span>`;
-          valLine.innerHTML += `<span>${val}</span>`;
-          noteLine.innerHTML += `<span>${table16[val]}</span>`;
-        });
+        renderNibbleLine(binLine, vals.map(val => val.toString(2).padStart(4, "0")));
+        renderNibbleLine(valLine, vals.map(val => val));
+        renderNibbleLine(noteLine, vals.map(val => table16[val]));
         $("ulid-decode").classList.remove("hidden");
-
         $("note-sequence").textContent = "🎵 Séquence :\n" + seq.map(o => table16[o.val]).join(", ");
-
         for (let b = 0; b < 4; b++) {
           $("tbl" + b).innerHTML   = "";
           $("staff" + b).innerHTML = "";
         }
-
         renderTablesAndStaff(seq, table16);
-
       } else {
-        // ULID invalide
+        $("play").disabled = true;
         statusEl.textContent = "❌ " + (data.error || "");
         statusEl.style.color = "var(--error,#f00)";
         $("ulid-ts-preview").textContent = "📆 Date : —";
@@ -1253,75 +1260,66 @@
           `⚖️ Rythme : —`;
         $("note-grids").style.display = "none";
       }
-
     }
+
+
+    /*────────────────────────────┐
+    │  UI : LISTENERS & WORKFLOW  │
+    └────────────────────────────*/
     
-    /* Validation ULID avec anti-rebond */
+    // Rafraîchit la séquence à chaque modif de l’accord, arpège ou octave (input mutualisé)
+    ['chordsSel','arp','octaveShift']
+      .forEach(id =>
+        $(id).addEventListener('input', refreshDisplayAfterOctaveChange)
+      );
+    
+    // Validation ULID avec anti-rebond
     $("ulid-input").addEventListener(
       "input",
-      debounce(() => validateUlid($("ulid-input").value), 300)
+      debounce(() => {
+        validateUlid($("ulid-input").value);
+      }, 300)
     );
-
-    /*──────── Tempo ↔ Durée : listeners uniques ────────*/
-    function syncTempoFields(source) {
-      const bpmInput = $("tempoBpm");
-      const durInput = $("tempoDur");
-
-      if (source === "bpm") {
-        const bpm = parseFloat(bpmInput.value);
-        if (bpm > 0) durInput.value = (60 / bpm).toFixed(2);
-      } else {
-        const dur = parseFloat(durInput.value);
-        if (dur > 0) bpmInput.value = Math.round(60 / dur);
-      }
-    }
-
+    
+    // Synchronisation BPM / Durée noire
     $("tempoBpm").addEventListener("input", () => syncTempoFields("bpm"));
     $("tempoDur").addEventListener("input", () => syncTempoFields("dur"));
-
-    /* ===== UI ===== */
-    $("stop").onclick = () => {
-      clearAll();
-
-      // ← NOUVEAU : stop manuel → même réactivation des contrôles
-      isPlaying = false;
-      playbackBaseOctave = null;
-      ["instrumentSel","octaveShift","chordsSel","arp",
-      "tempoBpm","tempoDur"].forEach(id => $(id).disabled = false);
-
-      isPaused = false;
-      $("pause").textContent = "⏸ Pause";
-      $("pause").disabled = true;
-    };
-
-    /* ─── Boutons ULID Random / Maintenant ─── */
+    
+    // Boutons ULID random/maintenant
     $("ulid-random").onclick = () => {
       const id = makeUlidRandom();
       $("ulid-input").value = id;
       validateUlid(id);
     };
-
     $("ulid-now").onclick = () => {
       const id = makeUlidNow();
       $("ulid-input").value = id;
       validateUlid(id);
     };
-
-    /* ===== lecture ===== */
+    
+    // Gestion bouton Stop
+    $("stop").onclick = () => {
+      clearAll();
+      isPlaying = false;
+      playbackBaseOctave = null;
+      ["instrumentSel","octaveShift","chordsSel","arp",
+       "tempoBpm","tempoDur"].forEach(id => $(id).disabled = false);
+      isPaused = false;
+      $("pause").textContent = "⏸ Pause";
+      $("pause").disabled = true;
+    };
+    
+    // Lecture : Play
     $("play").onclick = async () => {
-      isPlaying = true;             /* 🔒 verrou visu & octave */
-
-      /* 🔒 1) Désactive tous les sélecteurs/inputs sensibles pendant la lecture */
+      if (!seq || seq.length === 0) return;
+      isPlaying = true;
       ["instrumentSel","octaveShift","chordsSel","arp",
        "tempoBpm","tempoDur"].forEach(id => $(id).disabled = true);
-      /* 1️⃣  Fige immédiatement l’octave (et donc la clef) pour TOUTE la lecture */
       playbackBaseOctave = parseInt($("octaveShift").value, 10);
       const baseOctave   = playbackBaseOctave;
       const table16      = getTable16(baseOctave);
       const transposed = table16;
-
       await Tone.start();
-      // si un playback est en cours, on stoppe et on attend l'événement "stop"
       if (isPlaying) {
         await new Promise(resolve => {
           Tone.Transport.once("stop", resolve);
@@ -1330,66 +1328,41 @@
       } else {
         clearAll();
       }
-      /* ───────── Mise à jour éventuelle de l’instrument ───────── */
-      /* 1) Si un nouvel instrument est encore en attente, on le charge
-            (cela arrivera si l’utilisateur a cliqué “▶ Jouer” AVANT la fin
-            du morceau, donc avant que le listener `"stop"` ait eu le temps
-            de lancer loadSampler).                                     */
       if (pendingInstrument) {
-        await loadSampler(pendingInstrument);   /* ← charge vraiment */
-        pendingInstrument = null;               /* ← puis on purge le flag */
+        await loadSampler(pendingInstrument);
+        pendingInstrument = null;
       }
-
-      /* 2) On attend que le sampler actif soit totalement prêt
-            (buffers chargés) avant de planifier la nouvelle lecture.   */
       await currentSamplerReady;
-
-      isPaused = false;          // réinitialise l’état « pause »
-
-      // on remet à jour le bouton pause
+      isPaused = false;
       $("pause").textContent = "⏸ Pause";
       $("pause").disabled = false;
-
       const chordT = $("chordsSel").value;
       const pat = $("arp").value;
-
       const seqArr = arp(seq, pat);
       Tone.Transport.cancel();
       updateArrowDirection(false);
-
       let pos = 0;
       const tempo = parseFloat($("tempoDur").value);
       const isUpdown = pat === "updown";
       const len = seqArr.length;
-
       const instrument = $("instrumentSel").value;
-      const playMode = instrumentBehavior[instrument]; // "full" ou "cut"
-
+      const playMode = instrumentBehavior[instrument];
       seqArr.forEach((o, i) => {
         const dur = tempo * (o.fast ? 0.5 : 1);
-
-        /* Marque le point de bascule (up → down) une seule fois */
         Tone.Transport.schedule(t => {
           if (isUpdown && i === Math.floor(len / 2)) {
             updateArrowDirection(true);
           }
         }, pos);
-
         const note        = transposed[o.val];
         const chordNotes  = chordify(note, chordT, transposed);
         const arpeggiate  = (pat !== "none" && chordT !== "none" && chordNotes.length > 1);
-
-        /* ───── Tableau des notes à jouer pour CETTE ULID (montée ou descente) ───── */
         const isDescending = isUpdown && i >= len / 2;
-        const chordSeq = (arpeggiate && isDescending) ? [...chordNotes].reverse()
-                                                     : chordNotes;
-
+        const chordSeq = (arpeggiate && isDescending) ? [...chordNotes].reverse() : chordNotes;
         chordSeq.forEach((n, j) => {
           const offset   = arpeggiate ? j * (dur / chordSeq.length) : 0;
           const when     = pos + offset;
           const noteDur  = (playMode === "full") ? undefined : dur / chordSeq.length;
-
-          /* ── Son ── */
           Tone.Transport.schedule(t => {
             if (playMode === "full") {
               currentSampler.triggerAttack(n, t);
@@ -1397,62 +1370,53 @@
               currentSampler.triggerAttackRelease(n, noteDur, t);
             }
           }, when);
-
-          /* ── Surbrillance ──
-             - accords + arpège : une pastille / note
-             - accords simples  : une seule pastille                    */
           const jAdj = arpeggiate
-                       ? (isDescending ? chordSeq.length - 1 - j : j)  /* ordre inversé en descente */
+                       ? (isDescending ? chordSeq.length - 1 - j : j)
                        : 0;
           Tone.Transport.schedule(() => {
             highlightNote(i, jAdj);
           }, when);
         });
-
-        pos += dur;                       /* incrémente à la fin de la note “mère” */
+        pos += dur;
       });
-
       Tone.Transport.scheduleOnce((time) => {
         Tone.Transport.stop(time);
-        updateArrowDirection(false); // réinitialise les flèches à droite
+        updateArrowDirection(false);
         clearAll(time);
-
-        // ← NOUVEAU : fin de la lecture → déverrouillage complet
         isPlaying = false;
         playbackBaseOctave = null;
         ["instrumentSel","octaveShift","chordsSel","arp",
          "tempoBpm","tempoDur"].forEach(id => $(id).disabled = false);
-
         isPaused = false;
         $("pause").textContent = "⏸ Pause";
         $("pause").disabled = true;
       }, pos + tempo);
-
-      /* 🔸 Lance réellement la lecture après planification */
       Tone.Transport.start("+0");
-    }
-
-    let isPaused = false;
-
+    };
+    
+    // Pause/Reprendre
     $("pause").onclick = () => {
       if (Tone.Transport.state === "started") {
-        // Met en pause la lecture en cours
         Tone.Transport.pause();
         isPaused = true;
         $("pause").textContent = "▶ Reprendre";
       } else if (Tone.Transport.state === "paused" && isPaused) {
-        // Reprend la lecture après pause
         Tone.Transport.start();
         isPaused = false;
         $("pause").textContent = "⏸ Pause";
       }
     };
+    
+    
+    /*────────────────────────────┐
+    │  UI : LISTENERS & WORKFLOW  │
+    └────────────────────────────*/
 
-    /* init */
     (async () => {
       await loadSampler("piano");
       newUid();
-      $("pause").disabled = true; // grisé au démarrage
+      $("pause").disabled = true;
+      if (!seq || seq.length === 0) $("play").disabled = true;
     })();
 
   </script>
