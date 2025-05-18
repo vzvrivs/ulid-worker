@@ -2,13 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ULID Worker Terminal - Home</title>
 
 <!-- Thème avant chargement du CSS -->
 <script>
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
+  const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
 </script>
   
 <!-- ton CSS -->
@@ -37,7 +37,7 @@
 
   </main>
 
-  <footer>ULID Playground • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
 
   <!-- enfin ton script principal -->
   <script type="module" src="./site.js"></script> 

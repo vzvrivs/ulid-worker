@@ -2,8 +2,18 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>ULID Worker – Aide rapide</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🆘 ULID Worker – Aide rapide</title>
+
+  <!-- Thème avant chargement du CSS -->
+  <script>
+    const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
+  </script>
+
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
+
   <style>
     body {
       background-color: #0d0d0d;
@@ -43,37 +53,50 @@
     }
   </style>
 </head>
+
 <body>
-  <h1>🧰 ULID Worker – Aide rapide</h1>
+  <header id="nav-container" class="header-nav-container"></header>
 
-  <div class="section">
-    <div class="comment"># Générer 5 ULID (base Crockford par défaut)</div>
-    <pre>$ <a href="./ulid?n=5">/ulid?n=5</a></pre>
+  <main>
 
-    <div class="comment"># Générer 1 ULID en base16 (hexadécimal) + binaire</div>
-    <pre>$ <a href="./ulid?base=hex&bin=true&pretty=true">/ulid?base=hex&bin=true&pretty=true</a></pre>
+    <h1>🧰 ULID Worker – Aide rapide</h1>
 
-    <div class="comment"># Ajouter un préfixe/suffixe</div>
-    <pre>$ <a href="./ulid?n=2&prefix=RAPH-&suffix=-X">/ulid?n=2&prefix=RAPH-&suffix=-X</a></pre>
-  </div>
+    <div class="section">
+      <div class="comment"># Générer 5 ULID (base Crockford par défaut)</div>
+      <pre>$ <a href="./ulid?n=5">/ulid?n=5</a></pre>
 
-  <div class="section">
-    <div class="comment"># Valider un ULID</div>
-    <pre>$ <a href="./ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP">/ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP</a></pre>
-  </div>
+      <div class="comment"># Générer 1 ULID en base16 (hexadécimal) + binaire</div>
+      <pre>$ <a href="./ulid?base=hex&bin=true&pretty=true">/ulid?base=hex&bin=true&pretty=true</a></pre>
 
-  <div class="section">
-    <div class="comment"># Compléter les champs *_uid: null dans un JSON</div>
-    <pre>$ <a href="/test">/test</a> (interface interactive)</pre>
-  </div>
+      <div class="comment"># Ajouter un préfixe/suffixe</div>
+      <pre>$ <a href="./ulid?n=2&prefix=RAPH-&suffix=-X">/ulid?n=2&prefix=RAPH-&suffix=-X</a></pre>
+    </div>
 
-  <div class="section">
-    <div class="comment"># Voir la documentation complète</div>
-    <pre>$ <a href="/docs">/docs</a></pre>
-  </div>
+    <div class="section">
+      <div class="comment"># Valider un ULID</div>
+      <pre>$ <a href="./ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP">/ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP</a></pre>
+    </div>
 
-  <footer class="section">
-    <div class="comment">ULID Worker v1 — Codé par Raphaël dans le noir 🦾</div>
-  </footer>
+    <div class="section">
+      <div class="comment"># Compléter les champs *_uid: null dans un JSON</div>
+      <pre>$ <a href="/test">/test</a> (interface interactive)</pre>
+    </div>
+
+    <div class="section">
+      <div class="comment"># Voir la documentation complète</div>
+      <pre>$ <a href="/docs">/docs</a></pre>
+    </div>
+
+    <footer class="section">
+      <div class="comment">ULID Worker v1 — Codé par Raphaël dans le noir 🦾</div>
+    </footer>
+
+  </main>
+
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+
+  <!-- enfin ton script principal -->
+  <script type="module" src="./site.js"></script> 
+
 </body>
 </html>`

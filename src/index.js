@@ -94,9 +94,9 @@ async function handleRequest(event) {
     // ──────────────────────────────────────────────
     // Mini‑dashboard HTML pour consulter /logs
     // ──────────────────────────────────────────────
-    if (url.pathname === '/debug/logs' && request.method === 'GET') {
-      return handleDebugLogs();
-    }
+    //if (url.pathname === '/debug/logs' && request.method === 'GET') {
+    //  return handleDebugLogs();
+    //}
 
     // 2) Routes core
     if (url.pathname === '/ulid' && request.method === 'GET') {
@@ -113,7 +113,6 @@ async function handleRequest(event) {
     if (url.pathname === '/auto-doc') {
       return handleAutoDoc(request);
     }
-
 
     // 3) Fallback fichiers statiques
     try {
@@ -209,67 +208,67 @@ async function handleUlid(request) {
 
   // D) Génération des ULID
   const list = [];
-const fields = (url.searchParams.get('fields') || 't,ts,ulid')
-  .split(',')
-  .map(f => f.trim())
-  .filter(Boolean);
+  const fields = (url.searchParams.get('fields') || 't,ts,ulid')
+    .split(',')
+    .map(f => f.trim())
+    .filter(Boolean);
 
-const forceBin = fields.includes('ulid') && bin;
+  const forceBin = fields.includes('ulid') && bin;
 
-if (monotonic) {
-  const m = monotonicFactory();
-  for (let i=0; i<n; i++) {
-    const raw = forcedTs !== null ? m(forcedTs) : m();
-    const built = buildULIDObject(raw, { base, bin: forceBin });
+  if (monotonic) {
+    const m = monotonicFactory();
+    for (let i=0; i<n; i++) {
+      const raw = forcedTs !== null ? m(forcedTs) : m();
+      const built = buildULIDObject(raw, { base, bin: forceBin });
 
-    if (fields.length === 1 && fields[0] === 'ulid') {
-      if (bin) {
-        list.push({ ulid: built.ulid, bin: built.bin });
+      if (fields.length === 1 && fields[0] === 'ulid') {
+        if (bin) {
+          list.push({ ulid: built.ulid, bin: built.bin });
+        } else {
+          list.push(built.ulid);
+        }
+      } else if (fields.length === 1 && fields[0] === 't') {
+        list.push(built.t);
+      } else if (fields.length === 1 && fields[0] === 'ts') {
+        list.push(built.ts);
       } else {
-        list.push(built.ulid);
+        const selected = {};
+        for (const field of fields) {
+          if (field === 't') selected.t = built.t;
+          else if (field === 'ts') selected.ts = built.ts;
+          else if (field === 'ulid') selected.ulid = built.ulid;
+        }
+        if (forceBin) selected.bin = built.bin;
+        list.push(selected);
       }
-    } else if (fields.length === 1 && fields[0] === 't') {
-      list.push(built.t);
-    } else if (fields.length === 1 && fields[0] === 'ts') {
-      list.push(built.ts);
-    } else {
-      const selected = {};
-      for (const field of fields) {
-        if (field === 't') selected.t = built.t;
-        else if (field === 'ts') selected.ts = built.ts;
-        else if (field === 'ulid') selected.ulid = built.ulid;
+    }
+  } else {
+    for (let i=0; i<n; i++) {
+      const raw = forcedTs !== null ? randomULID(forcedTs) : randomULID();
+      const built = buildULIDObject(raw, { base, bin: forceBin });
+
+      if (fields.length === 1 && fields[0] === 'ulid') {
+        if (bin) {
+          list.push({ ulid: built.ulid, bin: built.bin });
+        } else {
+          list.push(built.ulid);
+        }
+      } else if (fields.length === 1 && fields[0] === 't') {
+        list.push(built.t);
+      } else if (fields.length === 1 && fields[0] === 'ts') {
+        list.push(built.ts);
+      } else {
+        const selected = {};
+        for (const field of fields) {
+          if (field === 't') selected.t = built.t;
+          else if (field === 'ts') selected.ts = built.ts;
+          else if (field === 'ulid') selected.ulid = built.ulid;
+        }
+        if (forceBin) selected.bin = built.bin;
+        list.push(selected);
       }
-      if (forceBin) selected.bin = built.bin;
-      list.push(selected);
     }
   }
-} else {
-  for (let i=0; i<n; i++) {
-    const raw = forcedTs !== null ? randomULID(forcedTs) : randomULID();
-    const built = buildULIDObject(raw, { base, bin: forceBin });
-
-    if (fields.length === 1 && fields[0] === 'ulid') {
-      if (bin) {
-        list.push({ ulid: built.ulid, bin: built.bin });
-      } else {
-        list.push(built.ulid);
-      }
-    } else if (fields.length === 1 && fields[0] === 't') {
-      list.push(built.t);
-    } else if (fields.length === 1 && fields[0] === 'ts') {
-      list.push(built.ts);
-    } else {
-      const selected = {};
-      for (const field of fields) {
-        if (field === 't') selected.t = built.t;
-        else if (field === 'ts') selected.ts = built.ts;
-        else if (field === 'ulid') selected.ulid = built.ulid;
-      }
-      if (forceBin) selected.bin = built.bin;
-      list.push(selected);
-    }
-  }
-}
 
   // E) Formats texte (csv, tsv, text, joined)
   if (['csv','tsv','text','joined'].includes(format)) {
@@ -596,7 +595,7 @@ ${JSON.stringify(log, null, 2)}
 // ───────────────────────────────────────────────────────────
 // Dashboard logs
 // ───────────────────────────────────────────────────────────
-async function handleDebugLogs() {
+/*async function handleDebugLogs() {
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -712,4 +711,4 @@ async function handleDebugLogs() {
   return new Response(html, {
     headers: { 'Content-Type': 'text/html; charset=utf-8' }
   });
-}
+}*/

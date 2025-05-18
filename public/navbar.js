@@ -15,7 +15,6 @@ export function initNavbar() {
     menu.setAttribute("aria-hidden", !isOpen);
   });
   
-
   // 2) Theme toggle au démarrage + clic
   const html = document.documentElement;
   const toggles = Array.from(
@@ -55,11 +54,11 @@ export function initNavbar() {
     })
   );
 
-    // 🔔 **NOU: mise à jour si le thème OS change en cours de session
-    window.matchMedia("(prefers-color-scheme: dark)")
-    .addEventListener("change", evt => {
-      const sysTheme = evt.matches ? "dark" : "light";
-      html.setAttribute("data-theme", sysTheme);
-      updateIcons(sysTheme);
-    });
+  // 🔔 **NOU: mise à jour si le thème OS change en cours de session
+  window.matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", evt => {
+    const sysTheme = evt.matches ? "dark" : "light";
+    html.setAttribute("data-theme", sysTheme);
+    updateIcons(sysTheme);
+  });
 }

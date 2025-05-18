@@ -149,21 +149,22 @@ button {
   background: var(--button-bg);
   color: var(--button-color);
   border: var(--input-border);
-  padding: var(--space-sm) var(--space-md);
+  padding-block: var(--space-sm) var(--space-md);
+  padding-inline: 1rem;
   margin-block: var(--space-sm);
+  margin-inline: auto;
   cursor: pointer;
   transition: background var(--transition-slow);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 button:hover {
   background: var(--button-hover-bg);
   color: var(--button-hover-color);
-}
-
-.copy-btn {
-  margin-left: var(--space-sm);
-  padding: var(--space-xs) var(--space-sm);
-  font-size: var(--font-size-sm);
 }
 
 pre {
@@ -303,11 +304,6 @@ footer {
   min-width: 4rem;
 }
 
-/*textarea.input {
-  margin-inline: var(--space-sm);
-  width: 100%;
-}*/
-
 .check-params {
   padding-inline: var(--space-sm);
 }
@@ -359,32 +355,15 @@ pre.code-block-req {
   word-break: break-word;
 }
 
-/* ===== Boutons en deux lignes ===== */
-button {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  margin-inline: auto;
-  padding-inline: 1rem;
-}
 
-/* Icône et texte distincts */
-/*.btn-icon {
-  display: block;
-  font-size: 1.5em;
+.btn-icon {
+  font-size: 1.2em;
   line-height: 1;
 }
-
 .btn-label {
-  display: block;
-  font-size: 0.9em;
-  margin-top: 0.1em;
-}*/
-
-.btn-icon { font-size: 1.2em; line-height: 1; }
-.btn-label { font-size: 0.85em; margin-top: var(--space-xs); }
+  font-size: 0.85em;
+  margin-top: var(--space-xs);
+}
 
 /* Boutons d'action principaux (Générer, Vérifier, Remplir) */
 .btn-action {
@@ -393,12 +372,7 @@ button {
   padding-block: 1rem;
   margin: 1.5rem;
   border: double;
-  /*border-style: dotted;
-  border-radius: 6px;
-  font-weight: bold;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);*/
 }
-
 
 /* nouveau bloc "Valeur à insérer" en full-width */
 .insert-block {
@@ -414,8 +388,6 @@ button {
 .insert-block .btn-row {
   justify-content: flex-start;
 }
-
-
 
 /* =====================================
    Centre verticalement checkbox + texte
@@ -487,7 +459,6 @@ input[type="checkbox"] {
   color: var(--text);
 }
 
-
 /* Piles radio + input verticales */
 .radio-stack{
   display:flex;
@@ -505,13 +476,6 @@ input[type="checkbox"] {
 #ts-preview{line-height:1.4;
   margin-top:.5rem
 }
-
-.ts-valid{
-  font-size:0.8rem;
-  height:1rem;               /* réserve l'espace */
-}
-.ts-valid.ok   { color:#33ff33 }
-.ts-valid.bad  { color:#ff4444 }
 
 /* Groupe radio personnalisé */
 .ts-radio-group {
@@ -544,6 +508,7 @@ input[type="checkbox"] {
 }
 
 .ts-valid {
+  height:1rem; 
   min-width: 5rem;
   font-size: 0.85rem;
   white-space: nowrap;

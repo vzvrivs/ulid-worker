@@ -2,8 +2,18 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>📚 ULID Worker – Docs Terminal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📚 ULID Worker – Docs Terminal</title>
+
+<!-- Thème avant chargement du CSS -->
+<script>
+  const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
+</script>  
+
+<!-- ton CSS -->
+<link rel="stylesheet" href="/style.css"/>
+
   <style>
     body {
       background-color: #0d0d0d;
@@ -63,102 +73,112 @@
     }
   </style>
 </head>
+
 <body>
-  <h1>📚 ULID Worker – Documentation complète</h1>
 
-  <p>API pour générer, valider, transformer ou compléter dynamiquement des ULID (Universally Unique Lexicographically Sortable Identifiers).</p>
+  <header id="nav-container" class="header-nav-container"></header>
 
-  <h2>🔗 Endpoints disponibles</h2>
-  <ul>
-    <li><code>GET /ulid</code> → Générer 1 ou plusieurs ULID</li>
-    <li><code>GET /ulid?validate=...</code> → Valider un ULID</li>
-    <li><code>POST /autofill</code> → Compléter les <code>_uid: null</code> d’un JSON</li>
-    <li><code>/test</code> → Interface de test interactive</li>
-    <li><code>/help</code> → Aide rapide</li>
-    <li><code>/docs</code> → Cette page</li>
-  </ul>
+  <main>
 
-  <h2>⚙️ Paramètres de génération (<code>GET /ulid</code>)</h2>
-  <table>
-    <tr><th>Paramètre</th><th>Type</th><th>Par défaut</th><th>Description</th></tr>
-    <tr><td><code>n</code></td><td>entier</td><td>1</td><td>Nombre de ULID à générer (max 1000)</td></tr>
-    <tr><td><code>prefix</code></td><td>string</td><td>""</td><td>Ajoute un préfixe à chaque ULID</td></tr>
-    <tr><td><code>suffix</code></td><td>string</td><td>""</td><td>Ajoute un suffixe à chaque ULID</td></tr>
-    <tr><td><code>base</code></td><td>string</td><td><code>crockford</code></td><td><code>crockford</code> (standard) ou <code>hex</code> (base16)</td></tr>
-    <tr><td><code>pretty</code></td><td>bool</td><td><code>false</code></td><td>Format JSON indenté pour la lisibilité</td></tr>
-    <tr><td><code>bin</code></td><td>bool</td><td><code>false</code></td><td>Ajoute un champ <code>"bin"</code> (130 bits bruts)</td></tr>
-  </table>
+    <h1>📚 ULID Worker – Documentation complète</h1>
 
-  <h3>📤 Exemple simple</h3>
-  <pre>/ulid?n=2</pre>
-  <h3>📤 Exemple avec base16 et binaire</h3>
-  <pre>/ulid?n=1&base=hex&bin=true&pretty=true</pre>
+    <p>API pour générer, valider, transformer ou compléter dynamiquement des ULID (Universally Unique Lexicographically Sortable Identifiers).</p>
 
-  <h3>📤 Réponse</h3>
-  <pre>[
-  {
-    "t": 1743526222138,
-    "ts": "2025-04-01T16:50:22.138Z",
-    "ulid": "f2e0a159877fa82ca5122489",
-    "bin": "000000000001011001001111010111101100110011..."
-  }
-]</pre>
+    <h2>🔗 Endpoints disponibles</h2>
+    <ul>
+      <li><code>GET /ulid</code> → Générer 1 ou plusieurs ULID</li>
+      <li><code>GET /ulid?validate=...</code> → Valider un ULID</li>
+      <li><code>POST /autofill</code> → Compléter les <code>_uid: null</code> d’un JSON</li>
+      <li><code>/test</code> → Interface de test interactive</li>
+      <li><code>/help</code> → Aide rapide</li>
+      <li><code>/docs</code> → Cette page</li>
+    </ul>
 
-  <h2>🔍 Validation (<code>/ulid?validate=...</code>)</h2>
-  <p>Vérifie syntaxe, taille, alphabet Crockford, et extrait le timestamp si valide.</p>
+    <h2>⚙️ Paramètres de génération (<code>GET /ulid</code>)</h2>
+    <table>
+      <tr><th>Paramètre</th><th>Type</th><th>Par défaut</th><th>Description</th></tr>
+      <tr><td><code>n</code></td><td>entier</td><td>1</td><td>Nombre de ULID à générer (max 1000)</td></tr>
+      <tr><td><code>prefix</code></td><td>string</td><td>""</td><td>Ajoute un préfixe à chaque ULID</td></tr>
+      <tr><td><code>suffix</code></td><td>string</td><td>""</td><td>Ajoute un suffixe à chaque ULID</td></tr>
+      <tr><td><code>base</code></td><td>string</td><td><code>crockford</code></td><td><code>crockford</code> (standard) ou <code>hex</code> (base16)</td></tr>
+      <tr><td><code>pretty</code></td><td>bool</td><td><code>false</code></td><td>Format JSON indenté pour la lisibilité</td></tr>
+      <tr><td><code>bin</code></td><td>bool</td><td><code>false</code></td><td>Ajoute un champ <code>"bin"</code> (130 bits bruts)</td></tr>
+    </table>
 
-  <h3>📥 Exemple</h3>
-  <pre>/ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP</pre>
+    <h3>📤 Exemple simple</h3>
+    <pre>/ulid?n=2</pre>
+    <h3>📤 Exemple avec base16 et binaire</h3>
+    <pre>/ulid?n=1&base=hex&bin=true&pretty=true</pre>
 
-  <h3>📤 Réponse</h3>
-  <pre>{
-  "ulid": "01HTY79MNQY3GE8G7VFDWSVJJP",
-  "valid": true,
-  "t": 1743531883000,
-  "ts": "2025-04-01T22:04:43.000Z"
-}</pre>
-
-  <h2>🧪 Autofill JSON (<code>POST /autofill</code>)</h2>
-  <p>Complète tous les champs <code>_uid</code> valant <code>null</code> avec des ULID uniques, basés sur un même timestamp.</p>
-
-  <h3>📥 Exemple d’entrée</h3>
-  <pre>{
-  "playlist_uid": null,
-  "playlist_tracks": [
+    <h3>📤 Réponse</h3>
+    <pre>[
     {
-      "track_uid": null,
-      "track_artists": [
-        { "artist_uid": null }
-      ]
+      "t": 1743526222138,
+      "ts": "2025-04-01T16:50:22.138Z",
+      "ulid": "f2e0a159877fa82ca5122489",
+      "bin": "000000000001011001001111010111101100110011..."
     }
-  ]
-}</pre>
+  ]</pre>
 
-  <h3>📤 Exemple de réponse</h3>
-  <pre>{
-  "playlist_uid": "01JQS9V6ABCD...",
-  "playlist_tracks": [
-    {
-      "track_uid": "01JQS9V6EFGH...",
-      "track_artists": [
-        { "artist_uid": "01JQS9V6IJKL..." }
-      ]
-    }
-  ]
-}</pre>
+    <h2>🔍 Validation (<code>/ulid?validate=...</code>)</h2>
+    <p>Vérifie syntaxe, taille, alphabet Crockford, et extrait le timestamp si valide.</p>
 
-  <h2>🛠️ Améliorations futures</h2>
-  <ul>
-    <li><code>as_uuid=true</code> → Format UUID v4-like</li>
-    <li>ULID monotones</li>
-    <li>Export CSV / TSV / base64</li>
-    <li>Seed personnalisé ou RNG externe</li>
-    <li>Compression (<code>gzip</code>, <code>br</code>)</li>
-    <li>Quotas ou auth token</li>
-  </ul>
+    <h3>📥 Exemple</h3>
+    <pre>/ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP</pre>
 
-  <footer>
-    ULID Worker v1 – codé à la main par Raphaël dans le noir 🦾
-  </footer>
+    <h3>📤 Réponse</h3>
+    <pre>{
+    "ulid": "01HTY79MNQY3GE8G7VFDWSVJJP",
+    "valid": true,
+    "t": 1743531883000,
+    "ts": "2025-04-01T22:04:43.000Z"
+  }</pre>
+
+    <h2>🧪 Autofill JSON (<code>POST /autofill</code>)</h2>
+    <p>Complète tous les champs <code>_uid</code> valant <code>null</code> avec des ULID uniques, basés sur un même timestamp.</p>
+
+    <h3>📥 Exemple d’entrée</h3>
+    <pre>{
+    "playlist_uid": null,
+    "playlist_tracks": [
+      {
+        "track_uid": null,
+        "track_artists": [
+          { "artist_uid": null }
+        ]
+      }
+    ]
+  }</pre>
+
+    <h3>📤 Exemple de réponse</h3>
+    <pre>{
+    "playlist_uid": "01JQS9V6ABCD...",
+    "playlist_tracks": [
+      {
+        "track_uid": "01JQS9V6EFGH...",
+        "track_artists": [
+          { "artist_uid": "01JQS9V6IJKL..." }
+        ]
+      }
+    ]
+  }</pre>
+
+    <h2>🛠️ Améliorations futures</h2>
+    <ul>
+      <li><code>as_uuid=true</code> → Format UUID v4-like</li>
+      <li>ULID monotones</li>
+      <li>Export CSV / TSV / base64</li>
+      <li>Seed personnalisé ou RNG externe</li>
+      <li>Compression (<code>gzip</code>, <code>br</code>)</li>
+      <li>Quotas ou auth token</li>
+    </ul>
+
+  </main>
+
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+    
+  <!-- enfin ton script principal -->
+  <script type="module" src="./site.js"></script> 
+
 </body>
 </html>

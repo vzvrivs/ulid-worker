@@ -7,11 +7,22 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
 
+## [0.5.1] - 2025-05-18
+
+### Modifié
+- Réorganisation technique :
+  - Intégration directe du JS du Playground dans son HTML.
+  - Suppression du fichier `navbar.css`, CSS intégré.
+  - `/debug/logs` est désormais servi en statique.
+  - Ajout de la navbar aux pages `/help`, `/docs` et `/debug/logs`.
+
+---
+
 ## [Unreleased]
 
 ### Modifié
 
-- Optimisation et finalisation de la page Music après la version 0.5.0 (détails à venir).
+- Optimisation et finalisation de la page Music après la version 0.5.0 (détails devaient venir, mais flemme).
 
 ---
 
