@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    // Initialisation prioritaire : toujours restaurer le dernier thème utilisé
+    (function(){
+      let lastTheme = localStorage.getItem("ulidw-theme-last");
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (lastTheme) {
+        theme = lastTheme;
+      } else if (mode === "auto") {
+        theme = prefersDark ? themeDark : themeLight;
+      } else if (mode === "light") {
+        theme = themeLight;
+      } else if (mode === "dark") {
+        theme = themeDark;
+      } else {
+        theme = "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
+  </script>
+  <title>Choix du Thème ULID Worker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/style.css"/>
+  <style>
+    .theme-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+      margin-bottom: var(--space-xl);
+      align-items: flex-start;
+    }
+    @media (max-width: 700px) {
+      .theme-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    .theme-panel {
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius-sm);
+      background: var(--code-bg);
+      padding: var(--space-xl);
+      min-width: 260px;
+      max-width: 460px;
+      box-shadow: 0 1px 10px rgba(0,0,0,0.03);
+      margin-bottom: var(--space-lg);
+    }
+    .theme-preview {
+      border: 1.5px solid var(--field-odd-border);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      padding: var(--space-xl);
+      min-width: 260px;
+      max-width: 420px;
+      box-shadow: 0 1px 10px rgba(0,0,0,0.03);
+      margin-bottom: var(--space-lg);
+      transition: background .4s, color .4s;
+    }
+    .theme-preview h2 {
+      margin-top: 0;
+      color: var(--heading);
+    }
+    .theme-preview a { color: var(--link); }
+    .theme-preview a:hover { color: var(--link-hover);}
+    .theme-preview code {
+      background: var(--code-bg);
+      color: var(--code-color);
+      padding: 0.2em 0.4em;
+      border-radius: var(--radius-sm);
+    }
+    .btn-action {
+      margin-top: var(--space-lg);
+      font-size: 1.1em;
+    }
+    .field-pair label {
+      min-width: 120px;
+    }
+    .theme-select {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header id="nav-container" class="header-nav-container"></header>
+  <main class="page-wrapper">
+    <h1>Choisir le thème ULID Worker</h1>
+    <div class="row theme-row">
+      <!-- Bloc de sélection -->
+      <form class="panel theme-panel" id="theme-form" autocomplete="off" onsubmit="return false;">
+        <div class="field-pair">
+          <label for="mode">Mode :</label>
+          <select id="mode" class="theme-select">
+            <option value="auto">Auto (suivant le système)</option>
+            <option value="light">Clair</option>
+            <option value="dark">Sombre</option>
+          </select>
+        </div>
+        <div class="field-pair">
+          <label for="theme-light">Thème clair :</label>
+          <select id="theme-light" class="theme-select"></select>
+        </div>
+        <div class="field-pair">
+          <label for="theme-dark">Thème sombre :</label>
+          <select id="theme-dark" class="theme-select"></select>
+        </div>
+        <button type="button" id="btn-save" class="btn btn-action">Valider ce thème</button>
+        <button type="button" id="btn-refresh-theme" class="btn btn-xs" style="margin-left:1em;">Rafraîchir le thème</button>
+        <div style="margin-top:1em; color:var(--footer-color); font-size:.95em;">Les choix sont enregistrés pour tous les onglets ULID Worker.</div>
+      </form>
+      <!-- Bloc preview enrichi -->
+      <div class="panel theme-preview" id="preview">
+        <h1>Exemple <code>h1</code> (titre principal)</h1>
+        <h2>Exemple <code>h2</code> (titre secondaire)</h2>
+        <h3>Exemple <code>h3</code> (titre tertiaire)</h3>
+
+        <p>
+          <a href="#">Ceci est un <b>lien</b> de démonstration</a> &mdash; 
+          <span style="font-style:italic">texte en <i>italique</i></span><br>
+        </p>
+        <button class="btn">Un bouton d’action</button>
+        <button class="btn btn-action">Bouton principal</button>
+
+        <div style="margin-block: 1em">
+          <label for="input-preview">Input :</label>
+          <input id="input-preview" name="input-preview" placeholder="Exemple de saisie" title="Exemple de saisie" aria-label="Exemple de saisie"/>
+          
+          <label for="select-preview">Select :</label>
+          <select id="select-preview" name="select-preview" title="Choisissez une option" aria-label="Choisissez une option">
+            <option value="" disabled selected hidden>Veuillez choisir</option>
+            <option value="1">Option 1</option>
+            <option value="2">Option 2</option>
+          </select>
+          
+          <label for="textarea-preview">Textarea :</label>
+          <textarea id="textarea-preview" name="textarea-preview" rows="2"
+            placeholder="Du texte ici…" title="Zone de texte" aria-label="Zone de texte">Du texte ici…</textarea>
+        </div>
+
+        <pre class="code-block">Exemple de bloc <b>code</b>
+let ulid = "01H....";
+alert(ulid);
+        </pre>
+        <code>Exemple <b>inline</b> <i>code</i></code>
+        
+        <div style="margin-block: 1em">
+          <input type="checkbox" id="checkbox-demo-1" checked aria-label="Checkbox cochée"/>
+          <label for="checkbox-demo-1">Checkbox cochée</label>
+          <input type="checkbox" id="checkbox-demo-2" aria-label="Checkbox décochée"/>
+          <label for="checkbox-demo-2">Checkbox décochée</label>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Col 1</th><th>Col 2</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cellule A</td><td>Cellule B</td></tr>
+            <tr><td><code>ULID</code></td><td>01H...</td></tr>
+          </tbody>
+        </table>
+        <footer style="margin-top:2rem;">
+          Le thème change tous les styles principaux de l’interface.<br>
+          <span style="font-size:0.9em">Navbar, boutons, formulaires, code, tableau, checkbox…</span>
+        </footer>
+      </div>
+    </div>
+    <div class="panel theme-panel" style="margin-bottom:var(--space-xl)">
+      <h2 style="margin-top:0; font-size:1.15em">Gérer mes thèmes personnalisés</h2>
+      <label for="file-upload" style="font-size:0.98em;font-weight:500;">Importer un ou plusieurs fichiers CSS :</label>
+      <input type="file" id="file-upload" accept=".css" multiple style="margin-bottom:.7em"/>
+      <div style="font-size:.95em; color:var(--footer-color);margin-bottom:1em">
+        Uploade un ou plusieurs fichiers CSS contenant des blocs <code>[data-theme="nom"]</code>.<br>
+        Chaque thème sera ajouté s’il n’existe pas déjà.
+      </div>
+      <div id="custom-themes-list"></div>
+    </div>
+  </main>
+
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence CC BY-NC-SA 4.0</footer>
+
+  <script>
+    const BASE_THEMES = [
+      { name: "light", css: "" },
+      { name: "dark", css: "" }
+    ];
+
+    // Utilitaire pour extraire les blocs [data-theme="..."] d'un texte CSS
+    function extractThemes(cssText) {
+      const re = /\[data-theme\s*=\s*["']([^"']+)["']\]\s*\{[^}]+\}/g;
+      let match, found = [];
+      while ((match = re.exec(cssText))) {
+        found.push({
+          name: match[1],
+          css: match[0]
+        });
+      }
+      return found;
+    }
+
+    // LocalStorage helpers
+    function loadUserThemes() {
+      return JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+    }
+    function saveUserThemes(themes) {
+      localStorage.setItem("ulidw-user-themes", JSON.stringify(themes));
+    }
+
+    // Liste des thèmes disponibles (base + custom)
+    function getAllThemes() {
+      const base = BASE_THEMES;
+      const custom = loadUserThemes();
+      return [...base, ...custom];
+    }
+
+    // UI : met à jour la liste des thèmes dans les <select>
+    function populateThemeSelects() {
+      const themes = getAllThemes();
+      const themeLight = document.getElementById("theme-light");
+      const themeDark = document.getElementById("theme-dark");
+      const themeList = themes.map(t => `<option value="${t.name}">${t.name}</option>`).join("");
+      themeLight.innerHTML = themeList;
+      themeDark.innerHTML = themeList;
+      // Sélectionne la valeur précédente ou la première dispo
+      themeLight.value = localStorage.getItem("ulidw-theme-light") || "light";
+      themeDark.value  = localStorage.getItem("ulidw-theme-dark")  || "dark";
+    }
+
+    // UI : liste dynamique des thèmes custom avec boutons de suppression
+    function renderCustomThemesList() {
+      const list = document.getElementById("custom-themes-list");
+      const userThemes = loadUserThemes();
+      if (userThemes.length === 0) {
+        list.innerHTML = '<div style="color:var(--footer-color)">Aucun thème importé pour l’instant.</div>';
+        return;
+      }
+      list.innerHTML = userThemes.map(t =>
+        `<div style="margin-bottom:0.7em">
+          <span style="font-family:monospace">${t.name}</span>
+          <button class="btn btn-xs" data-name="${t.name}" title="Supprimer ce thème">🗑️</button>
+        </div>`
+      ).join("");
+      // Listeners de suppression
+      list.querySelectorAll('button[data-name]').forEach(btn => {
+        btn.onclick = function() {
+          const name = btn.getAttribute('data-name');
+          let arr = loadUserThemes();
+          arr = arr.filter(t => t.name !== name);
+          saveUserThemes(arr);
+          populateThemeSelects();
+          renderCustomThemesList();
+          applyTheme();
+        }
+      });
+    }
+
+    // Ajout de thèmes via input file
+    document.getElementById("file-upload").addEventListener("change", function(e) {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+      let allThemes = loadUserThemes();
+      let totalAdded = 0;
+
+      Promise.all(files.map(file => file.text()))
+        .then(contents => {
+          contents.forEach(cssText => {
+            const found = extractThemes(cssText);
+            found.forEach(theme => {
+              if (!allThemes.find(t => t.name === theme.name)) {
+                allThemes.push(theme);
+                totalAdded++;
+              }
+            });
+          });
+          saveUserThemes(allThemes);
+          populateThemeSelects();
+          renderCustomThemesList();
+          if (totalAdded > 0) alert(`${totalAdded} thème(s) ajouté(s) !`);
+        });
+    });
+
+    // Applique le thème sélectionné
+    function applyTheme() {
+      // Appelle uniquement la version globale SI on n'est pas déjà dedans !
+      if (window.applyTheme && window.applyTheme !== applyTheme) window.applyTheme();
+    }
+
+    // Sauvegarde les choix d’utilisateur (mode, clair, sombre)
+    document.getElementById("btn-save").addEventListener("click", () => {
+      const mode = document.getElementById("mode").value;
+      const themeLight = document.getElementById("theme-light").value;
+      const themeDark = document.getElementById("theme-dark").value;
+      let activeTheme;
+      if (mode === "auto") {
+        // Choisit selon le système
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        activeTheme = prefersDark ? themeDark : themeLight;
+      } else if (mode === "dark") {
+        activeTheme = themeDark;
+      } else {
+        activeTheme = themeLight;
+      }
+      localStorage.setItem("ulidw-theme-mode", mode);
+      localStorage.setItem("ulidw-theme-light", themeLight);
+      localStorage.setItem("ulidw-theme-dark", themeDark);
+      // 👇 Ajout : on force la mémorisation du dernier thème choisi + mode manuel
+      localStorage.setItem("ulidw-theme-mode", "manual");
+      localStorage.setItem("ulidw-theme-last", activeTheme);
+      alert("Thème enregistré ! Il sera appliqué à tout le site.");
+      applyTheme();
+    });
+
+
+    // Prévisualisation live
+    ["mode", "theme-light", "theme-dark"].forEach(id => {
+      document.getElementById(id).addEventListener("change", applyTheme);
+    });
+
+    // Sur changement de thème système
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+      const mode = document.getElementById("mode").value;
+      if (mode === "auto") applyTheme();
+    });
+
+    // Init
+    populateThemeSelects();
+    renderCustomThemesList();
+    applyTheme();
+  </script>
+
+  <!-- enfin ton script principal -->
+  <script type="module" src="/site.js"></script> 
+
+</body>
+  <script>
+      // Sécurité anti-FOUC en cas de navigation dynamique :
+      const t = localStorage.getItem('ulidw-theme-last');
+      if (t && document.documentElement.getAttribute('data-theme') !== t) {
+        document.documentElement.setAttribute('data-theme', t);
+      }
+    </script>
+  </html>
+</html>

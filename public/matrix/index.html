@@ -2,13 +2,37 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🧬 ULID Matrix</title>
-  
-  <!-- Thème avant chargement du CSS -->
   <script>
-    const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  </script>
+  <title>🧬 ULID Matrix</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <script>
+    (function(){
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (mode === "auto") theme = prefersDark ? themeDark : themeLight;
+      else if (mode === "manual") theme = localStorage.getItem("ulidw-theme-last") || themeDark;
+      else if (mode === "light") theme = themeLight;
+      else if (mode === "dark") theme = themeDark;
+      else theme = "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      // Si thème custom, cache tout tant que JS n'a pas injecté le style
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
   </script>
 
   <!-- ton CSS -->
@@ -95,300 +119,308 @@
         </ul>
       </div>
 
-    <script type="module">
-      import { ulid } from "/module/ulid";
+  </main>  
 
-      // ──────────────────────────────────────────────
-      // 1. VARIABLES D'ÉTAT GLOBAL & CONSTANTES
-      // ──────────────────────────────────────────────
-      const fontSize = 16;
-      const chars    = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-      const TAIL     = 52; // Longueur traîne
-      const MAX_FPS  = 30; // Limiteur d'images/sec
-      const FRAME_DELAY = 1000 / MAX_FPS;
+  <script type="module">
 
-      let canvas = document.getElementById("matrix");
-      let ctx    = canvas.getContext("2d");
+    import { ulid } from "/module/ulid";
 
-      // État global
-      let columns, drops, dropColors;
-      let paused      = false;
-      let funkyMode   = 0;
-      let fpsCapEnabled = true;
-      let lastTime    = 0;
+    // ──────────────────────────────────────────────
+    // 1. VARIABLES D'ÉTAT GLOBAL & CONSTANTES
+    // ──────────────────────────────────────────────
+    const fontSize = 16;
+    const chars    = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    const TAIL     = 52; // Longueur traîne
+    const MAX_FPS  = 30; // Limiteur d'images/sec
+    const FRAME_DELAY = 1000 / MAX_FPS;
 
-      // Matrices de traînée et ULID streams
-      let buffers    = [], baseSat = [], baseLum = [];
-      let idStreams  = [], idIndices = [];
-      const ALPHA    = new Float32Array(TAIL);
+    let canvas = document.getElementById("matrix");
+    let ctx    = canvas.getContext("2d");
 
-      // Couleurs/thèmes
-      let bgColor, textColor, invBgColor;
+    // État global
+    let columns, drops, dropColors;
+    let paused      = false;
+    let funkyMode   = 0;
+    let fpsCapEnabled = true;
+    let lastTime    = 0;
 
-      // ──────────────────────────────────────────────
-      // 2. HELPERS / OUTILS
-      // ──────────────────────────────────────────────
+    // Matrices de traînée et ULID streams
+    let buffers    = [], baseSat = [], baseLum = [];
+    let idStreams  = [], idIndices = [];
+    const ALPHA    = new Float32Array(TAIL);
 
-      /** Inverse une couleur (hex ou rgb) en rgb(255−r,255−g,255−b) */
-      function invertColor(col) {
-        const d = document.createElement('div');
-        d.style.color = col;
-        document.body.appendChild(d);
-        const cs = getComputedStyle(d).color; // "rgb(r, g, b)"
-        document.body.removeChild(d);
-        const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-        if (m) {
-          const r = 255 - parseInt(m[1], 10),
-                g = 255 - parseInt(m[2], 10),
-                b = 255 - parseInt(m[3], 10);
-          return `rgb(${r}, ${g}, ${b})`;
-        }
-        return '#fff'; // fallback blanc
+    // Couleurs/thèmes
+    let bgColor, textColor, invBgColor;
+
+    // ──────────────────────────────────────────────
+    // 2. HELPERS / OUTILS
+    // ──────────────────────────────────────────────
+
+    /** Inverse une couleur (hex ou rgb) en rgb(255−r,255−g,255−b) */
+    function invertColor(col) {
+      const d = document.createElement('div');
+      d.style.color = col;
+      document.body.appendChild(d);
+      const cs = getComputedStyle(d).color; // "rgb(r, g, b)"
+      document.body.removeChild(d);
+      const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+      if (m) {
+        const r = 255 - parseInt(m[1], 10),
+              g = 255 - parseInt(m[2], 10),
+              b = 255 - parseInt(m[3], 10);
+        return `rgb(${r}, ${g}, ${b})`;
       }
+      return '#fff'; // fallback blanc
+    }
 
-      /** Parse une couleur CSS (hex, rgb, hsl…) pour obtenir [r,g,b] */
-      function parseRGB(col) {
-        const d = document.createElement('div');
-        d.style.color = col;
-        document.body.appendChild(d);
-        const cs = getComputedStyle(d).color;   // "rgb(r, g, b)"
-        document.body.removeChild(d);
-        const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-        return m ? [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)] : [0,0,0];
-      }
+    /** Parse une couleur CSS (hex, rgb, hsl…) pour obtenir [r,g,b] */
+    function parseRGB(col) {
+      const d = document.createElement('div');
+      d.style.color = col;
+      document.body.appendChild(d);
+      const cs = getComputedStyle(d).color;   // "rgb(r, g, b)"
+      document.body.removeChild(d);
+      const m = cs.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+      return m ? [parseInt(m[1],10), parseInt(m[2],10), parseInt(m[3],10)] : [0,0,0];
+    }
 
-      // ──────────────────────────────────────────────
-      // 3. GESTION DU THÈME ET MISE À JOUR UI
-      // ──────────────────────────────────────────────
+    // ──────────────────────────────────────────────
+    // 3. GESTION DU THÈME ET MISE À JOUR UI
+    // ──────────────────────────────────────────────
 
-      function updateThemeColors() {
-        const s = getComputedStyle(document.documentElement);
-        bgColor    = s.getPropertyValue('--matrix-background').trim();
-        textColor  = s.getPropertyValue('--text').trim();
-        // 1) met à jour le fond du canevas en inline style…
-        canvas.style.backgroundColor = bgColor;
-        // …puis le rend visible
-        canvas.style.visibility = 'visible';
-        // 2) calcule la couleur inverse pour la tête brillante
-        invBgColor = invertColor(bgColor);
-        // → Calcule un fond transparent basé sur bgColor
-        const [r, g, b] = parseRGB(bgColor);
-        const helpBg     = `rgba(${r}, ${g}, ${b}, 0.6)`;
-        // Applique en CSS variable…
-        document.documentElement.style.setProperty('--help-bg', helpBg);
-        // …et en inline pour forcer la mise à jour si nécessaire
-        document.getElementById('help-box').style.backgroundColor = helpBg;
-        // 🔳 ou 🔲 selon dark/light
-        const theme = document.documentElement.getAttribute("data-theme");
-        fsBtn.textContent = theme === "dark" ? "🔳" : "🔲";
-        // synchronise la couleur de la boîte d’aide
-        document.documentElement.style.setProperty('--help-color', invBgColor);
-      }
+    function updateThemeColors() {
+      const s = getComputedStyle(document.documentElement);
+      bgColor    = s.getPropertyValue('--matrix-background').trim();
+      textColor  = s.getPropertyValue('--text').trim();
+      // 1) met à jour le fond du canevas en inline style…
+      canvas.style.backgroundColor = bgColor;
+      // …puis le rend visible
+      canvas.style.visibility = 'visible';
+      // 2) calcule la couleur inverse pour la tête brillante
+      invBgColor = invertColor(bgColor);
+      // → Calcule un fond transparent basé sur bgColor
+      const [r, g, b] = parseRGB(bgColor);
+      const helpBg     = `rgba(${r}, ${g}, ${b}, 0.6)`;
+      // Applique en CSS variable…
+      document.documentElement.style.setProperty('--help-bg', helpBg);
+      // …et en inline pour forcer la mise à jour si nécessaire
+      document.getElementById('help-box').style.backgroundColor = helpBg;
+      // 🔳 ou 🔲 selon dark/light
+      const theme = document.documentElement.getAttribute("data-theme");
+      fsBtn.textContent = theme === "dark" ? "🔳" : "🔲";
+      // synchronise la couleur de la boîte d’aide
+      document.documentElement.style.setProperty('--help-color', invBgColor);
+    }
 
-      // 3) réagir aux changements de thème (data-theme sur <html>)
-      new MutationObserver(muts => {
-        for (const m of muts) {
-          if (m.attributeName === 'data-theme') {
-            updateThemeColors();
-          }
-        }
-      }).observe(document.documentElement, { attributes: true });
-
-      // ──────────────────────────────────────────────
-      // 4. INITIALISATION DES ALPHAS & RÉGLAGES INITIAUX
-      // ──────────────────────────────────────────────
-
-      for (let i = 0; i < TAIL; i++) ALPHA[i] = 1 - i / TAIL;
-
-      // ──────────────────────────────────────────────
-      // 5. FONCTIONS DE RENDU / ANIMATION
-      // ──────────────────────────────────────────────
-
-      /** Efface tout avec la vraie couleur de fond du thème courant */
-      function clearBackground() {
-        ctx.save();
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-      }
-
-      /** Rendu complet d’une frame */
-      function draw() {
-        clearBackground(); //✔️ plus de halo
-        ctx.font = fontSize + "px monospace";
-        for (let i = 0; i < columns; i++) {
-          // ── extrait le caractère suivant du ULID de cette colonne
-          const stream   = idStreams[i];
-          const idx      = idIndices[i] % stream.length;
-          const headChar = stream[idx];
-          idIndices[i]++;
-          buffers[i].unshift(headChar);
-          if (buffers[i].length > TAIL) buffers[i].pop();
-
-          const headHue = dropColors[i];
-          const glyphColor = textColor;
-
-          /* —––––  traîne  ––––— */
-          for (let t = 0; t < TAIL; t++) {
-            const row = drops[i] - t;
-            if (row < 0) break;
-            const y = row * fontSize;
-            const x = i   * fontSize;
-            ctx.globalAlpha = ALPHA[t];
-            let color;
-            if (t === 0) {
-              color = invBgColor;
-            } else {
-              if (funkyMode === 1) {
-                color = `hsl(${Math.random()*360|0},100%,60%)`;
-              } else if (funkyMode === 2) {
-                const delta = (Math.random()*2 - 1) * 15;
-                const sat   = Math.min(100, Math.max(0, baseSat[i] + delta));
-                const lum   = Math.min(100, Math.max(0, baseLum[i] + delta));
-                color = `hsl(${headHue}, ${sat}%, ${lum}%)`;
-              } else {
-                color = glyphColor;
-              }
-            }
-            ctx.fillStyle = color;
-            const ch = buffers[i][t];
-            ctx.fillText(ch, x, y);
-          }
-          ctx.globalAlpha = 1;
-          // Re‑cycle la colonne quand elle sort de l’écran
-          if ((drops[i] - TAIL) * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i]       = 0;
-            dropColors[i]  = Math.random()*360|0;
-            baseSat[i] = 80 + Math.random()*20;
-            baseLum[i] = 50 + Math.random()*30;
-            idStreams[i]  = ulid();
-            idIndices[i]  = Math.floor(Math.random() * idStreams[i].length);
-          }
-          drops[i]++;
+    // 3) réagir aux changements de thème (data-theme sur <html>)
+    new MutationObserver(muts => {
+      for (const m of muts) {
+        if (m.attributeName === 'data-theme') {
+          updateThemeColors();
         }
       }
+    }).observe(document.documentElement, { attributes: true });
 
-      // Remplace le loop() par un tick() pour gérer le capping FPS
-      function tick(now) {
-        if (!paused) {
-          if (fpsCapEnabled) {
-            if (now - lastTime >= FRAME_DELAY) {
-              lastTime = now;
-              draw();
-            }
+    // ──────────────────────────────────────────────
+    // 4. INITIALISATION DES ALPHAS & RÉGLAGES INITIAUX
+    // ──────────────────────────────────────────────
+
+    for (let i = 0; i < TAIL; i++) ALPHA[i] = 1 - i / TAIL;
+
+    // ──────────────────────────────────────────────
+    // 5. FONCTIONS DE RENDU / ANIMATION
+    // ──────────────────────────────────────────────
+
+    /** Efface tout avec la vraie couleur de fond du thème courant */
+    function clearBackground() {
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+    }
+
+    /** Rendu complet d’une frame */
+    function draw() {
+      clearBackground(); //✔️ plus de halo
+      ctx.font = fontSize + "px monospace";
+      for (let i = 0; i < columns; i++) {
+        // ── extrait le caractère suivant du ULID de cette colonne
+        const stream   = idStreams[i];
+        const idx      = idIndices[i] % stream.length;
+        const headChar = stream[idx];
+        idIndices[i]++;
+        buffers[i].unshift(headChar);
+        if (buffers[i].length > TAIL) buffers[i].pop();
+
+        const headHue = dropColors[i];
+        const glyphColor = textColor;
+
+        /* —––––  traîne  ––––— */
+        for (let t = 0; t < TAIL; t++) {
+          const row = drops[i] - t;
+          if (row < 0) break;
+          const y = row * fontSize;
+          const x = i   * fontSize;
+          ctx.globalAlpha = ALPHA[t];
+          let color;
+          if (t === 0) {
+            color = invBgColor;
           } else {
+            if (funkyMode === 1) {
+              color = `hsl(${Math.random()*360|0},100%,60%)`;
+            } else if (funkyMode === 2) {
+              const delta = (Math.random()*2 - 1) * 15;
+              const sat   = Math.min(100, Math.max(0, baseSat[i] + delta));
+              const lum   = Math.min(100, Math.max(0, baseLum[i] + delta));
+              color = `hsl(${headHue}, ${sat}%, ${lum}%)`;
+            } else {
+              color = glyphColor;
+            }
+          }
+          ctx.fillStyle = color;
+          const ch = buffers[i][t];
+          ctx.fillText(ch, x, y);
+        }
+        ctx.globalAlpha = 1;
+        // Re‑cycle la colonne quand elle sort de l’écran
+        if ((drops[i] - TAIL) * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i]       = 0;
+          dropColors[i]  = Math.random()*360|0;
+          baseSat[i] = 80 + Math.random()*20;
+          baseLum[i] = 50 + Math.random()*30;
+          idStreams[i]  = ulid();
+          idIndices[i]  = Math.floor(Math.random() * idStreams[i].length);
+        }
+        drops[i]++;
+      }
+    }
+
+    // Remplace le loop() par un tick() pour gérer le capping FPS
+    function tick(now) {
+      if (!paused) {
+        if (fpsCapEnabled) {
+          if (now - lastTime >= FRAME_DELAY) {
+            lastTime = now;
             draw();
           }
-        }
-        requestAnimationFrame(tick);
-      }
-
-      // ──────────────────────────────────────────────
-      // 6. UI / GESTION DES ÉVÉNEMENTS & INTERACTIONS
-      // ──────────────────────────────────────────────
-
-      function resize() {
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
-        columns = Math.floor(canvas.width / fontSize);
-        drops   = Array(columns).fill(1);
-        dropColors = Array(columns).fill(0).map(() => Math.random() * 360 | 0);
-        buffers.length = 0;
-        baseSat.length = baseLum.length = 0;
-        idStreams.length = idIndices.length = 0;
-        for (let i = 0; i < columns; i++) {
-          buffers.push(Array(TAIL).fill(' '));
-          baseSat.push(80 + Math.random()*20);
-          baseLum.push(50 + Math.random()*30);
-          idStreams.push(ulid());
-          idIndices.push(Math.floor(Math.random() * idStreams[idStreams.length - 1].length));
-        }
-      }
-
-      window.addEventListener("resize", resize);
-
-      // Raccourcis et boutons
-      const fsBtn    = document.getElementById("fullscreen-btn");
-      const pauseBtn = document.getElementById("pause-btn");
-      const funkyBtn = document.getElementById("funky-btn");
-      const fpsBtn   = document.getElementById("fps-btn");
-      const helpBtn  = document.getElementById('help-btn');
-      const helpBox  = document.getElementById('help-box');
-
-      pauseBtn.onclick = () => paused = !paused;
-      funkyBtn.onclick = () => funkyMode = (funkyMode + 1) % 3;
-      fpsBtn.onclick   = () => fpsCapEnabled = !fpsCapEnabled;
-      fsBtn.onclick    = () => {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
         } else {
-          document.exitFullscreen();
+          draw();
         }
-      };
-
-      document.addEventListener("fullscreenchange", () => {
-        const nav = document.getElementById("nav-container");
-        nav.style.display = document.fullscreenElement ? "none" : "";
-      });
-
-      // Opacité à 1 pendant appui Ctrl gauche
-      document.addEventListener("keydown", e => {
-        if (e.code === "ControlLeft") {
-          document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "1");
-        }
-      });
-      document.addEventListener("keyup", e => {
-        if (e.code === "ControlLeft") {
-          document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "");
-        }
-      });
-
-      // Bouton Aide
-      helpBtn.onclick = () => {
-        helpBox.style.display = helpBox.style.display === 'block' ? 'none' : 'block';
-      };
-
-      // Raccourcis clavier
-      document.addEventListener('keydown', e => {
-        if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
-        switch (e.key) {
-          case 'f': case 'F':
-            fsBtn.click();
-            break;
-          case ' ':
-            e.preventDefault();
-            pauseBtn.click();
-            break;
-          case 'm': case 'M':
-            funkyBtn.click();
-            break;
-          case 's': case 'S':
-            fpsBtn.click();
-            break;
-          case 'h': case 'H':
-            helpBtn.click();
-            break;
-        }
-      });
-
-      // ──────────────────────────────────────────────
-      // 7. INITIALISATION
-      // ──────────────────────────────────────────────
-
-      resize();
-      updateThemeColors();
+      }
       requestAnimationFrame(tick);
+    }
 
-    </script>
+    // ──────────────────────────────────────────────
+    // 6. UI / GESTION DES ÉVÉNEMENTS & INTERACTIONS
+    // ──────────────────────────────────────────────
 
-  </main>
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      columns = Math.floor(canvas.width / fontSize);
+      drops   = Array(columns).fill(1);
+      dropColors = Array(columns).fill(0).map(() => Math.random() * 360 | 0);
+      buffers.length = 0;
+      baseSat.length = baseLum.length = 0;
+      idStreams.length = idIndices.length = 0;
+      for (let i = 0; i < columns; i++) {
+        buffers.push(Array(TAIL).fill(' '));
+        baseSat.push(80 + Math.random()*20);
+        baseLum.push(50 + Math.random()*30);
+        idStreams.push(ulid());
+        idIndices.push(Math.floor(Math.random() * idStreams[idStreams.length - 1].length));
+      }
+    }
 
-  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+    window.addEventListener("resize", resize);
+
+    // Raccourcis et boutons
+    const fsBtn    = document.getElementById("fullscreen-btn");
+    const pauseBtn = document.getElementById("pause-btn");
+    const funkyBtn = document.getElementById("funky-btn");
+    const fpsBtn   = document.getElementById("fps-btn");
+    const helpBtn  = document.getElementById('help-btn');
+    const helpBox  = document.getElementById('help-box');
+
+    pauseBtn.onclick = () => paused = !paused;
+    funkyBtn.onclick = () => funkyMode = (funkyMode + 1) % 3;
+    fpsBtn.onclick   = () => fpsCapEnabled = !fpsCapEnabled;
+    fsBtn.onclick    = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    };
+
+    document.addEventListener("fullscreenchange", () => {
+      const nav = document.getElementById("nav-container");
+      nav.style.display = document.fullscreenElement ? "none" : "";
+    });
+
+    // Opacité à 1 pendant appui Ctrl gauche
+    document.addEventListener("keydown", e => {
+      if (e.code === "ControlLeft") {
+        document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "1");
+      }
+    });
+    document.addEventListener("keyup", e => {
+      if (e.code === "ControlLeft") {
+        document.querySelectorAll(".controls button").forEach(b => b.style.opacity = "");
+      }
+    });
+
+    // Bouton Aide
+    helpBtn.onclick = () => {
+      helpBox.style.display = helpBox.style.display === 'block' ? 'none' : 'block';
+    };
+
+    // Raccourcis clavier
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.isContentEditable) return;
+      switch (e.key) {
+        case 'f': case 'F':
+          fsBtn.click();
+          break;
+        case ' ':
+          e.preventDefault();
+          pauseBtn.click();
+          break;
+        case 'm': case 'M':
+          funkyBtn.click();
+          break;
+        case 's': case 'S':
+          fpsBtn.click();
+          break;
+        case 'h': case 'H':
+          helpBtn.click();
+          break;
+      }
+    });
+
+    // ──────────────────────────────────────────────
+    // 7. INITIALISATION
+    // ──────────────────────────────────────────────
+
+    resize();
+    updateThemeColors();
+    requestAnimationFrame(tick);
+
+  </script>
+
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
 
   <!-- enfin ton script principal -->
   <script type="module" src="./site.js"></script> 
 
 </body>
+  <script>
+    // Sécurité anti-FOUC en cas de navigation dynamique :
+    const t = localStorage.getItem('theme');
+    if (t && document.documentElement.getAttribute('data-theme') !== t) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  </script>
 </html>

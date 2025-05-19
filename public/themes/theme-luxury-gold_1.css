@@ -1,0 +1,30 @@
+[data-theme="luxury-gold_1"] {
+  --bg: #181303;
+  --text: #ffd700;
+  --heading: #daa520;
+  --link: #fff8dc;
+  --link-hover: #ffd700;
+  --input-bg: #2b210a;
+  --input-border: 1px solid #ffd700;
+  --button-bg: #5c4904;
+  --button-color: #ffd700;
+  --button-hover-bg: #ffd700;
+  --button-hover-color: #181303;
+  --code-bg: #2b210a;
+  --code-color: #ffd700;
+  --code-border: 4px solid #daa520;
+  --field-even-background: #2b210a;
+  --field-odd-border: #5c4904;
+  --footer-color: #daa520;
+  --navbar-bg: rgba(24,19,3,0.96);
+  --navbar-text: #ffd700;
+  --navbar-link-hover: #daa520;
+  --navbar-toggle-bg: rgba(44,36,10,0.75);
+  --nav-glow-1: rgba(255,215,0,0.13);
+  --nav-glow-2: rgba(218,165,32,0.18);
+  --matrix-background: #181303;
+  --matrix-overlay: rgba(255,215,0,0.09);
+  --bit-on: #ffd700;
+  --bit-off: #5c4904;
+  --bit-test: #daa520;
+}

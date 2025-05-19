@@ -1,3 +1,16 @@
+// Applique le thème sélectionné dans localStorage (light/dark custom)
+function switchTheme() {
+  let themeLight = localStorage.getItem("ulidw-theme-light") || "light";
+  let themeDark  = localStorage.getItem("ulidw-theme-dark")  || "dark";
+  let current = document.documentElement.getAttribute("data-theme");
+  let next = (current === themeDark) ? themeLight : themeDark;
+  localStorage.setItem("ulidw-theme-mode", "manual");
+  localStorage.setItem("ulidw-theme-last", next);
+  document.documentElement.setAttribute("data-theme", next);
+  // On relance bien applyTheme pour que le style soit réappliqué
+  if (typeof window.applyTheme === "function") window.applyTheme();
+}
+
 export function initNavbar() {
   console.log("✅ initNavbar()");
 
@@ -22,18 +35,14 @@ export function initNavbar() {
   );
   if (!toggles.length) return;    // ✳️ guard clause
 
-  // icône selon OS
-  const osDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  html.setAttribute("data-theme", osDark ? "dark" : "light");
-
   // ➤ Fonction utilitaire pour mettre à jour l'icône de chaque toggle
   function updateIcons(theme) {
+    const themeDark = localStorage.getItem("ulidw-theme-dark") || "dark";
     toggles.forEach(el => {
       const icon = el.querySelector(".nav-icon");
       const label = el.querySelector(".nav-label");
       if (!icon || !label) return;
-  
-      if (theme === "dark") {
+      if (theme === themeDark) {
         icon.textContent  = "☀️";
         label.textContent = "Clair";
       } else {
@@ -41,24 +50,18 @@ export function initNavbar() {
         label.textContent = "Sombre";
       }
     });
-  }  
+  }
   updateIcons(html.getAttribute("data-theme"));
 
   // ➤ Au clic, on inverse simplement le data-theme en mémoire
   toggles.forEach(el =>
     el.addEventListener("click", e => {
       e.preventDefault();
-      const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      html.setAttribute("data-theme", next);
-      updateIcons(next);
+      switchTheme();
+      // Mets à jour les icônes selon le nouveau thème actif
+      const newTheme = document.documentElement.getAttribute("data-theme");
+      updateIcons(newTheme);
     })
   );
 
-  // 🔔 **NOU: mise à jour si le thème OS change en cours de session
-  window.matchMedia("(prefers-color-scheme: dark)")
-  .addEventListener("change", evt => {
-    const sysTheme = evt.matches ? "dark" : "light";
-    html.setAttribute("data-theme", sysTheme);
-    updateIcons(sysTheme);
-  });
 }

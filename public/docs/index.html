@@ -2,74 +2,62 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  </script>
   <title>📚 ULID Worker – Docs Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- Thème avant chargement du CSS -->
-<script>
-  const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
-</script>  
+  <script>
+    (function(){
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (mode === "auto") theme = prefersDark ? themeDark : themeLight;
+      else if (mode === "manual") theme = localStorage.getItem("ulidw-theme-last") || themeDark;
+      else if (mode === "light") theme = themeLight;
+      else if (mode === "dark") theme = themeDark;
+      else theme = "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      // Si thème custom, cache tout tant que JS n'a pas injecté le style
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
+  </script>
 
-<!-- ton CSS -->
-<link rel="stylesheet" href="/style.css"/>
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
 
   <style>
-    body {
-      background-color: #0d0d0d;
-      color: #33ff33;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-      max-width: 960px;
-      margin: auto;
-    }
-    h1, h2, h3 {
-      color: #00ffcc;
-      margin-top: 2rem;
-      border-bottom: 1px dashed #00ffcc;
-      padding-bottom: 0.3rem;
-    }
     pre {
-      background-color: #111;
+      background: var(--code-bg);
       padding: 1rem;
+      border-left: 4px solid var(--heading);
       overflow-x: auto;
-      color: #66ff66;
-      border-left: 4px solid #00ffcc;
-      margin-bottom: 1rem;
     }
     code {
-      background-color: #111;
-      color: #66ffff;
+      background: var(--code-bg);
+      color: var(--code-color);
       padding: 0.2em 0.4em;
       border-radius: 4px;
-    }
-    a {
-      color: #66ffff;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin: 1rem 0;
     }
-    th, td {
-      border: 1px solid #33ff33;
-      padding: 8px;
-    }
-    th {
-      background-color: #111;
-    }
     ul {
       margin-top: 0.5rem;
-    }
-    footer {
-      margin-top: 3rem;
-      font-style: italic;
-      color: #888;
-      font-size: 0.9rem;
     }
   </style>
 </head>
@@ -78,7 +66,7 @@
 
   <header id="nav-container" class="header-nav-container"></header>
 
-  <main>
+  <main class="page-wrapper">
 
     <h1>📚 ULID Worker – Documentation complète</h1>
 
@@ -98,8 +86,6 @@
     <table>
       <tr><th>Paramètre</th><th>Type</th><th>Par défaut</th><th>Description</th></tr>
       <tr><td><code>n</code></td><td>entier</td><td>1</td><td>Nombre de ULID à générer (max 1000)</td></tr>
-      <tr><td><code>prefix</code></td><td>string</td><td>""</td><td>Ajoute un préfixe à chaque ULID</td></tr>
-      <tr><td><code>suffix</code></td><td>string</td><td>""</td><td>Ajoute un suffixe à chaque ULID</td></tr>
       <tr><td><code>base</code></td><td>string</td><td><code>crockford</code></td><td><code>crockford</code> (standard) ou <code>hex</code> (base16)</td></tr>
       <tr><td><code>pretty</code></td><td>bool</td><td><code>false</code></td><td>Format JSON indenté pour la lisibilité</td></tr>
       <tr><td><code>bin</code></td><td>bool</td><td><code>false</code></td><td>Ajoute un champ <code>"bin"</code> (130 bits bruts)</td></tr>
@@ -175,10 +161,17 @@
 
   </main>
 
-  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
     
   <!-- enfin ton script principal -->
   <script type="module" src="./site.js"></script> 
 
 </body>
+  <script>
+    // Sécurité anti-FOUC en cas de navigation dynamique :
+    const t = localStorage.getItem('theme');
+    if (t && document.documentElement.getAttribute('data-theme') !== t) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  </script>
 </html>

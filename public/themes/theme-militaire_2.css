@@ -1,0 +1,30 @@
+[data-theme="militaire_2"] {
+  --bg: #202818;
+  --text: #b0b090;
+  --heading: #a2c35f;
+  --link: #c3ba86;
+  --link-hover: #a2c35f;
+  --input-bg: #323c23;
+  --input-border: 1px solid #a2c35f;
+  --button-bg: #4a5733;
+  --button-color: #b0b090;
+  --button-hover-bg: #a2c35f;
+  --button-hover-color: #202818;
+  --code-bg: #232c1e;
+  --code-color: #b0b090;
+  --code-border: 4px solid #a2c35f;
+  --field-even-background: #2d341b;
+  --field-odd-border: #232c1e;
+  --footer-color: #969c7e;
+  --navbar-bg: rgba(32,40,24,0.94);
+  --navbar-text: #b0b090;
+  --navbar-link-hover: #a2c35f;
+  --navbar-toggle-bg: rgba(50,60,35,0.83);
+  --nav-glow-1: rgba(162,195,95,0.08);
+  --nav-glow-2: rgba(176,176,144,0.09);
+  --matrix-background: #202818;
+  --matrix-overlay: rgba(162,195,95,0.06);
+  --bit-on: #a2c35f;
+  --bit-off: #575c4d;
+  --bit-test: #b0b090;
+}

@@ -1,0 +1,30 @@
+[data-theme="jungle_1"] {
+  --bg: #143d14;
+  --text: #c4f0c5;
+  --heading: #34a853;
+  --link: #1db954;
+  --link-hover: #b2f985;
+  --input-bg: #244c24;
+  --input-border: 1px solid #34a853;
+  --button-bg: #155e17;
+  --button-color: #b2f985;
+  --button-hover-bg: #b2f985;
+  --button-hover-color: #143d14;
+  --code-bg: #244c24;
+  --code-color: #c4f0c5;
+  --code-border: 4px solid #34a853;
+  --field-even-background: #244c24;
+  --field-odd-border: #155e17;
+  --footer-color: #4b7931;
+  --navbar-bg: rgba(20,61,20,0.92);
+  --navbar-text: #b2f985;
+  --navbar-link-hover: #1db954;
+  --navbar-toggle-bg: rgba(36,76,36,0.8);
+  --nav-glow-1: rgba(34,168,83,0.25);
+  --nav-glow-2: rgba(180,249,133,0.2);
+  --matrix-background: #143d14;
+  --matrix-overlay: rgba(34,168,83,0.07);
+  --bit-on: #b2f985;
+  --bit-off: #155e17;
+  --bit-test: #1db954;
+}

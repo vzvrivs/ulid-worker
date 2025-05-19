@@ -1,0 +1,30 @@
+[data-theme="jardin-fleuri_1"] {
+  --bg: #fff0f5;
+  --text: #4b0082;
+  --heading: #ff69b4;
+  --link: #da70d6;
+  --link-hover: #ee82ee;
+  --input-bg: #fffafc;
+  --input-border: 1px solid #ffb6c1;
+  --button-bg: #f7e6ff;
+  --button-color: #c71585;
+  --button-hover-bg: #ffb6c1;
+  --button-hover-color: #fff0f5;
+  --code-bg: #fffafc;
+  --code-color: #ff69b4;
+  --code-border: 4px solid #ffb6c1;
+  --field-even-background: #fffafc;
+  --field-odd-border: #f7e6ff;
+  --footer-color: #c71585;
+  --navbar-bg: rgba(255,240,245,0.93);
+  --navbar-text: #c71585;
+  --navbar-link-hover: #ff69b4;
+  --navbar-toggle-bg: rgba(247,230,255,0.8);
+  --nav-glow-1: rgba(218,112,214,0.17);
+  --nav-glow-2: rgba(255,182,193,0.2);
+  --matrix-background: #fff0f5;
+  --matrix-overlay: rgba(255,182,193,0.08);
+  --bit-on: #ff69b4;
+  --bit-off: #f7e6ff;
+  --bit-test: #ee82ee;
+}

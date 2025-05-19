@@ -1,0 +1,30 @@
+[data-theme="matrix_2"] {
+  --bg: #030b03;
+  --text: #0aff0a;
+  --heading: #00e817;
+  --link: #1ff32c;
+  --link-hover: #bbff00;
+  --input-bg: #071107;
+  --input-border: 1px solid #0aff0a;
+  --button-bg: #102f10;
+  --button-color: #0aff0a;
+  --button-hover-bg: #0aff0a;
+  --button-hover-color: #011001;
+  --code-bg: #0d210d;
+  --code-color: #bbff00;
+  --code-border: 4px solid #0aff0a;
+  --field-even-background: #0d210d;
+  --field-odd-border: #0d1c0d;
+  --footer-color: #396c39;
+  --navbar-bg: rgba(3, 11, 3, 0.98);
+  --navbar-text: #0aff0a;
+  --navbar-link-hover: #bbff00;
+  --navbar-toggle-bg: rgba(3,11,3,0.88);
+  --nav-glow-1: rgba(10, 255, 10, 0.17);
+  --nav-glow-2: rgba(187, 255, 0, 0.12);
+  --matrix-background: #000;
+  --matrix-overlay: rgba(0, 255, 0, 0.08);
+  --bit-on: #0aff0a;
+  --bit-off: #132313;
+  --bit-test: #bbff00;
+}

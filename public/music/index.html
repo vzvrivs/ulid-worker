@@ -2,13 +2,37 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>🎶 ULID Music</title>
-
-  <!-- Thème avant chargement du CSS -->
   <script>
-    const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  </script>
+  <title>🎶 ULID Music</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+
+  <script>
+    (function(){
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (mode === "auto") theme = prefersDark ? themeDark : themeLight;
+      else if (mode === "manual") theme = localStorage.getItem("ulidw-theme-last") || themeDark;
+      else if (mode === "light") theme = themeLight;
+      else if (mode === "dark") theme = themeDark;
+      else theme = "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      // Si thème custom, cache tout tant que JS n'a pas injecté le style
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
   </script>
 
   <!-- ton CSS -->
@@ -41,7 +65,7 @@
     /* ── Taille fixe pour l’ULID (26 caractères Base32) ── */
     #ulid-input {
       flex: none;              /* pas d’expansion/shrink */
-      width: 28ch;             /* 26 “0” de large, soit pile la longueur d’un ULID */
+      width: 28ch;             /* 28 “0” de large, soit pile la longueur d’un ULID, avec un marge en début et fin */
       box-sizing: border-box;  /* inclut padding/border dans ces 26ch */
     }
     
@@ -99,6 +123,7 @@
 
     .mini th,
     .mini td {
+      border: none;
       color: var(--text);
       padding: 0.2em 0.3em;
       text-align: center;
@@ -234,14 +259,15 @@
 
   <header id="nav-container" class="header-nav-container"></header>
 
-  <main class="page-wrapper" role="main">
+  <main class="page-wrapper">
 
     <h1>🎶 ULID Music</h1>
     <section id="ulid-controls">
       <div class="action-container flex-container">
         <div class="group">
-          <button type="button" id="ulid-now"
-                  aria-label="Générer un ULID à l’horodatage courant">
+          <button type="button" id="ulid-ts-now"
+                  aria-label="Générer un ULID à l’horodatage courant"
+                  class="maintenant-btn">
             <span aria-hidden="true">⏲️</span> Maintenant
           </button>
           <button type="button" id="ulid-random"
@@ -454,12 +480,19 @@
 
   </main>
 
-  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/tone@14.8.39/build/Tone.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.5/build/cjs/vexflow.js"></script>
 
   <script type="module">
+    import {
+      alphabet,
+      rawToBinary,
+      formatFullDate,
+      generateUlidOfficial,
+      checkUlid
+    } from '/helpers.js';
 
     /* ===== Constantes & tables ===== */
     const $ = id => document.getElementById(id);
@@ -496,7 +529,7 @@
     let isPaused = false;
     
     // Constantes de configuration
-    const crock = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+    const crock = alphabet;
     
     // Table de cache pour les gammes 16 notes
     const _tbl16Cache = Object.create(null);
@@ -512,7 +545,7 @@
     // Liste et configuration des instruments
     const instrumentFiles = {
       marimba: {
-        base: "./samples/Samples_Marimba/",
+        base: "/music/samples/Samples_Marimba/",
         files: {
           "A2": "A2.80966957.mp3",
           "A3": "A3.cc7d0a4b.mp3",
@@ -527,7 +560,7 @@
         }
       },
       piano: {
-        base: "./samples/Samples_Piano/",
+        base: "/music/samples/Samples_Piano/",
         files: {
 
           "A2": "A2v8.mp3",
@@ -547,7 +580,7 @@
         }
       },
       strings: {
-        base: "./samples/Samples_Strings/",
+        base: "/music/samples/Samples_Strings/",
         files: {
           "A2": "A2.32eab706.mp3",
           "A3": "A3.ead476da.mp3",
@@ -562,7 +595,7 @@
         }
       },
       synth: {
-        base: "./samples/Samples_Synth/",
+        base: "/music/samples/Samples_Synth/",
         files: {
           "A2": "A2.d39e6a1e.mp3",
           "A3": "A3.2583ee7f.mp3",
@@ -577,7 +610,7 @@
         }
       },
       woodwind: {
-        base: "./samples/Samples_Woodwind/",
+        base: "/music/samples/Samples_Woodwind/",
         files: {
           "A2": "A2.c94f91ab.mp3",
           "A3": "A3.44853c04.mp3",
@@ -606,62 +639,10 @@
     │  HELPERS PURS             │
     └──────────────────────────*/
     
-    // Conversion ULID en 128 bits binaires (string)
-    function toBits(ulid) {
-      return ulid
-        .split("")
-        .map(c => crock.indexOf(c).toString(2).padStart(5, "0"))
-        .join("")
-        .slice(0, 128);
-    }
-    
     // Coupe en 32 nibbles (tableau de 32× "0000" à "1111")
     function chunk4(bits) {
       return Array.from({ length: 32 }, (_, i) => bits.slice(i*4, i*4 + 4));
     }
-    
-    // Génération d’un ULID conforme (timestamp ou aléa)
-    function makeUlid(ts) {
-      const crock = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
-      let ts48;
-      if (ts === 'random') {
-        ts48 = BigInt(0);
-        for (let i = 0; i < 6; i++) {
-          ts48 = (ts48 << 8n) | BigInt(Math.floor(Math.random() * 256));
-        }
-      } else {
-        let tsVal;
-        if (typeof ts === "number" && isFinite(ts)) {
-          tsVal = Math.floor(ts);
-        } else if (typeof ts === "string" && /^\d+$/.test(ts)) {
-          tsVal = Math.floor(Number(ts));
-        } else if (ts === undefined || ts === null) {
-          tsVal = Date.now();
-        } else {
-          tsVal = Date.now();
-        }
-        ts48 = BigInt(tsVal) & 0xFFFFFFFFFFFFn;
-      }
-      let tsBase32 = "";
-      let v = ts48;
-      for (let i = 0; i < 10; i++) {
-        tsBase32 = crock[Number(v % 32n)] + tsBase32;
-        v = v / 32n;
-      }
-      let rand = BigInt(0);
-      for (let i = 0; i < 10; i++) {
-        rand = (rand << 8n) | BigInt(Math.floor(Math.random() * 256));
-      }
-      let randBase32 = "";
-      v = rand;
-      for (let i = 0; i < 16; i++) {
-        randBase32 = crock[Number(v % 32n)] + randBase32;
-        v = v / 32n;
-      }
-      return tsBase32 + randBase32;
-    }
-    function makeUlidNow()    { return makeUlid(Date.now()); }
-    function makeUlidRandom() { return makeUlid(); }
     
     // Table de 16 notes (gamme de base, mémoïsée par octave)
     function getTable16(baseOctave = 4){
@@ -711,23 +692,6 @@
         default:        return arr;
       }
     }
-    
-    // Format date humanisé (optionnel ici)
-    function formatFullDate(isoString) {
-      const d = new Date(isoString);
-      const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-      const months = ["janvier", "février", "mars", "avril", "mai", "juin",
-                      "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
-      const dayName = days[d.getUTCDay()];
-      const day     = d.getUTCDate().toString().padStart(2, "0");
-      const month   = months[d.getUTCMonth()];
-      const year    = d.getUTCFullYear();
-      const hour    = d.getUTCHours().toString().padStart(2, "0");
-      const minute  = d.getUTCMinutes().toString().padStart(2, "0");
-      const second  = d.getUTCSeconds().toString().padStart(2, "0");
-      const ms      = d.getUTCMilliseconds().toString().padStart(3, "0");
-      return `${dayName} ${day} ${month} ${year} à ${hour}:${minute}:${second}.${ms} UTC`;
-    }
 
     // Anti-rebond pour les inputs
     const debounce = (fn, d = 300) => {
@@ -736,7 +700,7 @@
     
     // Conversion ULID → séquence complète (tableau d’objets {val, fast})
     function ulidToSequence(v) {
-      const bits    = toBits(v);
+      const bits    = rawToBinary(v);
       const nibbles = chunk4(bits);
       const vals    = nibbles.map(b => parseInt(b, 2));
       const revs    = [...vals].reverse();
@@ -1164,8 +1128,8 @@
     }
 
     // Génère un nouvel ULID, le place dans le champ, valide l'entrée
-    function newUid(){
-      const id = makeUlidNow();
+    async function newUid(){
+      const id = await generateUlidOfficial();
       $("ulid-input").value = id;
       validateUlid(id);
     }
@@ -1186,7 +1150,7 @@
     }
     
     // Validation d’un ULID (appel au worker + maj UI)
-    async function validateUlid(v) {
+    function validateUlid(v) {
       v = v.trim().toUpperCase();
       $("ulid-input").value = v;
       const baseOctave    = getBaseOctave();
@@ -1195,17 +1159,11 @@
       const valLine       = $("nibbles-values");
       const noteLine      = $("nibbles-notes");
       const statusEl = $("ulid-status");
-      let   res, data;
-      try{
-        res  = await fetch('/ulid?check=' + encodeURIComponent(v));
-        data = await res.json();
-      }catch(err){
-        statusEl.textContent = "⛔ Erreur réseau ("+err.message+")";
-        statusEl.style.color = "var(--error,#f00)";
-        $("ulid-ts-preview").textContent = "📆 Date : —";
-        return;
-      }
-      if (res.ok && data.conform) {
+
+      // Vérification locale via checkUlid
+      const data = checkUlid(v);
+
+      if (data.ok) {
         $("play").disabled = false;
         statusEl.textContent = "✅ ULID conforme";
         statusEl.style.color = "var(--success,#00ff00)";
@@ -1260,8 +1218,7 @@
           `⚖️ Rythme : —`;
         $("note-grids").style.display = "none";
       }
-    }
-
+}
 
     /*────────────────────────────┐
     │  UI : LISTENERS & WORKFLOW  │
@@ -1286,13 +1243,13 @@
     $("tempoDur").addEventListener("input", () => syncTempoFields("dur"));
     
     // Boutons ULID random/maintenant
-    $("ulid-random").onclick = () => {
-      const id = makeUlidRandom();
+    $("ulid-random").onclick = async () => {
+      const id = await generateUlidOfficial();
       $("ulid-input").value = id;
       validateUlid(id);
     };
-    $("ulid-now").onclick = () => {
-      const id = makeUlidNow();
+    $("ulid-ts-now").onclick = async () => {
+      const id = await generateUlidOfficial();
       $("ulid-input").value = id;
       validateUlid(id);
     };
@@ -1425,4 +1382,11 @@
   <script type="module" src="./site.js"></script> 
 
 </body>
+  <script>
+    // Sécurité anti-FOUC en cas de navigation dynamique :
+    const t = localStorage.getItem('theme');
+    if (t && document.documentElement.getAttribute('data-theme') !== t) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  </script>
 </html>

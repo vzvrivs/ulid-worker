@@ -1,0 +1,30 @@
+[data-theme="stormtrooper-dark_2"] {
+  --bg: #101216;
+  --text: #e8eaf6;
+  --heading: #c5c9d6;
+  --link: #0b87fc;
+  --link-hover: #e8eaf6;
+  --input-bg: #232632;
+  --input-border: 1px solid #e8eaf6;
+  --button-bg: #292a33;
+  --button-color: #e8eaf6;
+  --button-hover-bg: #0b87fc;
+  --button-hover-color: #101216;
+  --code-bg: #232632;
+  --code-color: #c5c9d6;
+  --code-border: 4px solid #0b87fc;
+  --field-even-background: #222733;
+  --field-odd-border: #232632;
+  --footer-color: #adb5bd;
+  --navbar-bg: rgba(16,18,22,0.94);
+  --navbar-text: #e8eaf6;
+  --navbar-link-hover: #0b87fc;
+  --navbar-toggle-bg: rgba(16,18,22,0.82);
+  --nav-glow-1: rgba(11,135,252,0.10);
+  --nav-glow-2: rgba(229,234,246,0.08);
+  --matrix-background: #232632;
+  --matrix-overlay: rgba(229,234,246,0.05);
+  --bit-on: #e8eaf6;
+  --bit-off: #3b3c4e;
+  --bit-test: #0b87fc;
+}

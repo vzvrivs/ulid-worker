@@ -1,0 +1,29 @@
+[data-theme="sanstorm_1"] {
+  --bg: #f8f1e4;
+  --text: #5b4636;
+  --heading: #c29a5c;
+  --link: #a8763e;
+  --link-hover: #8c6239;
+  --input-bg: #fff8ee;
+  --input-border: 1px solid #d2b48c;
+  --button-bg: #f2e0c9;
+  --button-color: #5b4636;
+  --button-hover-bg: #c29a5c;
+  --button-hover-color: #fff;
+  --code-bg: #f2e5d5;
+  --code-color: #5b4636;
+  --code-border: 4px solid #c29a5c;
+  --field-even-background: color-mix(in srgb, var(--text) 10%, var(--bg));
+  --field-odd-border: var(--field-even-background);
+  --footer-color: #a9947a;
+  --navbar-bg: rgba(248, 241, 228, 0.6);
+  --navbar-text: #5b4636;
+  --navbar-link-hover: #a8763e;
+  --navbar-toggle-bg: rgba(248, 241, 228, 0.6);
+  --nav-glow-1: rgba(194, 154, 92, 0.6);
+  --nav-glow-2: rgba(168, 118, 62, 0.6);
+  --matrix-background: #f8f1e4;
+  --matrix-overlay: rgba(0, 0, 0, 0.02);
+  --bit-on: #c29a5c;
+  --bit-off: color-mix(in srgb, var(--footer-color) 50%, var(--bg));
+}

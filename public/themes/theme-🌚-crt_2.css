@@ -1,0 +1,30 @@
+[data-theme="crt_2"] {
+  --bg: #181c14;
+  --text: #8aff68;
+  --heading: #fdffb6;
+  --link: #53e456;
+  --link-hover: #fcff71;
+  --input-bg: #2a3321;
+  --input-border: 1px solid #d8ffb6;
+  --button-bg: #232b19;
+  --button-color: #8aff68;
+  --button-hover-bg: #8aff68;
+  --button-hover-color: #1c230f;
+  --code-bg: #181c14;
+  --code-color: #fcff71;
+  --code-border: 4px solid #53e456;
+  --field-even-background: #1f2c1c;
+  --field-odd-border: #203319;
+  --footer-color: #83a272;
+  --navbar-bg: rgba(24, 28, 20, 0.88);
+  --navbar-text: #d8ffb6;
+  --navbar-link-hover: #8aff68;
+  --navbar-toggle-bg: rgba(24, 28, 20, 0.77);
+  --nav-glow-1: rgba(138, 255, 104, 0.22);
+  --nav-glow-2: rgba(253, 255, 182, 0.18);
+  --matrix-background: #1e2513;
+  --matrix-overlay: rgba(138,255,104,0.07);
+  --bit-on: #8aff68;
+  --bit-off: #384f36;
+  --bit-test: #fdffb6;
+}

@@ -1,0 +1,30 @@
+[data-theme="luxury-gold_2"] {
+  --bg: #1d1b16;
+  --text: #c7b86b;
+  --heading: #ffd700;
+  --link: #c7b86b;
+  --link-hover: #ffd700;
+  --input-bg: #292717;
+  --input-border: 1px solid #ffd700;
+  --button-bg: #312c1a;
+  --button-color: #ffd700;
+  --button-hover-bg: #c7b86b;
+  --button-hover-color: #1d1b16;
+  --code-bg: #292717;
+  --code-color: #ffd700;
+  --code-border: 4px solid #ffd700;
+  --field-even-background: #2e280f;
+  --field-odd-border: #312c1a;
+  --footer-color: #bda872;
+  --navbar-bg: rgba(29,27,22,0.96);
+  --navbar-text: #ffd700;
+  --navbar-link-hover: #c7b86b;
+  --navbar-toggle-bg: rgba(41,39,23,0.89);
+  --nav-glow-1: rgba(255,215,0,0.13);
+  --nav-glow-2: rgba(199,184,107,0.12);
+  --matrix-background: #1d1b16;
+  --matrix-overlay: rgba(199,184,107,0.05);
+  --bit-on: #ffd700;
+  --bit-off: #bda872;
+  --bit-test: #c7b86b;
+}

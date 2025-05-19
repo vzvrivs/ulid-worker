@@ -1,0 +1,30 @@
+[data-theme="halloween_2"] {
+  --bg: #2d1b06;
+  --text: #ffa600;
+  --heading: #f55b0a;
+  --link: #ffa600;
+  --link-hover: #f55b0a;
+  --input-bg: #3e240a;
+  --input-border: 1px solid #f55b0a;
+  --button-bg: #5a3c19;
+  --button-color: #ffa600;
+  --button-hover-bg: #f55b0a;
+  --button-hover-color: #2d1b06;
+  --code-bg: #362100;
+  --code-color: #ffa600;
+  --code-border: 4px solid #f55b0a;
+  --field-even-background: #4d2b00;
+  --field-odd-border: #362100;
+  --footer-color: #b6712e;
+  --navbar-bg: rgba(61, 28, 3, 0.98);
+  --navbar-text: #ffa600;
+  --navbar-link-hover: #f55b0a;
+  --navbar-toggle-bg: rgba(61,28,3,0.85);
+  --nav-glow-1: rgba(255, 166, 0, 0.16);
+  --nav-glow-2: rgba(245, 91, 10, 0.11);
+  --matrix-background: #2d1b06;
+  --matrix-overlay: rgba(245,91,10,0.08);
+  --bit-on: #ffa600;
+  --bit-off: #563212;
+  --bit-test: #f55b0a;
+}

@@ -1,0 +1,30 @@
+[data-theme="jungle_2"] {
+  --bg: #113e21;
+  --text: #ddffbb;
+  --heading: #a1ff56;
+  --link: #b8ff82;
+  --link-hover: #edff8f;
+  --input-bg: #295d3c;
+  --input-border: 1px solid #a1ff56;
+  --button-bg: #24513a;
+  --button-color: #edff8f;
+  --button-hover-bg: #a1ff56;
+  --button-hover-color: #113e21;
+  --code-bg: #182b19;
+  --code-color: #a1ff56;
+  --code-border: 4px solid #b8ff82;
+  --field-even-background: #204c26;
+  --field-odd-border: #113e21;
+  --footer-color: #a1b88f;
+  --navbar-bg: rgba(17,62,33,0.96);
+  --navbar-text: #edff8f;
+  --navbar-link-hover: #b8ff82;
+  --navbar-toggle-bg: rgba(41,93,60,0.87);
+  --nav-glow-1: rgba(161,255,86,0.10);
+  --nav-glow-2: rgba(237,255,143,0.10);
+  --matrix-background: #163c1e;
+  --matrix-overlay: rgba(177,255,86,0.07);
+  --bit-on: #a1ff56;
+  --bit-off: #28492e;
+  --bit-test: #edff8f;
+}

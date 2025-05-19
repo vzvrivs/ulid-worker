@@ -1,0 +1,29 @@
+[data-theme="graveyard_2"] {
+  --bg: #181c1b;
+  --text: #cad3c3;
+  --heading: #96e6a1;
+  --link: #7fb069;
+  --link-hover: #ddeac1;
+  --input-bg: #232825;
+  --input-border: 1px solid #49635a;
+  --button-bg: #232825;
+  --button-color: #ddeac1;
+  --button-hover-bg: #96e6a1;
+  --button-hover-color: #232825;
+  --code-bg: #222825;
+  --code-color: #b4ebc0;
+  --code-border: 4px solid #96e6a1;
+  --field-even-background: #232825;
+  --field-odd-border: #232825;
+  --footer-color: #6b7a73;
+  --navbar-bg: rgba(24,28,27,0.7);
+  --navbar-text: #ddeac1;
+  --navbar-link-hover: #96e6a1;
+  --navbar-toggle-bg: rgba(35,40,37,0.7);
+  --nav-glow-1: rgba(150,230,161,0.2);
+  --nav-glow-2: rgba(125,176,105,0.1);
+  --matrix-background: #181c1b;
+  --matrix-overlay: rgba(24,28,27,0.05);
+  --bit-on: #96e6a1;
+  --bit-off: #6b7a73;
+}

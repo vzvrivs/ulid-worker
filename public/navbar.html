@@ -44,14 +44,14 @@
       </li>
       <li>
         <a class="nav-item" href="#" id="themeToggle">
-          <span class="nav-icon" aria-hidden="true">🌙</span>
-          <span class="nav-label">Sombre</span>
+          <span class="nav-icon" aria-hidden="true">🌓</span>
+          <span class="nav-label">Thème</span>
         </a>
       </li>
       <li>
-        <a class="nav-item" href="/settings">
-          <span class="nav-icon" aria-hidden="true">⚙️</span>
-          <span class="nav-label">Options</span>
+        <a class="nav-item" href="/themes">
+          <span class="nav-icon" aria-hidden="true">🖼️</span>
+          <span class="nav-label">Themes</span>
         </a>
       </li>
     </ul>
@@ -84,7 +84,7 @@
     <li><a class="nav-item" href="/playground">🕹️ Playground</a></li>
     <li><a class="nav-item" href="/debug/logs">📖 Logs</a></li>
     <li><a class="nav-item" href="#" id="themeToggleMobile">🌓 Thème</a></li>
-    <li><a class="nav-item" href="/settings">⚙️ Options</a></li>
+    <li><a class="nav-item" href="/themes">🖼️ Thèmes</a></li>
   </ul>
 </div>
 
@@ -121,6 +121,9 @@
     width: 100%;
     display: flex;
     align-items: center;
+    min-height: 60px;
+    padding-top: 0.45rem;
+    padding-bottom: 0.1rem;
     padding-left: .8rem;
     padding-right: .55rem;
     margin-inline: 1rem;
@@ -163,6 +166,10 @@
     to   { transform: rotate(+360deg); }
   }
 
+  .navbar-links .nav-item {
+    gap: 0.18rem;
+  }
+
   .navbar-links {
     list-style: none;
     margin: 0;
@@ -179,6 +186,11 @@
     text-decoration: none;
     padding: 0.5rem 0;
     transition: color 0.3s;
+  }
+
+  .nav-icon {
+    display: block;
+    margin-bottom: -0.08em;
   }
 
   /* ──────────────────────────────────────────────────────────────────── */
@@ -273,6 +285,7 @@
   }
 
   .nav-item:hover {
+    font-weight: bold;
     color: var(--navbar-link-hover);
     text-shadow:
       0 0 4px var(--nav-glow-1),

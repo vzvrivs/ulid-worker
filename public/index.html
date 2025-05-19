@@ -2,17 +2,41 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  </script>
   <title>ULID Worker Terminal - Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<!-- Thème avant chargement du CSS -->
-<script>
-  const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
-</script>
+  <script>
+    (function(){
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (mode === "auto") theme = prefersDark ? themeDark : themeLight;
+      else if (mode === "manual") theme = localStorage.getItem("ulidw-theme-last") || themeDark;
+      else if (mode === "light") theme = themeLight;
+      else if (mode === "dark") theme = themeDark;
+      else theme = "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      // Si thème custom, cache tout tant que JS n'a pas injecté le style
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
+  </script>
   
-<!-- ton CSS -->
-<link rel="stylesheet" href="/style.css"/>
+  <!-- ton CSS -->
+  <link rel="stylesheet" href="/style.css"/>
 
 </head>
 
@@ -37,10 +61,17 @@
 
   </main>
 
-  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
 
   <!-- enfin ton script principal -->
-  <script type="module" src="./site.js"></script> 
+  <script type="module" src="./site.js"></script>
   
 </body>
+  <script>
+    // Sécurité anti-FOUC en cas de navigation dynamique :
+    const t = localStorage.getItem('theme');
+    if (t && document.documentElement.getAttribute('data-theme') !== t) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  </script>
 </html>

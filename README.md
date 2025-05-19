@@ -10,124 +10,241 @@
 ![Made with 💻 & ☕ (chicorée inside)](https://img.shields.io/badge/Made%20with-%F0%9F%92%BB%20%26%20%E2%98%95%20(chicor%C3%A9e%20inside)-blue)
 ![Visitors](https://visitor-badge.laobi.icu/badge?page_id=vzvrivs.ulid-worker)
 
-✨ Un projet personnel autour des ULID, propulsé par Cloudflare Workers.
+✨ A personal project centered around ULIDs, powered by Cloudflare Workers.
 
 - [ULID Worker](#ulid-worker)
-  - [📦 Présentation](#-présentation)
-  - [🚀 Fonctionnalités](#-fonctionnalités)
+  - [📦 Overview](#-overview)
+  - [🚀 Features](#-features)
   - [🛠️ Technologies](#️-technologies)
-  - [🧑‍💻 Pour développer localement](#-pour-développer-localement)
-  - [🔗 Routes principales](#-routes-principales)
-  - [🗂️ Pages annexes](#️-pages-annexes)
-  - [🧠 Auteur](#-auteur)
-  - [📝 Licence](#-licence)
-  - [🔮 À venir](#-à-venir)
+  - [🧑‍💻 Local Development](#-local-development)
+  - [🔗 Main Endpoints](#-main-endpoints)
+  - [🔒 Security & Log Management](#-security--log-management)
+  - [🗂️ Additional Pages](#️-additional-pages)
+  - [🧠 Author](#-author)
+  - [📝 License](#-license)
+
+
+> ℹ️ **Accessibilité / a11y**  
+> Tous les formulaires, inputs, selects, checkboxes, et boutons sont systématiquement dotés de labels explicites (`<label for=...>`), `title` et/ou `aria-label` pour une accessibilité maximale et la compatibilité avec les linters ou outils comme axe, VSCode, etc.
+
 
 ---
 
-## 📦 Présentation
+---
 
-Ce projet a deux objectifs principaux :
+## Table of Contents
 
-1. **Générer des ULID** (Universally Unique Lexicographically Sortable Identifiers)
-2. **Analyser, documenter et expérimenter avec leur structure et leurs usages**
-
-Il est né dans le cadre d’un autre projet nommé **PlayPal**, avant de devenir une entité indépendante dédiée à la compréhension et à la manipulation des ULID.
+- [ULID Worker](#ulid-worker)
+  - [📦 Overview](#-overview)
+  - [ℹ️ Accessibilité / a11y](#ℹ️-accessibilité--a11y)
+  - [🧑‍💻 Local Development](#-local-development)
+  - [🚀 Features](#-features)
+  - [🔗 Main Endpoints](#-main-endpoints)
+  - [🗂️ Additional Pages](#️-additional-pages)
+  - [🎨 Gestion des thèmes (light/dark/custom) & FOUC](#-gestion-des-thèmes-lightdarkcustom--fouc)
+  - [🎨 Thèmes prêts à l’emploi](#-thèmes-prêts-à-lemploi)
+  - [💡 Astuce](#-astuce)
+  - [🚩 Known Issues / Limitations](#-known-issues--limitations)
+  - [🧠 Author](#-author)
+  - [Assistant IA & aide à l’optimisation](#assistant-ia--aide-à-loptimisation)
+  - [📝 License](#-license)
 
 ---
 
-## 🚀 Fonctionnalités
+## 📦 Overview
 
-- 🎲 Génération d'ULID via API HTTP avec options (quantité, format, préfixe/suffixe…)
-- 🧪 Analyse de conformité d’un ULID (forme, timestamp)
-- 🧬 Complétion automatique de champs `_uid: null` dans un JSON fourni
-- 🧰 Interface web interactive à la racine (`/`)
+This project serves two main purposes:
 
----
+1. **Generate ULIDs** (Universally Unique Lexicographically Sortable Identifiers)
+2. **Analyze, document, and experiment with their structure and use cases**
 
-## 🛠️ Technologies
-
-- Cloudflare Workers (backend serverless)
-- HTML/CSS/JS vanilla (frontend statique)
-- Git + GitHub pour le versionnement
+It originated as a subproject of **PlayPal**, but has since grown into an independent playground for working with ULIDs.
 
 ---
 
-## 🧑‍💻 Pour développer localement
+## 🧑‍💻 Local Development
 
 ```bash
 wrangler dev
 ```
 
-> Nécessite l’outil [`wrangler`](https://developers.cloudflare.com/workers/wrangler/) (CLI officielle Cloudflare)
+> Requires [`wrangler`](https://developers.cloudflare.com/workers/wrangler/) (official Cloudflare CLI)
 
 ---
 
-## 🔗 Routes principales
+## 🚀 Features
 
-| Route               | Description                              |
-|---------------------|------------------------------------------|
-| `/`                 | Interface web interactive                |
-| `/ulid`             | Génération ULID                          |
-| `/ulid?check=...`   | Analyse de conformité                    |
-| `/autofill` (POST)  | Remplit tous les champs `_uid:null`      |
-
-✅ Paramètres acceptés dans /ulid
-
-| Paramètre | Type    | Description                                             |
-|-----------|---------|---------------------------------------------------------|
-| check     | string  | ULID à analyser pour en vérifier la conformité          |
-| n         | number  | Nombre de ULID à générer (max 1000)                     |
-| pretty    | boolean | Si true, formatte le JSON avec indentation              |
-| prefix    | string  | Ajoute un préfixe aux ULID générés                      |
-| suffix    | string  | Ajoute un suffixe aux ULID générés                      |
-| base      | string  | Base de sortie (actuellement : crockford ou hex)        |
-| bin       | boolean | Si true, ajoute aussi l’ULID en binaire                 |
-| format    | string  | Type de format de sortie : json, csv, tsv, text, joined |
+- 🎲 Generate ULIDs via HTTP API (with options: batch, format, prefix/suffix…)
+- 🧪 Validate a ULID’s format and timestamp
+- 🧬 Automatically fill `_uid: null` fields in any provided JSON
+- 🧰 Interactive web interface at the root (`/`)
 
 ---
 
-## 🗂️ Pages annexes
+## 🔗 Main Endpoints
 
-Le projet comprend également des interfaces ou contenus complémentaires :
+| Route               | Description                                      |
+|---------------------|--------------------------------------------------|
+| `/`                 | Interactive web interface                        |
+| `/ulid`             | Generate ULID(s)                                 |
+| `/ulid?check=...`   | Validate a ULID                                  |
+| `/autofill` (POST)  | Autofill all `_uid:null` fields in a JSON        |
 
-| URL           | Description                                                                 |
-|---------------|-----------------------------------------------------------------------------|
-| `/`           | 🏠 Interface principale (génération, vérification, autofill)               |
-| `/help`       | 🆘 Aide rapide avec exemples d'URL préconfigurées                          |
-| `/docs`       | 📚 Documentation complète des endpoints, paramètres et réponses            |
-| `/playground` | 🕹️ Scripts interractifs pour tester les fonctionnalités principales        |
-| `/music`      | 🎶 Générateur de musique basé sur les ULID, avec différents styles sonores |
-| `/matrix`     | 🧬 Animation visuelle "Matrix ULID" interactive                            |
+**Accepted parameters for /ulid:**
+
+| Parameter | Type    | Description                                              |
+|-----------|---------|----------------------------------------------------------|
+| check     | string  | ULID to validate                                         |
+| n         | number  | Number of ULIDs to generate (max 1000)                   |
+| pretty    | boolean | Pretty-print the JSON                                    |
+| prefix    | string  | Add a prefix to each generated ULID                      |
+| suffix    | string  | Add a suffix to each generated ULID                      |
+| base      | string  | Output base (currently: crockford or hex)                |
+| bin       | boolean | Also output the ULID as binary if true                   |
+| format    | string  | Output format: json, csv, tsv, text, joined              |
 
 ---
 
-## 🧠 Auteur
+## 🗂️ Additional Pages
 
-Projet conçu avec passion par **Raphaël**
+This project also includes a set of supporting interfaces and documentation:
+
+| URL           | Description                                                            |
+|---------------|------------------------------------------------------------------------|
+| `/`           | 🏠 Main interface (generation, validation, autofill)                   |
+| `/help`       | 🆘 Quick help and example URLs                                         |
+| `/docs`       | 📚 Full documentation for endpoints, parameters, and responses         |
+| `/playground` | 🕹️ Interactive scripts for feature exploration                        |
+| `/music`      | 🎶 ULID-based music generator with multiple sound styles               |
+| `/matrix`     | 🧬 Interactive "Matrix ULID" visual animation                          |
 
 ---
 
-## 📝 Licence
+## 🎨 Gestion des thèmes (light/dark/custom) & FOUC
+---
 
-Ce projet est distribué sous la licence  
+## 🎨 Thèmes prêts à l’emploi
+
+Le projet inclut désormais **plusieurs thèmes personnalisés** inspirés de la pop culture, de l’esthétique vintage ou de la fantaisie :
+
+- CRT (terminal vert)
+- Matrix
+- Neon
+- Halloween
+- Stormtrooper Light
+- Stormtrooper Dark
+- Jungle
+- Jardin fleuri
+- Militaire
+- Candy
+- Luxury Gold
+
+Chaque thème définit **toutes les variables CSS** du projet : couleurs, fonds, boutons, champs, code, navbar, etc.
+Ils peuvent être ajoutés/importés dans `/themes` via un simple fichier CSS (voir exemple ci-dessus).
+
+> Voir le fichier [`themes-custom.css`](./themes-custom.css) pour une collection complète à importer, ou copie-colle un bloc dans l’UI.
+
+---
+
+
+ULID Worker supporte un système de thème avancé :
+  - Sélection automatique clair/sombre (“auto” selon le système)
+  - Personnalisation avec thèmes custom téléchargeables/importables
+  - Persistance du thème choisi entre toutes les pages
+  - **Zéro flash blanc (FOUC) :** le thème est appliqué dès le tout premier pixel, même avec navigation dynamique
+
+**Mise en œuvre technique :**
+  - Un mini-script est injecté au tout début du `<head>` de chaque page HTML.  
+    Il lit les préférences (`localStorage`) et applique le bon `data-theme` avant tout chargement du CSS.
+  - Si un thème custom est utilisé, la page est temporairement masquée (`visibility:hidden`) jusqu’à ce que le JS injecte le bon style (plus de FOUC).
+  - Le bouton de la navbar permet de basculer entre les thèmes “clair” et “sombre” choisis dans la page Thèmes, qu’ils soient natifs ou custom.
+
+**Pour ajouter un thème custom :**
+1. Va sur la page `/themes`
+2. Uploade un ou plusieurs fichiers `.css` contenant des blocs de la forme :  
+   ```css
+   [data-theme="mon-theme"] {
+     --bg: #222;
+     --text: #eee;
+     /* ... */
+   }
+   ```
+3. Sélectionne-le comme thème clair ou sombre.
+4. Le thème s’applique immédiatement sur tout le site.
+
+### Exemple de structure d’un thème custom
+
+
+> 💡 **Astuce**  
+> Pour créer un thème custom à partir d’un thème existant, tu peux simplement :
+> 1. Copier un bloc `[data-theme="..."]` du fichier CSS
+> 2. Modifier les couleurs selon tes envies
+> 3. Importer le fichier CSS dans `/themes` !
+
+
+```css
+[data-theme="solarized-dark"] {
+  --bg: #002b36;
+  --text: #93a1a1;
+  --heading: #b58900;
+  /* ... */
+}
+```
+Le nom (`data-theme="..."`) est ce que tu sélectionnes comme “clair” ou “sombre” dans la page Thèmes.
+
+> ⚠️ Après toute modification des thèmes ou de la page Thèmes,  
+> pense à recharger toutes les pages du site pour appliquer les nouveaux styles.
+
+---
+
+## 🚩 Known Issues / Limitations
+
+- La gestion avancée des thèmes custom est expérimentale.
+- Certains effets visuels peuvent varier selon le navigateur.
+- L’interface `/themes` est optimisée pour Chrome, Firefox et Edge récents.
+
+---
+
+> **Assistant IA & aide à l’optimisation :**  
+> Ce projet a été continuellement amélioré et optimisé avec l’aide de ChatGPT (OpenAI) pour l’architecture, le refactoring, l’accessibilité, l’audit de thème, et le support utilisateur avancé.
+
+---
+
+## 🧠 Author
+
+Project crafted with passion by **Raphaël**
+
+---
+
+> **Assistant IA & aide à l’optimisation :**  
+> Ce projet a été continuellement amélioré et optimisé avec l’aide de ChatGPT (OpenAI) pour l’architecture, le refactoring, l’accessibilité, l’audit de thème, et le support utilisateur avancé.
+
+## 📝 License
+
+This project is distributed under  
 **[Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)**
 
-> Cela signifie que vous êtes libre de :
+> You are free to:
 >
-> - 📤 utiliser, modifier et redistribuer ce projet,
-> - à condition de me créditer clairement,
-> - **et de ne pas en faire un usage commercial**.
+> - 📤 use, modify, and redistribute this project,
+> - as long as you credit the author clearly,
+> - **and do not use it commercially**.
 
-Pour toute demande d’usage commercial, merci de me contacter directement.
+For any commercial usage requests, please contact the author directly.
 
 ---
 
-## 🔮 À venir
+## 📝 License
 
-- [ ] Compression ULID (base64, zlib ?)
-- [ ] ULID en UUIDv7 (option `as_uuid`)
-- [ ] Séquences monotones
-- [ ] Seed personnalisés
-- [ ] Quotas d’utilisation ou API keys
-- [ ] Mini dashboard personnel
+This project is distributed under  
+**[Creative Commons Attribution – NonCommercial 4.0 International (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)**
+
+> You are free to:
+>
+> - 📤 use, modify, and redistribute this project,
+> - as long as you credit the author clearly,
+> - **and do not use it commercially**.
+
+For any commercial usage requests, please contact the author directly.
+
+---

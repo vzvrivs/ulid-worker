@@ -2,54 +2,67 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>🆘 ULID Worker – Aide rapide</title>
-
-  <!-- Thème avant chargement du CSS -->
   <script>
-    const currentTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.setAttribute("data-theme", currentTheme ? "dark" : "light");
+    try {
+      const theme = localStorage.getItem('theme');
+      if (theme) document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {}
+  </script>
+  <title>🆘 ULID Worker – Aide rapide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script>
+    (function(){
+      let mode = localStorage.getItem('ulidw-theme-mode') || "auto";
+      let themeLight = localStorage.getItem('ulidw-theme-light') || "light";
+      let themeDark  = localStorage.getItem('ulidw-theme-dark')  || "dark";
+      let prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      let theme;
+      if (mode === "auto") theme = prefersDark ? themeDark : themeLight;
+      else if (mode === "manual") theme = localStorage.getItem("ulidw-theme-last") || themeDark;
+      else if (mode === "light") theme = themeLight;
+      else if (mode === "dark") theme = themeDark;
+      else theme = "light";
+      document.documentElement.setAttribute("data-theme", theme);
+      // Si thème custom, cache tout tant que JS n'a pas injecté le style
+      try {
+        const customs = JSON.parse(localStorage.getItem("ulidw-user-themes") || "[]");
+        if (Array.isArray(customs) && customs.find(t => t.name === theme)) {
+          document.documentElement.style.visibility = "hidden";
+          window.__ulidw_theme_pending = true;
+        }
+      } catch(e){}
+    })();
   </script>
 
   <!-- ton CSS -->
   <link rel="stylesheet" href="/style.css"/>
 
   <style>
-    body {
-      background-color: #0d0d0d;
-      color: #33ff33;
-      font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-    }
-    h1 {
-      color: #00ffcc;
-      border-bottom: 1px dashed #00ffcc;
-      margin-bottom: 1.5rem;
-    }
     .section {
       margin-top: 2rem;
     }
     pre {
-      background: #111;
+      background: var(--code-bg);
       padding: 1rem;
-      border-left: 4px solid #00ffcc;
+      border-left: 4px solid var(--heading);
       overflow-x: auto;
     }
     code {
-      background: #111;
-      color: #66ffff;
+      background: var(--code-bg);
+      color: var(--code-color);
       padding: 0.2em 0.4em;
       border-radius: 4px;
     }
     a {
-      color: #66ffff;
+      color: var(--link);
       text-decoration: none;
     }
     a:hover {
       text-decoration: underline;
     }
     .comment {
-      color: #888;
+      color: var(--footer-color);
     }
   </style>
 </head>
@@ -57,7 +70,7 @@
 <body>
   <header id="nav-container" class="header-nav-container"></header>
 
-  <main>
+  <main class="page-wrapper">
 
     <h1>🧰 ULID Worker – Aide rapide</h1>
 
@@ -67,9 +80,6 @@
 
       <div class="comment"># Générer 1 ULID en base16 (hexadécimal) + binaire</div>
       <pre>$ <a href="./ulid?base=hex&bin=true&pretty=true">/ulid?base=hex&bin=true&pretty=true</a></pre>
-
-      <div class="comment"># Ajouter un préfixe/suffixe</div>
-      <pre>$ <a href="./ulid?n=2&prefix=RAPH-&suffix=-X">/ulid?n=2&prefix=RAPH-&suffix=-X</a></pre>
     </div>
 
     <div class="section">
@@ -87,16 +97,19 @@
       <pre>$ <a href="/docs">/docs</a></pre>
     </div>
 
-    <footer class="section">
-      <div class="comment">ULID Worker v1 — Codé par Raphaël dans le noir 🦾</div>
-    </footer>
-
   </main>
 
-  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 • Licence MIT</footer>
+  <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
 
   <!-- enfin ton script principal -->
   <script type="module" src="./site.js"></script> 
 
 </body>
-</html>`
+  <script>
+    // Sécurité anti-FOUC en cas de navigation dynamique :
+    const t = localStorage.getItem('theme');
+    if (t && document.documentElement.getAttribute('data-theme') !== t) {
+      document.documentElement.setAttribute('data-theme', t);
+    }
+  </script>
+</html>

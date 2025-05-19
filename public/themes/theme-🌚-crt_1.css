@@ -1,0 +1,30 @@
+[data-theme="crt_1"] {
+  --bg: #001100;
+  --text: #00ff00;
+  --heading: #00ff66;
+  --link: #00ffaa;
+  --link-hover: #33ff99;
+  --input-bg: #001a00;
+  --input-border: 1px solid #00ff00;
+  --button-bg: #002200;
+  --button-color: #00ff00;
+  --button-hover-bg: #00ff00;
+  --button-hover-color: #001100;
+  --code-bg: #001a00;
+  --code-color: #00ff00;
+  --code-border: 4px solid #00ff00;
+  --field-even-background: #001700;
+  --field-odd-border: #002200;
+  --footer-color: #00ff00;
+  --navbar-bg: rgba(0, 17, 0, 0.95);
+  --navbar-text: #00ff00;
+  --navbar-link-hover: #33ff99;
+  --navbar-toggle-bg: rgba(0, 17, 0, 0.8);
+  --nav-glow-1: rgba(0,255,0,0.5);
+  --nav-glow-2: rgba(0,191,0,0.6);
+  --matrix-background: #001100;
+  --matrix-overlay: rgba(0, 32, 0, 0.07);
+  --bit-on: #00ff00;
+  --bit-off: #014201;
+  --bit-test: #228b22;
+}

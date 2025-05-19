@@ -7,21 +7,30 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
 
-## [0.5.1] - 2025-05-18
+## [0.5.1] - 2025-05-19
+
+### Ajouté
+
+- Nouvelle page pour ajouter et gérer des thèmes personnalisés :
+  - Upload local avec stockage via `localStorage`.
+  - Collection de thèmes prêts à l’emploi.
 
 ### Modifié
+
+- Réactivation complète et enrichie du système de logs :
+  - Espaces KV différenciés dev/prod.
+  - Recherche par terme ou date.
+  - Affichage du nombre total de logs.
+  - Navigation entre pages de logs.
+  - Export JSON de la page courante.
+  - Suppression complète avec sécurité.
+- Mutualisation des fonctions ULID (génération et vérification) entre Playground et Music via `helpers.js`.
+- Unification des boutons "Maintenant" et de l’affichage humanisé des dates.
 - Réorganisation technique :
   - Intégration directe du JS du Playground dans son HTML.
   - Suppression du fichier `navbar.css`, CSS intégré.
   - `/debug/logs` est désormais servi en statique.
   - Ajout de la navbar aux pages `/help`, `/docs` et `/debug/logs`.
-
----
-
-## [Unreleased]
-
-### Modifié
-
 - Optimisation et finalisation de la page Music après la version 0.5.0 (détails devaient venir, mais flemme).
 
 ---

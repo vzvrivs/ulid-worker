@@ -1,0 +1,30 @@
+[data-theme="candy_1"] {
+  --bg: #fff0f5;
+  --text: #ff69b4;
+  --heading: #ff1493;
+  --link: #ffb6c1;
+  --link-hover: #db7093;
+  --input-bg: #fffafd;
+  --input-border: 1px solid #ff69b4;
+  --button-bg: #fff4fa;
+  --button-color: #ff69b4;
+  --button-hover-bg: #ffb6c1;
+  --button-hover-color: #fff0f5;
+  --code-bg: #fffafd;
+  --code-color: #ff1493;
+  --code-border: 4px solid #ffb6c1;
+  --field-even-background: #fffafd;
+  --field-odd-border: #fff4fa;
+  --footer-color: #db7093;
+  --navbar-bg: rgba(255,240,245,0.95);
+  --navbar-text: #ff1493;
+  --navbar-link-hover: #ff69b4;
+  --navbar-toggle-bg: rgba(255,244,250,0.75);
+  --nav-glow-1: rgba(255,105,180,0.19);
+  --nav-glow-2: rgba(255,182,193,0.16);
+  --matrix-background: #fff0f5;
+  --matrix-overlay: rgba(255,182,193,0.09);
+  --bit-on: #ff69b4;
+  --bit-off: #fff4fa;
+  --bit-test: #ffb6c1;
+}

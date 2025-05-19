@@ -1,9 +1,32 @@
 import { rawToBinary } from '../public/helpers.js'
 
+import {
+  ulid as randomULID,    // Générateur ULID standard
+  decodeTime,            // Pour décoder t → ms depuis un ULID
+  monotonicFactory       // Générateur monotone (incrémente l’aléa)
+} from 'ulid';
+import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
+
 // ───────────────────────────────────────────────────────────
 // Logger JSON structuré avec niveaux contrôlés par ENV
 // Robuste pour Dev / Prod / Reload / Missing bindings
 // ───────────────────────────────────────────────────────────
+// Détection environnement (prod/dev) pour logs
+const IS_PROD = (globalThis.ENV && globalThis.ENV === "production") ||
+                (typeof ENVIRONMENT !== "undefined" && ENVIRONMENT === "production") ||
+                (typeof process !== "undefined" && process.env && process.env.NODE_ENV === "production") ||
+                false;
+const LOGS_ACCESS_TOKEN = globalThis.LOGS_ACCESS_TOKEN || "s3cret-token-change-me";
+
+function addEnvHeader(resp) {
+  const newHeaders = new Headers(resp.headers);
+  newHeaders.set("X-Logs-Env", IS_PROD ? "prod" : "dev");
+  return new Response(resp.body, {
+    status: resp.status,
+    statusText: resp.statusText,
+    headers: newHeaders
+  });
+}
 
 const LOG_LEVELS = { ERROR: 0, WARN: 1, INFO: 2, DEBUG: 3, TRACE: 4 };
 
@@ -13,6 +36,7 @@ function getCurrentLevel() {
 }
 
 async function log(level, message, meta = {}) {
+  console.log("[DEBUG] Appel à log() avec level=", level, "message=", message);
   const CURRENT_LEVEL = getCurrentLevel();
   console.log("CURRENT_LEVEL (log call) =", CURRENT_LEVEL);
 
@@ -23,17 +47,30 @@ async function log(level, message, meta = {}) {
       message,
       ...meta
     };
-
     console[level.toLowerCase()]?.(JSON.stringify(entry));
-
     if (typeof LOGS === "undefined") {
       console.warn("[Logger] LOGS binding is undefined — skipping KV storage");
       return;
     }
-
+    // PAGINATION / PURGE AUTO AU-DESSUS DE 10 000 ENTRÉES
+    let allKeys = [];
+    let cursor;
+    do {
+      const res = await LOGS.list({ limit: 1000, cursor });
+      allKeys.push(...res.keys.map(k => k.name));
+      cursor = res.cursor;
+    } while (cursor);
+    if (allKeys.length >= 10000) {
+      // Trie croissant, supprime les plus anciens pour retomber à 9999
+      allKeys.sort();
+      const toDelete = allKeys.slice(0, allKeys.length - 9999);
+      await Promise.all(toDelete.map(k => LOGS.delete(k)));
+      // Pas de toast possible ici (côté serveur) — le front affichera une info au prochain refresh
+    }
     const key = `${Date.now()}-${crypto.randomUUID()}`;
     try {
       await LOGS.put(key, JSON.stringify(entry), { expirationTtl: 365 * 24 * 3600 });
+      console.info("[Logger] Successfully put log in KV:", key);
     } catch (err) {
       console.error("[Logger] Failed to put log entry in KV:", err);
     }
@@ -44,15 +81,9 @@ async function log(level, message, meta = {}) {
 // index.js — ULID Worker (options timestamp & monotone, journaux intégrés)
 // =============================================================================
 
-import {
-  ulid as randomULID,    // Générateur ULID standard
-  decodeTime,            // Pour décoder t → ms depuis un ULID
-  monotonicFactory       // Générateur monotone (incrémente l’aléa)
-} from 'ulid';
-import { getAssetFromKV } from '@cloudflare/kv-asset-handler';
-
 // 🧠 Écouteur principal : log INFO + dispatch
 addEventListener('fetch', event => {
+  console.log("==> [DEBUG] Worker FETCH event reçu");
   const { request } = event;
   const url = new URL(request.url);
 
@@ -80,16 +111,33 @@ async function handleRequest(event) {
     // Micro‑dashboard HTML pour consulter /logs en JSON
     // ─────────────────────────────────────────────────────
     if (url.pathname === '/logs' && request.method === 'GET') {
+      // Protection en prod : nécessite un token dans l'URL ou en header
+      if (IS_PROD) {
+        const token = request.headers.get('X-Logs-Token') || new URL(request.url).searchParams.get('token');
+        if (token !== LOGS_ACCESS_TOKEN) {
+          return new Response('Forbidden', { status: 403 });
+        }
+      }
       const accept = request.headers.get('Accept') || '';
       if (accept.includes('application/json')) {
-        return handleLogsJSON(request);
+        const resp = await handleLogsJSON(request);
+        return addEnvHeader(resp);
       } else {
-        return handleLogsHTML(request);
+        const resp = await handleLogsHTML(request);
+        return addEnvHeader(resp);
       }
     }
 
-    
-    
+    if (url.pathname === '/logs/purge' && request.method === 'POST') {
+      // Supprime toutes les clés par pagination
+      let cursor = undefined;
+      do {
+        const res = await LOGS.list({ limit: 1000, cursor });
+        await Promise.all(res.keys.map(k => LOGS.delete(k.name)));
+        cursor = res.cursor;
+      } while (cursor);
+      return new Response("OK", { status: 200 });
+    }
 
     // ──────────────────────────────────────────────
     // Mini‑dashboard HTML pour consulter /logs
@@ -112,6 +160,31 @@ async function handleRequest(event) {
     }
     if (url.pathname === '/auto-doc') {
       return handleAutoDoc(request);
+    }
+    // Liste tous les fichiers thèmes CSS du dossier /themes/
+    if (url.pathname === '/themes/list' && request.method === 'GET') {
+      // Récupère la liste des assets
+      try {
+        // getAssetFromKV() ne fournit pas la liste, mais la plupart des KV frameworks le permettent.
+        // Ici, pour Cloudflare Pages/Workers, on suppose que __STATIC_CONTENT_MANIFEST contient les assets :
+        const manifest = globalThis.__STATIC_CONTENT_MANIFEST
+          ? JSON.parse(globalThis.__STATIC_CONTENT_MANIFEST)
+          : {};
+
+        // Récupère tous les fichiers de /themes/ finissant par .css
+        const themes = Object.keys(manifest)
+          .filter(key => key.startsWith('themes/theme-') && key.endsWith('.css'))
+          .map(key => key.replace(/^themes\/theme-/, '').replace(/\.css$/, ''));
+
+        return new Response(JSON.stringify({ themes }), {
+          headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      }
     }
 
     // 3) Fallback fichiers statiques
@@ -505,16 +578,37 @@ export function decodeTime(ulidStr) {
 // Basic logs
 // ───────────────────────────────────────────────────────────
 
-// module externe
+// module externe - LOGS pagination et total !
 async function handleLogsJSON(request) {
-  const limit = Math.min(parseInt(new URL(request.url).searchParams.get('limit') || '100', 10), 500);
-  const keys = await LOGS.list({ limit: 1000 });
-  const recent = keys.keys.map(k => k.name).sort().slice(-limit);
-  const values = await Promise.all(recent.map(k => LOGS.get(k)));
+  // Extrait limit + page depuis query params
+  const url = new URL(request.url);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '100', 10), 1000);
+  const page  = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1);
+  // Charge toutes les clés (pagination backend possible en adaptant la stratégie — ici charge tout)
+  let allKeys = [];
+  let cursor;
+  do {
+    const res = await LOGS.list({ limit: 1000, cursor });
+    allKeys.push(...res.keys.map(k => k.name));
+    cursor = res.cursor;
+  } while (cursor);
+  // Trie décroissant : plus récents d'abord
+  allKeys.sort().reverse();
+  // Paginer
+  const total = allKeys.length;
+  const start = (page - 1) * limit;
+  const pagedKeys = allKeys.slice(start, start + limit);
+  const values = await Promise.all(pagedKeys.map(k => LOGS.get(k)));
   const entries = values.map(v => {
     try { return JSON.parse(v); } catch { return null; }
   }).filter(Boolean);
-  return new Response(JSON.stringify(entries, null, 2), {
+  // Retourne aussi le total et la page pour l'UI
+  return new Response(JSON.stringify({
+    entries,
+    total,
+    page,
+    limit
+  }, null, 2), {
     headers: { 'Content-Type': 'application/json' }
   });
 }

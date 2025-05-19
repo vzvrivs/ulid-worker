@@ -1,0 +1,29 @@
+[data-theme="solarized_1"] {
+  --bg: #fdf6e3;
+  --text: #657b83;
+  --heading: #b58900;
+  --link: #268bd2;
+  --link-hover: #2aa198;
+  --input-bg: #fdf6e3;
+  --input-border: 1px solid #93a1a1;
+  --button-bg: #eee8d5;
+  --button-color: #586e75;
+  --button-hover-bg: #b58900;
+  --button-hover-color: #fff;
+  --code-bg: #eee8d5;
+  --code-color: #586e75;
+  --code-border: 4px solid #b58900;
+  --field-even-background: color-mix(in srgb, var(--text) 10%, var(--bg));
+  --field-odd-border: var(--field-even-background);
+  --footer-color: #93a1a1;
+  --navbar-bg: rgba(253, 246, 227, 0.6);
+  --navbar-text: #586e75;
+  --navbar-link-hover: #268bd2;
+  --navbar-toggle-bg: rgba(253, 246, 227, 0.6);
+  --nav-glow-1: rgba(38, 139, 210, 0.7);
+  --nav-glow-2: rgba(42, 161, 152, 0.7);
+  --matrix-background: #fdf6e3;
+  --matrix-overlay: rgba(253, 246, 227, 0.05);
+  --bit-on: #268bd2;
+  --bit-off: color-mix(in srgb, var(--footer-color) 50%, var(--bg));
+}

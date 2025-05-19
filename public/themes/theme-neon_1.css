@@ -1,0 +1,30 @@
+[data-theme="neon_1"] {
+  --bg: #1a0025;
+  --text: #ff00ff;
+  --heading: #00ffff;
+  --link: #fffb00;
+  --link-hover: #ff33cc;
+  --input-bg: #250033;
+  --input-border: 1px solid #ff00ff;
+  --button-bg: #330033;
+  --button-color: #00ffff;
+  --button-hover-bg: #ff00ff;
+  --button-hover-color: #1a0025;
+  --code-bg: #190a1a;
+  --code-color: #00ffff;
+  --code-border: 4px solid #ff00ff;
+  --field-even-background: #26003d;
+  --field-odd-border: #1a0025;
+  --footer-color: #ff66cc;
+  --navbar-bg: rgba(25, 0, 51, 0.85);
+  --navbar-text: #00ffff;
+  --navbar-link-hover: #ff00ff;
+  --navbar-toggle-bg: rgba(51,0,51,0.8);
+  --nav-glow-1: rgba(255,0,255,0.35);
+  --nav-glow-2: rgba(0,255,255,0.35);
+  --matrix-background: #1a0025;
+  --matrix-overlay: rgba(255,0,255,0.08);
+  --bit-on: #ff00ff;
+  --bit-off: #330033;
+  --bit-test: #00ffff;
+}

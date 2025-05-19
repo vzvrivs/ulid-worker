@@ -1,0 +1,29 @@
+[data-theme="dracula_2"] {
+  --bg: #282a36;
+  --text: #f8f8f2;
+  --heading: #bd93f9;
+  --link: #8be9fd;
+  --link-hover: #50fa7b;
+  --input-bg: #44475a;
+  --input-border: 1px solid #6272a4;
+  --button-bg: #44475a;
+  --button-color: #f8f8f2;
+  --button-hover-bg: #bd93f9;
+  --button-hover-color: #282a36;
+  --code-bg: #44475a;
+  --code-color: #f1fa8c;
+  --code-border: 4px solid #bd93f9;
+  --field-even-background: #343746;
+  --field-odd-border: #343746;
+  --footer-color: #6272a4;
+  --navbar-bg: rgba(40,42,54,0.7);
+  --navbar-text: #f8f8f2;
+  --navbar-link-hover: #bd93f9;
+  --navbar-toggle-bg: rgba(68,71,90,0.7);
+  --nav-glow-1: rgba(189, 147, 249, 0.3);
+  --nav-glow-2: rgba(80, 250, 123, 0.2);
+  --matrix-background: #282a36;
+  --matrix-overlay: rgba(40,42,54,0.04);
+  --bit-on: #50fa7b;
+  --bit-off: #6272a4;
+}

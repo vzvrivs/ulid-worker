@@ -109,6 +109,15 @@ body::before {
   height: 1rem; /* hauteur + les deux marges verticales */
 }
 
+main.fade {
+  opacity: 0.2;
+  transition: opacity 0.25s;
+}
+main.fading-in {
+  opacity: 1;
+  transition: opacity 0.25s;
+}
+
 h1, h2, h3 {
   color: var(--heading);
   border-bottom: 1px dashed var(--heading);
@@ -165,6 +174,17 @@ button {
 button:hover {
   background: var(--button-hover-bg);
   color: var(--button-hover-color);
+}
+
+th, td {
+  padding: 0.5rem;
+  border: 1px solid var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+th {
+  background-color: var(--bg);
 }
 
 pre {
