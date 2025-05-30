@@ -7,6 +7,14 @@ et le projet respecte [Semantic Versioning](https://semver.org/lang/fr/).
 
 ---
 
+## [0.5.2] – À venir (2025-05-31)
+
+### Modifié
+- Nettoyage du code HTML/JS de plusieurs pages.
+- Corrections mineures sur l’accueil, la page d’aide et la documentation.
+
+---
+
 ## [0.5.1] - 2025-05-19
 
 ### Ajouté

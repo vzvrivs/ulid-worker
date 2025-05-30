@@ -345,12 +345,13 @@ alert(ulid);
   <script type="module" src="/site.js"></script> 
 
 </body>
-  <script>
-      // Sécurité anti-FOUC en cas de navigation dynamique :
-      const t = localStorage.getItem('ulidw-theme-last');
-      if (t && document.documentElement.getAttribute('data-theme') !== t) {
-        document.documentElement.setAttribute('data-theme', t);
-      }
-    </script>
-  </html>
+
+<script>
+  // Sécurité anti-FOUC en cas de navigation dynamique :
+  const t = localStorage.getItem('ulidw-theme-last');
+  if (t && document.documentElement.getAttribute('data-theme') !== t) {
+    document.documentElement.setAttribute('data-theme', t);
+  }
+</script>
+
 </html>

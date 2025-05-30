@@ -75,11 +75,19 @@
     <h2>🔗 Endpoints disponibles</h2>
     <ul>
       <li><code>GET /ulid</code> → Générer 1 ou plusieurs ULID</li>
-      <li><code>GET /ulid?validate=...</code> → Valider un ULID</li>
+      <li><code>GET /ulid?check=...</code> → Vérification de la conformité d’un ULID</li>
       <li><code>POST /autofill</code> → Compléter les <code>_uid: null</code> d’un JSON</li>
-      <li><code>/test</code> → Interface de test interactive</li>
+    </ul>
+
+    <h2>🪐 Pages disponibles</h2>
+    <ul>
       <li><code>/help</code> → Aide rapide</li>
-      <li><code>/docs</code> → Cette page</li>
+      <li><code>/docs</code> → Documentation complète</li>
+      <li><code>/playground</code> → Interface de test interactive : vérification, génération, autofill d’ULID</li>
+      <li><code>/matrix</code> → Pluie d’ULID façon Matrix</li>
+      <li><code>/music</code> → Générer de la musique à partir d’un ULID</li>
+      <li><code>/debug/logs</code> → Logs d’activité</li>
+      <li><code>/themes</code> → Sélection des thèmes</li>
     </ul>
 
     <h2>⚙️ Paramètres de génération (<code>GET /ulid</code>)</h2>
@@ -88,7 +96,7 @@
       <tr><td><code>n</code></td><td>entier</td><td>1</td><td>Nombre de ULID à générer (max 1000)</td></tr>
       <tr><td><code>base</code></td><td>string</td><td><code>crockford</code></td><td><code>crockford</code> (standard) ou <code>hex</code> (base16)</td></tr>
       <tr><td><code>pretty</code></td><td>bool</td><td><code>false</code></td><td>Format JSON indenté pour la lisibilité</td></tr>
-      <tr><td><code>bin</code></td><td>bool</td><td><code>false</code></td><td>Ajoute un champ <code>"bin"</code> (130 bits bruts)</td></tr>
+      <tr><td><code>bin</code></td><td>bool</td><td><code>false</code></td><td>Ajoute un champ <code>"bin"</code> (représentation binaire 128 bits)</td></tr>
     </table>
 
     <h3>📤 Exemple simple</h3>
@@ -106,11 +114,11 @@
     }
   ]</pre>
 
-    <h2>🔍 Validation (<code>/ulid?validate=...</code>)</h2>
+    <h2>🔍 Validation (<code>/ulid?check=...</code>)</h2>
     <p>Vérifie syntaxe, taille, alphabet Crockford, et extrait le timestamp si valide.</p>
 
     <h3>📥 Exemple</h3>
-    <pre>/ulid?validate=01HTY79MNQY3GE8G7VFDWSVJJP</pre>
+    <pre>/ulid?check=01HTY79MNQY3GE8G7VFDWSVJJP</pre>
 
     <h3>📤 Réponse</h3>
     <pre>{
@@ -164,7 +172,7 @@
   <footer>ulid-worker • Codé avec 💚 par Raphaël et 🤖 •Licence CC BY-NC-SA 4.0</footer>
     
   <!-- enfin ton script principal -->
-  <script type="module" src="./site.js"></script> 
+  <script type="module" src="/site.js"></script> 
 
 </body>
   <script>
